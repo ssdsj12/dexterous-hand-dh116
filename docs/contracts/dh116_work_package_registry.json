@@ -51684,6 +51684,121 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.loaded-pair-continuity-r4": {
+      "title": "teacher loaded pair continuity",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-wrist-command-r3"
+      ],
+      "tests": [
+        "tests/test_dh116_loaded_pair_continuity.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-loaded-pair-continuity.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "tripod_index_load_duration_diagnostic",
+        "cpu_passed": 113,
+        "native_reset_component_verified": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.tripod-current-native-reset-r4": {
+      "title": "teacher tripod reset native wrapper",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-current-reset-freeze-r3"
+      ],
+      "tests": [
+        "tests/test_tripod_supported_reset_capture.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-native-wrapper.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "current_source_reset_native_component_verified",
+        "cpu_passed": 132,
+        "native_reset_component_verified": true,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.tripod-early-boundary-r4": {
+      "title": "teacher tripod early boundary",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-wrist-command-r3"
+      ],
+      "tests": [
+        "tests/test_tripod_early_boundary.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-early-boundary.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "very_low_margin_precontact_subwindow_candidate",
+        "cpu_passed": 113,
+        "native_reset_component_verified": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.902-pinch-facets-r4": {
+      "title": "teacher 902 pinch facet alignment",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-pinch-coupled-r3"
+      ],
+      "tests": [
+        "tests/test_dh116_902_pinch_facets.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-facet-alignment.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "left_opposed_sdf_source_convex_excess_right_gap_positive",
+        "cpu_passed": 175,
+        "native_reset_component_verified": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.power-right-index-r4": {
+      "title": "sync power right index",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-coupled-wrist-r3"
+      ],
+      "tests": [
+        "tests/test_dh116_power_right_index.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-right-index.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "axial_and_tangent_roll_excluded_original_workspace",
+        "cpu_passed": 102,
+        "native_reset_component_verified": false,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

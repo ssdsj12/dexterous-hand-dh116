@@ -1,0 +1,191 @@
+{
+  "version": 1,
+  "branch": "11-17",
+  "base_commit": "44c649ba2f069dbafb5a1685100eab1927faef83",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round4.md",
+  "native_isaac_runs": 1,
+  "new_sdk_steps": 2,
+  "new_episode_resets": 1,
+  "new_control_steps": 0,
+  "new_rod_steps": 0,
+  "ppo_updates": 0,
+  "formal_teacher_training": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "teacher_admission": false,
+  "native_tripod_reset": {
+    "path": "docs/contracts/dh116_teacher_tripod_native_reset_r4_v1.json",
+    "sha256": "bbd75ee6d2bc196e89723b4d1655adad6827c4026516991713b180e91a684052",
+    "component_verified": true
+  },
+  "integrated_cpu": {
+    "passed": 205,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-ra",
+      "tests/test_dh116_902_pinch_alignment.py",
+      "tests/test_dh116_902_pinch_right_alignment.py",
+      "tests/test_dh116_power_remaining_digits.py",
+      "tests/test_tripod_wrist_relief.py",
+      "tests/test_dh116_supported_force_seating.py",
+      "tests/test_dh116_power_bilateral_handoff.py",
+      "tests/test_dh116_power_bilateral_receipt.py",
+      "tests/test_supported_wire_factorial_holdouts.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_tripod_index_contact_loss.py",
+      "tests/test_dh116_902_pinch_coupled.py",
+      "tests/test_tripod_wrist_relief_command.py",
+      "tests/test_dh116_power_coupled_wrist.py",
+      "tests/test_tripod_supported_reset_capture.py",
+      "tests/test_dh116_loaded_pair_continuity.py",
+      "tests/test_dh116_902_pinch_facets.py",
+      "tests/test_tripod_early_boundary.py",
+      "tests/test_dh116_power_right_index.py"
+    ],
+    "log_sha256": "856bb19bba4756beeb6cffbf8a61130f14c2081d6f32d6b080b8602b89d57c06"
+  },
+  "packages": {
+    "teacher.loaded-pair-continuity-r4": {
+      "report": "docs/superpowers/reports/2026-11-23-teacher-loaded-pair-continuity.md",
+      "source_files": [
+        "docs/superpowers/reports/2026-11-23-teacher-loaded-pair-continuity.md",
+        "scripts/audit_dh116_loaded_pair_continuity.py",
+        "tests/test_dh116_loaded_pair_continuity.py"
+      ],
+      "evidence_sha256": {
+        "pair-continuity-release-r4-ko7m8bvt/tripod.json": "f6665b1c9c1e0b4369fbe1c4710bb0f66e241038e331724353bb4b502bffa01c",
+        "pair-continuity-release-r4-ko7m8bvt/cpu.log": "9e22e6375d630ea6a7687c0642541ea50442ef6a635d26a465064b16f3223364"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7b25bb5ff59d7f9a4f4531ae0b757ea816abb880",
+        "source_tree": "262f508a3149211d7d5ac06e0b6682a6f2a2a0e8",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "tripod_index_load_duration_diagnostic",
+      "cpu_passed": 113,
+      "native_reset_component_verified": false,
+      "native_qualification": false,
+      "teacher_admission": false
+    },
+    "teacher.tripod-current-native-reset-r4": {
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-native-wrapper.md",
+      "source_files": [
+        "docs/contracts/dh116_teacher_tripod_native_reset_r4_v1.json",
+        "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-native-wrapper.md"
+      ],
+      "evidence_sha256": {
+        "tripod-reset-wrapper-r4-e1qf3ns0/outer.json": "6119f2c648aee1d90e6b4526a3def9ae0d3240c274c796a4b90427e81f78e323",
+        "tripod-reset-wrapper-r4-e1qf3ns0/independent-reset-audit.json": "0ac8dad4573ecfb104c37d7ced69dc271eafb5fed6f7bfc73b46bf37810bac2d",
+        "tripod-reset-wrapper-r4-e1qf3ns0/teacher-reset-manifest.json": "1885263b3d21e247370379d54d0dfeac8cab4cf00c23b08e4faa52c68401a7b5"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c903ca6a8181017b65350c44e10871e0ddab8969",
+        "source_tree": "31fd48eeb1a7713f7e677fb5e15d4b91ff5e24aa",
+        "remote_branch": "11-17",
+        "files_verified": 2,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "current_source_reset_native_component_verified",
+      "cpu_passed": 132,
+      "native_reset_component_verified": true,
+      "native_qualification": false,
+      "teacher_admission": false
+    },
+    "teacher.tripod-early-boundary-r4": {
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-early-boundary.md",
+      "source_files": [
+        "docs/contracts/dh116_teacher_tripod_early_boundary_v1.json",
+        "docs/superpowers/reports/2026-11-23-teacher-tripod-early-boundary.md",
+        "scripts/audit_dh116_tripod_early_boundary.py",
+        "tests/test_tripod_early_boundary.py"
+      ],
+      "evidence_sha256": {
+        "full_replay": "5e8ed0df228c292da35eaffcdcbe01e7c0302e6f5083101aba8bac5ffb8656a5",
+        "causal_cutoff_replay": "190dcaa46c6b4ef7e83bbb0a0dac5c7ca301ee19b9d73f43c5bf25e9f25620a9"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0dd3349a092b8019f1f857fea9e2eb3a8e876ea2",
+        "source_tree": "37d99927564101c1208f8fade67b73084e991612",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "very_low_margin_precontact_subwindow_candidate",
+      "cpu_passed": 113,
+      "native_reset_component_verified": false,
+      "native_qualification": false,
+      "teacher_admission": false
+    },
+    "teacher.902-pinch-facets-r4": {
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-facet-alignment.md",
+      "source_files": [
+        "docs/superpowers/reports/2026-11-23-teacher-902-pinch-facet-alignment.md",
+        "scripts/screen_dh116_902_pinch_facets.py",
+        "tests/test_dh116_902_pinch_facets.py"
+      ],
+      "evidence_sha256": {
+        "sync-pinch-round4-facet-left-v4.json": "4221aa7939e175b8b1b45d0e0d55cd577624b5fdfd3f68beffdfde4b4183a9b5",
+        "sync-pinch-round4-facet-right-v4.json": "9a894bf3bf2f1808b9135f023ac9bb078f737233e367eb69d337f9b7298fc503",
+        "sync-pinch-round4-facet-left-negative-witness.json": "febf04954c3f4347bd38c1a1852132d8d0eb0dd6ee0c29f658a94bb45c79084e",
+        "sync-pinch-round4-facet-v4-cpu.log": "85012857d094e51a5c1f050e8c8fb351658d0a350843bba764ad2e03abe749c9"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0c14ac1106121532afbc477c41b01d493f98cda2",
+        "source_tree": "d65c4c0df728958cc6b6cb4c4c79b06a97cdd17b",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "left_opposed_sdf_source_convex_excess_right_gap_positive",
+      "cpu_passed": 175,
+      "native_reset_component_verified": false,
+      "native_qualification": false,
+      "teacher_admission": false
+    },
+    "teacher.power-right-index-r4": {
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-right-index.md",
+      "source_files": [
+        "docs/superpowers/reports/2026-11-23-sync-power-right-index.md",
+        "tests/test_dh116_power_right_index.py",
+        "tools/audit_dh116_power_right_index.py"
+      ],
+      "evidence_sha256": {
+        "sync-power-round4-right-index.c4q8SL/result.json": "121cf3dde2c1762b701c79b4cfc086295c15ae4cd3b224394f49454b1d9da381",
+        "sync-power-round4-cpu.8KxI9z/pytest.log": "1502c8a6a28ff1cdca7220f90577b2cf0be93703bd45863e62ffccbbb552e033"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "07b25e5f798968355d72d1b63ed31b8b86d12c13",
+        "source_tree": "f277afd7add323aeeb76b324f465d21d0dec478a",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "axial_and_tangent_roll_excluded_original_workspace",
+      "cpu_passed": 102,
+      "native_reset_component_verified": false,
+      "native_qualification": false,
+      "teacher_admission": false
+    }
+  },
+  "registry_cpu": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "c8088c4807901c92c1b2f5c899511eff390b89ca76f29436fa9dd687d3cc9d40"
+  }
+}

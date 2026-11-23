@@ -35217,6 +35217,181 @@
         "passed": 60,
         "failed": 0
       }
+    },
+    {
+      "package": "teacher.loaded-pair-continuity-r4",
+      "branch": "11-17",
+      "status": "tripod_index_load_duration_diagnostic",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-loaded-pair-continuity.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "cpu_tests": {
+        "passed": 113,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 205,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7b25bb5ff59d7f9a4f4531ae0b757ea816abb880",
+        "source_tree": "262f508a3149211d7d5ac06e0b6682a6f2a2a0e8",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.tripod-current-native-reset-r4",
+      "branch": "11-17",
+      "status": "current_source_reset_native_component_verified",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-reset-native-wrapper.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "cpu_tests": {
+        "passed": 132,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 205,
+        "failed": 0
+      },
+      "new_isaac_runs": 1,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": true,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c903ca6a8181017b65350c44e10871e0ddab8969",
+        "source_tree": "31fd48eeb1a7713f7e677fb5e15d4b91ff5e24aa",
+        "remote_branch": "11-17",
+        "files_verified": 2,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.tripod-early-boundary-r4",
+      "branch": "11-17",
+      "status": "very_low_margin_precontact_subwindow_candidate",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-early-boundary.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "cpu_tests": {
+        "passed": 113,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 205,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0dd3349a092b8019f1f857fea9e2eb3a8e876ea2",
+        "source_tree": "37d99927564101c1208f8fade67b73084e991612",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.902-pinch-facets-r4",
+      "branch": "11-17",
+      "status": "left_opposed_sdf_source_convex_excess_right_gap_positive",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-facet-alignment.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "cpu_tests": {
+        "passed": 175,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 205,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "0c14ac1106121532afbc477c41b01d493f98cda2",
+        "source_tree": "d65c4c0df728958cc6b6cb4c4c79b06a97cdd17b",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.power-right-index-r4",
+      "branch": "11-17",
+      "status": "axial_and_tangent_roll_excluded_original_workspace",
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-right-index.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round4_v1.json",
+      "cpu_tests": {
+        "passed": 102,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 205,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_reset_component_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "07b25e5f798968355d72d1b63ed31b8b86d12c13",
+        "source_tree": "f277afd7add323aeeb76b324f465d21d0dec478a",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
     }
   ]
 }

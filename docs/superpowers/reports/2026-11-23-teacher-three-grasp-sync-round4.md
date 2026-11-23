@@ -1,0 +1,17 @@
+# Parallel Teacher checkpoint, round 4
+
+One approved Tripod native Reset and three independent geometry/reaction packages advanced this round. The shared target remains a real flexible DeformX rod with the original 24D action and both fixed RGB cameras.
+
+| Work | What passed | Remaining physical gate |
+| --- | --- | --- |
+| Tripod Reset | The current recorder ran through `scripts/python.sh` on GPU 2. Two SDK steps, one Reset, 116.41 s, outer and debugger exit 0. The independent audit verified 17 meshes, an unchanged numeric reset state, 34 source shapes and 10 cooked envelopes. The source-bound manifest reloaded on the canonical execution path. | Build and qualify a complete original-control approach, then measure sustained bilateral reaction. This Reset used zero control, rod and PPO steps. |
+| Tripod earlier approach | Of 145 exact control boundaries, all 18 with left thumb contact have an inadmissible original thumb hull. At precontact SDK 576, one 23.096% scaled original 24D advance passed the measured and target 44-shape checks with historical motion reserves. The result is replayable from an archive cutoff at SDK 576. | The remaining lower-bound margin was 0.052 µm. This single precontact window does not qualify a physical route. Develop an earlier route with a usable tracking and rod motion reserve. |
+| Pinch thumb facets | At node 36 the left thumb and index had exclusive SDF gaps −0.041 and −0.030 mm. The measured-source thumb facet 605 still exceeded the original penetration limit by 0.234 mm on rod segment 35. All 24 right finalists failed, with the closest common point still +0.262/+0.289 mm. | Screen a genuinely different thumb locus and check the neighboring continuous rod segment under the same source/cooked thresholds. No new Pinch command path was qualified. |
+| Power right index | Conservative geometric bounds exclude all 17 original stations for axial slide and tangent roll within the original wrist workspace. Seven free-wrist endpoint poses also failed. The new reader found a 25.873–25.877 mm actual cooked right-index gap on the old SDK 6504 row. | The frozen live bilateral experiment still has no attempt or receipt. Use live rod deformation to evaluate a path to the full five-finger and palm grasp. |
+
+Antigravity read the fixed runtime worktree and confirmed the eight-step action window and the limits of static single-hand Slerp clearance. Codex checked which source hashes match the integration worktree and excluded the older consumers where they differ. The facet check uses the locked SDF gradient with a continuous neighboring-segment source and cooked hull audit. The new contact diagnostic shows that in the relevant Tripod interval the left index kept one loaded node/mesh pair for at most 3.30 ms, compared with 185.42 ms for each of the left thumb and middle.
+
+The current candidate chain still requires sustained opposing forces, fixed-wrist stabilization, clearance of both supports and at least 30 mm net rod Lift followed by 5 s Hold and at most 0.5 mm measured slip. The Reset and contact-source evidence does not qualify the three grasps, Teacher PPO, or generalization on reserved wire specifications.
+
+The targeted integration suite passed 205 CPU tests with the sealed Pinch warm and facet replay enabled. The approved Tripod Reset was the only new native run.
+The post-registration scheduler suite passed 60 CPU tests.

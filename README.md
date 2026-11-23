@@ -1,3 +1,5 @@
+The Tripod Reset now has current-source native exit evidence, with independent Pinch, Tripod and Power follow-up results. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round4.md)
+
 The three wire grasps now have coupled fitting or exact command evidence, with the full archived Lift replay and a current Tripod Reset recipe. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round3.md)
 
 The three Teacher grasp modes now have independent second-round contact results. Lift, Hold and held-out wire qualification are pending. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round2.md)
