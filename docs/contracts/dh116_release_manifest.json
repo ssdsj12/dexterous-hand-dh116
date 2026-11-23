@@ -35572,6 +35572,177 @@
         "passed": 60,
         "failed": 0
       }
+    },
+    {
+      "package": "teacher.tripod-902-guarded-runner-r6",
+      "branch": "11-17",
+      "status": "cpu_frozen_exact_902_approach_runner",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-guarded-runner.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "integrated_cpu_tests": {
+        "passed": 241,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_precontact_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "f3bd58446be8828e0899aaf3bbd426aae61c51db",
+        "source_tree": "073c79254829be7abf9c16c00a95b74a8fbe3f2f",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "cpu_tests": {
+        "passed": 121,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.tripod-triad-continuation-r6",
+      "branch": "11-17",
+      "status": "conditional_triad_goal_improved_full_24_sdk_reserve_blocked",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-triad-continuation.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "integrated_cpu_tests": {
+        "passed": 241,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_precontact_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "88409561e7135eeb114cf618a3e2f03ed6312309",
+        "source_tree": "91f6f9e52df1fea7cf4b3ef480bbe51aea00ba70",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "cpu_tests": {
+        "passed": 123,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.902-pinch-index-clearance-r6",
+      "branch": "11-17",
+      "status": "complete_archived_issued_target_route_cpu_pass",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-index-clearance.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "integrated_cpu_tests": {
+        "passed": 241,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_precontact_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "8db9def810c6b55d463c0fe8eaf42208a880529e",
+        "source_tree": "13fe20dc6df560286417a20b5b3598b2fa5d31f6",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "cpu_tests": {
+        "passed": 186,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.power-synchronized-relocation-r6",
+      "branch": "11-17",
+      "status": "five_cpu_windows_at_material_station_9_full_wrap_blocked",
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-synchronized-relocation.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "integrated_cpu_tests": {
+        "passed": 241,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_precontact_verified": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "3c8c5b48dcca030faa476705b84087e12ba1f389",
+        "source_tree": "c921e19af65863c081cb5625e9db52dd862dc29a",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "cpu_tests": {
+        "passed": 117,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.tripod-902-native-approach-r6",
+      "branch": "11-17",
+      "status": "precontact_native_pass_exit0_contact_and_lift_pending",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-native-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "integrated_cpu_tests": {
+        "passed": 241,
+        "failed": 0
+      },
+      "new_isaac_runs": 1,
+      "new_ppo_updates": 0,
+      "native_precontact_verified": true,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "63ac9cac55224612c0692327c957e691469a5bd2",
+        "source_tree": "dafd0e1bfaa9e14259c6fe1ed282bce998eb2f9f",
+        "remote_branch": "11-17",
+        "files_verified": 2,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
     }
   ]
 }

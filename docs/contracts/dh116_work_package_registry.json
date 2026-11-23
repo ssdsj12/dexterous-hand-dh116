@@ -51911,6 +51911,124 @@
         "teacher_admission": false,
         "cpu_passed": 183
       }
+    },
+    "teacher.tripod-902-guarded-runner-r6": {
+      "title": "Exact Tripod 902 guarded approach runner",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-902-preflight-r5"
+      ],
+      "tests": [
+        "tests/test_tripod_902_approach_interlocks.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-guarded-runner.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_frozen_exact_902_approach_runner",
+        "native_qualification": false,
+        "native_precontact_verified": false,
+        "teacher_admission": false,
+        "cpu_passed": 121
+      }
+    },
+    "teacher.tripod-triad-continuation-r6": {
+      "title": "Right Tripod tri-pad approach and causal reserve",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-transverse-approach-r5"
+      ],
+      "tests": [
+        "tests/test_tripod_triad_continuation.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-triad-continuation.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "conditional_triad_goal_improved_full_24_sdk_reserve_blocked",
+        "native_qualification": false,
+        "native_precontact_verified": false,
+        "teacher_admission": false,
+        "cpu_passed": 123
+      }
+    },
+    "teacher.902-pinch-index-clearance-r6": {
+      "title": "Paired Pinch index reserve and fixed-wrist restoration",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-pinch-relief-r5"
+      ],
+      "tests": [
+        "tests/test_dh116_902_pinch_index_clearance.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-index-clearance.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "complete_archived_issued_target_route_cpu_pass",
+        "native_qualification": false,
+        "native_precontact_verified": false,
+        "teacher_admission": false,
+        "cpu_passed": 186
+      }
+    },
+    "teacher.power-synchronized-relocation-r6": {
+      "title": "Power synchronized wrist-and-digit partial route",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-relocated-palm-r5"
+      ],
+      "tests": [
+        "tests/test_dh116_power_synchronized_relocation.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-synchronized-relocation.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "five_cpu_windows_at_material_station_9_full_wrap_blocked",
+        "native_qualification": false,
+        "native_precontact_verified": false,
+        "teacher_admission": false,
+        "cpu_passed": 117
+      }
+    },
+    "teacher.tripod-902-native-approach-r6": {
+      "title": "Verified native Tripod 902 supported approach",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-902-guarded-runner-r6"
+      ],
+      "tests": [
+        "tests/test_tripod_902_approach_interlocks.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-native-approach.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round6_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "scope": "precontact_native_pass_exit0_contact_and_lift_pending",
+        "native_qualification": false,
+        "native_precontact_verified": true,
+        "teacher_admission": false,
+        "sdk_steps": 568,
+        "controlled_sdk_rows": 328,
+        "solver_substeps": 6792,
+        "natural_exit_verified": true
+      }
     }
   },
   "execution_target": {
