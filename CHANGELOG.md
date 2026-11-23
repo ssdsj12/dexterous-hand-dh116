@@ -1,3 +1,5 @@
+The Power clearance refit audited the complete rod and retained the original limits. No fitted pose qualified. [Report](docs/superpowers/reports/2026-11-23-teacher-power-clearance-refit.md)
+
 The Power surface search measured new distal pairs with the unchanged wrist and hull constraints. No evaluated pair passed. [Report](docs/superpowers/reports/2026-11-23-teacher-power-surface-pairs.md)
 
 Power reserve audit found a valid static palm preload, with the tested distal preload violating the original continuous hand/rod envelope. [Report](docs/superpowers/reports/2026-11-23-teacher-power-preload-envelope.md)

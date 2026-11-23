@@ -1,0 +1,234 @@
+{
+  "version": "dh116-teacher-power-clearance-refit-v1",
+  "status": "cpu_replay_no_loaded_static_candidate",
+  "archive": {
+    "outer_sha256": "522f0180c88583ebf4cd4be1664e41667ecd25c67e583adb675fdd92969e7e9a",
+    "support_sha256": "d88c3a281e3a9d20cdbead2a1073ebf35a3928172b91812308cc6b06052abbaf",
+    "motion_row_sha256": "618f7f52161c7d72713608cfa1138f4600569da8c3cdb91722688441e5bde093",
+    "contract_sha256": "1a52b1d13548cbda5918d75988873421e1c718d918b9023f136471031dcb22a8",
+    "config_sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0"
+  },
+  "clock": {
+    "run_uuid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0",
+    "env_id": 0,
+    "episode_uid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0:0",
+    "reset_id": 1,
+    "rod_uid": "rod0",
+    "physics_step": 6504,
+    "rod_tick": 78024,
+    "timestamp_s": 13.549999999999999,
+    "solver_time_s": 13.546916961669922,
+    "clock_valid": true
+  },
+  "stations": {
+    "left.base_link": [
+      29
+    ],
+    "left.finger14_link": [
+      37
+    ],
+    "left.finger23_link": [
+      36
+    ],
+    "right.base_link": [
+      9
+    ],
+    "right.finger14_link": [
+      4
+    ],
+    "right.finger43_link": [
+      3
+    ]
+  },
+  "replays": {
+    "v1": {
+      "artifact": "ag_power_surface_clearance_refit_6504_v1.json",
+      "sha256": "020b606c2c7d5bd31b060b9646adf64b573a7d06c96a849a41313f8a26b7c09e",
+      "argv": [
+        "/mnt/mydisk/xk/envs/dh116/bin/python",
+        "-B",
+        "-m",
+        "scripts.search_dh116_power_surface_pairs",
+        "--palm-receipt",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2404-power-palm-witness-native/outer.json",
+        "--continuous-audit",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_thumb_route_continuous_6504_v4.json",
+        "--partial-audit",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_partial_opposition_6504_v1.json",
+        "--preload-audit",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_static_preload_6504_v2.json",
+        "--output",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_surface_clearance_refit_6504_v1.json",
+        "--align-wire-normals",
+        "--clearance-rounds",
+        "3"
+      ],
+      "hands": {
+        "left": {
+          "seeds": 8,
+          "rounds": 24,
+          "rejection_counts": {
+            "rod_envelope": 16,
+            "wrist_workspace": 8
+          },
+          "accepted": 0
+        },
+        "right": {
+          "seeds": 2,
+          "rounds": 6,
+          "rejection_counts": {
+            "wrist_workspace": 1,
+            "locked_sdf_or_station": 5
+          },
+          "accepted": 0
+        }
+      }
+    },
+    "v2_slide": {
+      "artifact": "ag_power_surface_clearance_refit_6504_v2_slide.json",
+      "sha256": "41002e527b4874db762c3ed0a2b7640fa73f6cd9f0f21eeb5bc0aa6ac9582299",
+      "argv": [
+        "/mnt/mydisk/xk/envs/dh116/bin/python",
+        "-B",
+        "-m",
+        "scripts.search_dh116_power_surface_pairs",
+        "--palm-receipt",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2404-power-palm-witness-native/outer.json",
+        "--continuous-audit",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_thumb_route_continuous_6504_v4.json",
+        "--partial-audit",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_partial_opposition_6504_v1.json",
+        "--preload-audit",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_static_preload_6504_v2.json",
+        "--output",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_surface_clearance_refit_6504_v2_slide.json",
+        "--align-wire-normals",
+        "--clearance-rounds",
+        "3",
+        "--slide-selected-pad"
+      ],
+      "hands": {
+        "left": {
+          "seeds": 8,
+          "rounds": 24,
+          "rejection_counts": {
+            "rod_envelope": 16,
+            "locked_sdf_or_station": 6,
+            "not_opposed": 2
+          },
+          "accepted": 0
+        },
+        "right": {
+          "seeds": 2,
+          "rounds": 6,
+          "rejection_counts": {
+            "locked_sdf_or_station": 6
+          },
+          "accepted": 0
+        }
+      }
+    },
+    "v3_strict_gate": {
+      "artifact": "ag_power_surface_clearance_refit_6504_v3_strict_gate.json",
+      "sha256": "41002e527b4874db762c3ed0a2b7640fa73f6cd9f0f21eeb5bc0aa6ac9582299",
+      "argv": [
+        "/mnt/mydisk/xk/envs/dh116/bin/python",
+        "-B",
+        "-m",
+        "scripts.search_dh116_power_surface_pairs",
+        "--palm-receipt",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2404-power-palm-witness-native/outer.json",
+        "--continuous-audit",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_thumb_route_continuous_6504_v4.json",
+        "--partial-audit",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_partial_opposition_6504_v1.json",
+        "--preload-audit",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_static_preload_6504_v2.json",
+        "--output",
+        "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_surface_clearance_refit_6504_v3_strict_gate.json",
+        "--align-wire-normals",
+        "--clearance-rounds",
+        "3",
+        "--slide-selected-pad"
+      ],
+      "hands": {
+        "left": {
+          "seeds": 8,
+          "rounds": 24,
+          "rejection_counts": {
+            "rod_envelope": 16,
+            "locked_sdf_or_station": 6,
+            "not_opposed": 2
+          },
+          "accepted": 0
+        },
+        "right": {
+          "seeds": 2,
+          "rounds": 6,
+          "rejection_counts": {
+            "locked_sdf_or_station": 6
+          },
+          "accepted": 0
+        }
+      }
+    }
+  },
+  "station_diagnostic": {
+    "artifact": "ag_power_surface_refit_station_rejection.json",
+    "sha256": "00e9bf269b0ff5eb896b70c15afc6c845b43b3289069e6eb9a79127b0a6567ad"
+  },
+  "antigravity": {
+    "read_actual_source": true,
+    "audited_implementation_sha256": "73ccd0dcb3f23fe9f03725e4e8d3bb9162c3cbc6d5a21c015cc5a69d330daa83",
+    "accepted_followup": "validate finite wrist state and coupled joint limits independently in the final gate"
+  },
+  "source_sha256": {
+    "scripts/search_dh116_power_surface_pairs.py": "82a457db2f95482b7631bb34313734d0290823c8221c739aba52e2f11c1ea00b",
+    "tests/test_dh116_power_surface_pairs.py": "ce65cdbf77a1a489bcbe0e85377a21d032a229aebd557e28cb1d8d96a768d14d"
+  },
+  "cpu": {
+    "passed": 183,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/test_dh116_power_partial_opposition.py",
+      "tests/test_dh116_power_partial_stage_evidence.py",
+      "tests/test_dh116_power_measured_reseat.py",
+      "tests/test_dh116_power_fixed_wrist_digits.py",
+      "tests/test_dh116_power_material_reach.py",
+      "tests/test_dh116_power_staged_palm_witness.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_power_palm_contact_evidence.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_grasp_feedback.py",
+      "tests/test_wire_fixed_pregrasp_native_reset.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_dh116_power_thumb_clearance.py",
+      "tests/test_supported_wire_material_variants.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_supported_wire_factorial_holdouts.py",
+      "tests/test_supported_wire_holdout_resets.py",
+      "tests/test_dh116_power_thumb_route.py",
+      "tests/test_dh116_owned_approach.py",
+      "tests/test_dh116_swept_wrist_projection.py",
+      "tests/test_dh116_power_preload.py",
+      "tests/test_dh116_power_surface_pairs.py"
+    ],
+    "log_sha256": "9ca7be9ef472b765701c41b5e326803dbba8f327f55ea3ce61025c830db1b851",
+    "search_exit_expected": 1,
+    "search_exit_actual": 1
+  },
+  "fixed_rod_only": true,
+  "bilateral_static_candidates": false,
+  "native_execution_ready": false,
+  "continuous_route_verified": false,
+  "actual_load_verified": false,
+  "teacher_admission": false,
+  "power_grasp_qualified": false,
+  "generalization_qualified": false,
+  "native_runs": 0,
+  "ppo_updates": 0
+}
