@@ -34859,6 +34859,108 @@
         },
         "draft_frozen_sha256": "4a0805d17307bd0a65c0d2a8dabccee43ea664fb24c3a473125a01ac00b6dde6"
       }
+    },
+    {
+      "package": "teacher.902-pinch-measured-alignment",
+      "branch": "11-17",
+      "status": "opposed_endpoint_still_missing",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-alignment.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_v1.json",
+      "cpu_tests": {
+        "passed": 164,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 368,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ee0629951ee06c6d4875292be63a5ee99f47d962",
+        "source_tree": "929dde680cb21d54ffb713773f80769bef6160c9",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
+    },
+    {
+      "package": "teacher.tripod-tracking-feedback",
+      "branch": "11-17",
+      "status": "no_archived_tracking_headroom",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-tracking-feedback.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_tracking_feedback_v1.json",
+      "cpu_tests": {
+        "passed": 181,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 368,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "040bf8bcf74f260f79d0acc6e7e53cf794123907",
+        "source_tree": "81ac40bf0489c692cdf769a9cbb00dbb11c31e4d",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
+    },
+    {
+      "package": "teacher.power-bilateral-receipt",
+      "branch": "11-17",
+      "status": "receipt_auditor_waiting_for_new_native_run",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_v1.json",
+      "cpu_tests": {
+        "passed": 107,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 368,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "28f5e81ed1ce121d0ae0c28d29c1de5227b519ad",
+        "source_tree": "400124b1da88b509baca82b9cdef8636670fdf11",
+        "remote_branch": "11-17",
+        "files_verified": 2,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

@@ -51463,6 +51463,73 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.902-pinch-measured-alignment": {
+      "title": "Pinch parallel contact checkpoint",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-staged-approach"
+      ],
+      "tests": [
+        "tests/test_dh116_902_pinch_alignment.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-alignment.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "opposed_endpoint_still_missing",
+        "cpu_passed": 164,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.tripod-tracking-feedback": {
+      "title": "Tripod parallel contact checkpoint",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.bilateral-load-feedback-native",
+        "teacher.tripod-index-contact-loss"
+      ],
+      "tests": [
+        "tests/test_dh116_supported_force_seating.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-tracking-feedback.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_tracking_feedback_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "no_archived_tracking_headroom",
+        "cpu_passed": 181,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.power-bilateral-receipt": {
+      "title": "Power parallel contact checkpoint",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-bilateral-handoff"
+      ],
+      "tests": [
+        "tests/test_dh116_power_bilateral_receipt.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "receipt_auditor_waiting_for_new_native_run",
+        "cpu_passed": 107,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -1,0 +1,105 @@
+{
+  "version": "dh116-teacher-three-grasp-sync-v1",
+  "source_base": "125f2664d6797adde10225bec4b5b732ec9627b8",
+  "grasps": {
+    "pinch": {
+      "source": "ee0629951ee06c6d4875292be63a5ee99f47d962",
+      "isolated_commit": "db3ee719d4bac05ac0437f1a7d7a33e7ae27159a",
+      "cpu_passed": 164,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-alignment.md",
+      "test": "tests/test_dh116_902_pinch_alignment.py",
+      "status": "opposed_endpoint_still_missing",
+      "artifact_sha256": "2328a0643f260c54517c76540d196e3f2d5d616162c3454cc1c4f40eeaf58949"
+    },
+    "tripod": {
+      "source": "040bf8bcf74f260f79d0acc6e7e53cf794123907",
+      "isolated_commit": "1d029ebcce953c6c298a1f7df288103eabc92354",
+      "cpu_passed": 181,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-tracking-feedback.md",
+      "test": "tests/test_dh116_supported_force_seating.py",
+      "status": "no_archived_tracking_headroom",
+      "readiness": "docs/contracts/dh116_teacher_tripod_tracking_feedback_v1.json"
+    },
+    "power": {
+      "source": "28f5e81ed1ce121d0ae0c28d29c1de5227b519ad",
+      "isolated_commit": "2dc513157aad888ecea24d3934cd94ec40415f4c",
+      "cpu_passed": 107,
+      "test": "tests/test_dh116_power_bilateral_receipt.py",
+      "status": "receipt_auditor_waiting_for_new_native_run",
+      "historical_rejection_sha256": "8c9d5d6059d57f498a2f37dc179e2257db32c30b2086bb4636df306d65054300",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync.md"
+    }
+  },
+  "cpu": {
+    "passed": 368,
+    "failed": 0,
+    "skipped": 0,
+    "seconds": 127.96,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_902_pinch_alignment.py",
+      "tests/test_dh116_902_flexible_contact.py",
+      "tests/test_dh116_902_flexible_precontact.py",
+      "tests/test_dh116_902_command_contact.py",
+      "tests/test_dh116_pinch_left_staged_workspace.py",
+      "tests/test_dh116_supported_distal_transfer.py",
+      "tests/test_dh116_pinch_supported_reset.py",
+      "tests/test_teacher_force_closure.py",
+      "tests/test_native_phase_contract_v2.py",
+      "tests/test_dh116_supported_force_seating.py",
+      "tests/test_dh116_tripod_paired_pad_balance.py",
+      "tests/test_dh116_tripod_supported_reset.py",
+      "tests/test_dh116_power_end_supported_rod.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_deformable_bimanual_step.py",
+      "tests/test_tripod_coupled_response.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_dh116_tripod_bilateral_distal_retarget.py",
+      "tests/test_dh116_deformx_pair_capture.py",
+      "tests/test_native_teacher_contact_sources.py",
+      "tests/test_dh116_power_bilateral_handoff.py",
+      "tests/test_dh116_power_bilateral_receipt.py",
+      "tests/test_dh116_power_partial_stage_evidence.py",
+      "tests/test_dh116_power_staged_palm_witness.py",
+      "tests/test_dh116_power_bilateral_detour.py",
+      "tests/test_supported_wire_factorial_holdouts.py",
+      "tests/test_supported_wire_holdout_resets.py",
+      "tests/test_dh116_wire_common_pregrasp.py",
+      "tests/test_wire_feedback_ablation.py"
+    ],
+    "log_sha256": "5722000f47998ceb03396d3b062655b51c76a2319f3dc0459aef299cb6e5d33a",
+    "pinch_actual_receipt_included": true
+  },
+  "preserved_power_plan": {
+    "source_base": "125f2664d6797adde10225bec4b5b732ec9627b8",
+    "frozen_sha256": "6e3c66dcb2fecb69e5c5397865cb6f9c2874846e76e26fc1276a4e96edb7c333",
+    "live_preflight_sha256": "848d08a56af358f261bc3b9643714cafe34fa222bbd17a024031392dfd89da51",
+    "attempt_started": false
+  },
+  "new_isaac_runs": 0,
+  "new_ppo_updates": 0,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "generalization_qualified": false,
+  "registry_cpu": {
+    "passed": 60,
+    "failed": 0,
+    "exit_code": 0,
+    "log_sha256": "602b848c2f271a0311b99822685f27e729b3da55dcc3ec58852035c387da3fb8"
+  },
+  "antigravity": {
+    "rounds": [
+      "Three grasp parallel R1",
+      "Three grasp parallel R2"
+    ],
+    "original_source_head": "125f2664d6797adde10225bec4b5b732ec9627b8",
+    "reviewed_original_contracts": true,
+    "new_source_diff_independently_reviewed_by_codex": true
+  }
+}
