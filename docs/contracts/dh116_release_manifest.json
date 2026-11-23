@@ -34515,6 +34515,36 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-control-feedback",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-control-feedback.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_control_feedback_v1.json",
+      "status": "passed_cpu_and_sealed_control_windows",
+      "cpu_tests": {
+        "passed": 198,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 68,
+        "failed": 0
+      },
+      "sealed_windows": 9,
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "28be609d90ae20dfac5c60d100ed791166799bd9",
+        "source_tree": "0e5af9d53aa54c1b718927d869b51818716a3459",
+        "remote_branch": "11-17",
+        "files_verified": 9,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
