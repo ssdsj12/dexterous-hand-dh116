@@ -36245,6 +36245,24 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.shared-source-model-v1",
+      "branch": "11-17",
+      "status": "source_model_cuda_regression_passed_actual_native_ppo_pending",
+      "cpu_passed": 11,
+      "cpu_skipped": 1,
+      "cuda_regression_passed": 57,
+      "native_ppo_updates": 0,
+      "report": "docs/superpowers/reports/2026-11-23-dh116-shared-teacher-source.md",
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "49e6d6edb9aecaa60aa1458b373fcfed2b27b2b8",
+        "source_tree": "14098acef4731651d62beeb141adf9d150d438d0",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
