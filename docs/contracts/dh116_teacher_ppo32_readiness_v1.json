@@ -1,0 +1,154 @@
+{
+  "schema": "dh116-teacher-ppo32-readiness-v1",
+  "basis_head": "83fd9acfeca81b834a6f0b96e8eabfc0675c9c20",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md",
+  "status": "blocked_on_integrated_multi_environment_owner",
+  "requested_envs_per_grasp": 32,
+  "maximum_live_isaac_instances": 1,
+  "launch_order": [
+    "pinch",
+    "tripod",
+    "power"
+  ],
+  "cpu": {
+    "physical_exchange": {
+      "passed": 100,
+      "failed": 0
+    },
+    "source_pack_and_ppo_fixtures": {
+      "passed": 46,
+      "failed": 0
+    },
+    "work_package_registry": {
+      "passed": 60,
+      "failed": 0
+    }
+  },
+  "cuda_solver_capacity": {
+    "2": {
+      "evidence_sha256": "507fb7974fadbab946877f7d29a47ce1ccc1207e03ee9a841f445f0aef1ed806",
+      "data": {
+        "num_solver_owners": 2,
+        "physics_equivalent_steps": 2,
+        "nodes_per_env": 41,
+        "meshes_per_env": 17,
+        "pairs_allocated_per_env": 8364,
+        "native_pair_counts_per_step": [
+          [
+            0,
+            24
+          ],
+          [
+            0,
+            24
+          ]
+        ],
+        "backend_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
+        "allocation_seconds": 0.3197088078595698,
+        "step_and_pair_readback_seconds": 0.004335503093898296,
+        "gpu_usage_mib_before": 6,
+        "gpu_usage_mib_at_allocation": 464,
+        "gpu_usage_mib_end": 466,
+        "isolated_reset_verified": true,
+        "isaac_envs": 0,
+        "ppo_updates": 0,
+        "native_teacher_admission": false
+      },
+      "is_isaac_training": false
+    },
+    "32": {
+      "evidence_sha256": "8f82c63d75f69bb7de55ba59a99a746fcb01ffafcfe81096eaa845c2c4a72a38",
+      "data": {
+        "num_solver_owners": 32,
+        "physics_equivalent_steps": 2,
+        "nodes_per_env": 41,
+        "meshes_per_env": 17,
+        "pairs_allocated_per_env": 8364,
+        "native_pair_counts_per_step": [
+          [
+            0,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24
+          ],
+          [
+            0,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24,
+            24
+          ]
+        ],
+        "backend_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
+        "allocation_seconds": 0.5930864110123366,
+        "step_and_pair_readback_seconds": 0.0773671770002693,
+        "gpu_usage_mib_before": 6,
+        "gpu_usage_mib_at_allocation": 1392,
+        "gpu_usage_mib_end": 1400,
+        "isolated_reset_verified": true,
+        "isaac_envs": 0,
+        "ppo_updates": 0,
+        "native_teacher_admission": false
+      },
+      "is_isaac_training": false
+    }
+  },
+  "native_isaac_envs": 0,
+  "native_ppo_updates": 0,
+  "teacher_admission": false
+}

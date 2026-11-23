@@ -1,3 +1,5 @@
+Teacher PPO now has a 32-lane physical and policy preflight. The verified native setup still runs one Isaac environment per job. [Report](docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md)
+
 Tripod 902 verified a native supported approach and natural exit. Pinch passed its full staged CPU route, while Power remains at a verified partial CPU prefix. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round6.md)
 
 Pinch paired endpoints, the Tripod two-window approach and exact 902 Reset preflight, and Power full-wrap reachability have separate geometry and native evidence. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round5.md)

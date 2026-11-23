@@ -1,3 +1,5 @@
+Add the lockstep Teacher physical barrier and same-clock source packing for 32 lanes, with a 32-owner CUDA capacity probe. The Isaac multi-environment launcher is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md)
+
 Tripod 902 verified a native supported approach and natural exit. Pinch passed its full staged CPU route, while Power remains at a verified partial CPU prefix. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round6.md)
 
 - Bind the Tripod Teacher PPO recipe to a newly measured current-source Reset and joint reference.

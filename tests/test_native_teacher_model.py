@@ -182,7 +182,7 @@ def test_native_pack_entry_rejects_historical_source_without_historical_adapter(
     with pytest.raises(ValueError):
         model_module().pack_native_inputs({}, {}, {}, packet, backend_profile=backend_profile)
 
-def raw_cpu_packets(profile):
+def raw_cpu_packets(profile, *, env_id=8):
     """NEW ABI synthetic packets. Every data packet stays explicitly CPU scoped."""
     import numpy as np
     from test_dh116_teacher_mounted_wrist_source import clock,capture,hand
@@ -192,8 +192,29 @@ def raw_cpu_packets(profile):
     from go2_pvcnn.control.dh116.tabletop_deformx_parameter_snapshot import validate_snapshot
     from go2_pvcnn.control.dh116 import tabletop_mesh_observation_source as source
     c=clock(2)
-    common=adapt_mounted_hands([capture(hand(s),s,read_identity=lambda:c) for s in ("left","right")],
-        expected_identity=c)
+    if env_id == 8:
+        captured = [capture(hand(side), side, read_identity=lambda:c) for side in ("left","right")]
+    else:
+        from test_dh116_teacher_mounted_wrist_source import world
+        from go2_pvcnn.control.dh116.tabletop_palm_mount import MountView
+        from go2_pvcnn.control.dh116.tabletop_teacher_mounted_wrist_source import (
+            capture_mounted_hand, capture_authored_reset_seed,
+        )
+        c.update(env_id=env_id, episode_uid=f"ep{env_id}", rod_uid=f"rod{env_id}")
+        seed = capture_authored_reset_seed(world(),read_identity=lambda:c,data_env_index=0)
+        captured = []
+        for side in ("left","right"):
+            item = hand(side)
+            prefix = f"/World/envs/env_{env_id}/{side}Hand"
+            spare = f"/World/envs/env_1000/{side}Hand"
+            item.root_physx_view.prim_paths[:] = [prefix, spare]
+            item.root_physx_view.link_paths[:] = [
+                [path+"/"+name for name in item.body_names] for path in (prefix, spare)
+            ]
+            captured.append(capture_mounted_hand(item,MountView(item),side=side,
+                read_identity=lambda:c,data_env_index=0,expected_hand_container_path=prefix,
+                expected_articulation_path=prefix,reset_seed=seed))
+    common=adapt_mounted_hands(captured,expected_identity=c)
     keys=("run_uuid","env_id","episode_uid","reset_id","rod_uid","physics_step","rod_tick",
         "timestamp_s","solver_time_s","clock_valid")
     raw=dict(version=runtime_version,source_scope="cpu_fixture",**{k:c[k] for k in keys},

@@ -125,11 +125,11 @@ class ClearanceGuardedExchange(FlexiblePhysicalExchange):
         finally:
             self=row=previous_rod_clock=None
 
-    def _step(self,action,substep):
+    def _complete_substep(self,pending,sdk):
         row=packet=None
         self._pending_clearance=None
         try:
-            row=super()._step(action,substep)
+            row=super()._complete_substep(pending,sdk)
             if self._pending_clearance is None:
                 raise ValueError("completed SDK step has no measured source clearance")
             packet=deepcopy(self._pending_clearance)
@@ -141,4 +141,4 @@ class ClearanceGuardedExchange(FlexiblePhysicalExchange):
             return row
         finally:
             self._pending_clearance=None
-            self=action=row=packet=None
+            self=pending=row=packet=None

@@ -84,10 +84,10 @@ def setup(monkeypatch,*,pairs=False,nodes=None):
         base.rope.contact_pair_samples=capture
     return base,bindings,poses,centers
 
-def runtime(monkeypatch,*,pairs=False):
+def runtime(monkeypatch,*,pairs=False,env_id=7):
     m=module();base,bindings,poses,centers=setup(monkeypatch,pairs=pairs)
     obj=m.DualHandRodRuntime(base,bindings=bindings,right_grids={n:Grid() for n in PADS},
-        right_poses={n:poses["right."+n] for n in PADS},run_uuid="run-cpu",env_id=7)
+        right_poses={n:poses["right."+n] for n in PADS},run_uuid="run-cpu",env_id=env_id)
     return obj,base,bindings,poses,centers
 
 def reset(obj,poses,*,uid="episode-1",reset_id=1,step=2):

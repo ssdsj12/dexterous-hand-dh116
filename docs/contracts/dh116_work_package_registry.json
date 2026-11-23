@@ -52249,6 +52249,60 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.ppo32-isolation-preflight-v1": {
+      "title": "32-lane Teacher physical barrier and source packing preflight",
+      "executor": "gated",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "last_result": {
+        "passed": 206,
+        "failed": 0,
+        "native_qualification": false,
+        "scope": "CPU and real DeformX only"
+      }
+    },
+    "teacher.pinch-ppo32-v1": {
+      "title": "Pinch Teacher PPO with 32 independent Isaac lanes",
+      "executor": "gated",
+      "status": "blocked",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.ppo32-isolation-preflight-v1"
+      ],
+      "reason": "The native C06 owner still binds a single scene and rod. Multi-lane scene creation, owned Reset recovery and journal integration must be enabled.",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "native_runs": 0
+    },
+    "teacher.tripod-ppo32-v1": {
+      "title": "Tripod Teacher PPO with 32 independent Isaac lanes",
+      "executor": "gated",
+      "status": "blocked",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.ppo32-isolation-preflight-v1"
+      ],
+      "reason": "The native C06 owner still binds a single scene and rod. Multi-lane scene creation, owned Reset recovery and journal integration must be enabled.",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "native_runs": 0
+    },
+    "teacher.power-ppo32-v1": {
+      "title": "Power Teacher PPO with 32 independent Isaac lanes",
+      "executor": "gated",
+      "status": "blocked",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.ppo32-isolation-preflight-v1"
+      ],
+      "reason": "The native C06 owner still binds a single scene and rod. Multi-lane scene creation, owned Reset recovery and journal integration must be enabled.",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "native_runs": 0
     }
   },
   "execution_target": {

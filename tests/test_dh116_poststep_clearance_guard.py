@@ -10,8 +10,8 @@ MODULE="go2_pvcnn.control.dh116.tabletop_deformable_clearance_guard"
 def module():
     return __import__(MODULE,fromlist=["ClearanceGuardedExchange"])
 
-def guarded(monkeypatch,*,breach_at=None,fault=None):
-    old,sim,base,calls=original_setup(monkeypatch)
+def guarded(monkeypatch,*,breach_at=None,fault=None,**options):
+    old,sim,base,calls=original_setup(monkeypatch,**options)
     def after(previous):
         row=old._read_geometry()
         row.update(rod_source_physics_step=previous["physics_step"],

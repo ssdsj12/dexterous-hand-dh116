@@ -11,34 +11,35 @@ from test_dh116_deformable_bimanual_step import Hand
 from test_dual_hand_rod_runtime import runtime, reset
 
 
-def setup(monkeypatch, *, budget_end=18):
-    rod, base, _, poses, centers = runtime(monkeypatch, pairs=True)
-    reset(rod, poses)
-    hands = {side: Hand(side, (7,)) for side in ("left", "right")}
+def setup(monkeypatch, *, budget_end=18, env_id=7, sim=None):
+    rod, base, _, poses, centers = runtime(monkeypatch, pairs=True, env_id=env_id)
+    reset(rod, poses, uid=f"episode-{env_id}")
+    hands = {side: Hand(side, (env_id,)) for side in ("left", "right")}
     calls = []
     for side, hand in hands.items():
         hand.update = lambda dt, side=side: calls.append(("refresh", side))
         hand.permanent_wrench_composer = SimpleNamespace(
             reset=lambda side=side: calls.append(("reset_composer", side)),
             set_forces_and_torques=lambda side=side, **values: calls.append(("reaction", side, values)))
-    bindings = [HandBinding(s, h, {7: f"/World/envs/env_7/{s}Hand"}, MountView(h))
+    bindings = [HandBinding(s, h, {env_id: f"/World/envs/env_{env_id}/{s}Hand"}, MountView(h))
                 for s, h in hands.items()]
     # Native scene would bind both adapters to the very same live link identities.
     for key, value in rod.bindings.items():
         side, body = key.split(".")
         hand = hands[side]
-        path = f"/World/envs/env_7/{side}Hand/{body}"
+        path = f"/World/envs/env_{env_id}/{side}Hand/{body}"
         value["prim_path"] = path
         hand.root_physx_view.link_paths = [list(
-            f"/World/envs/env_7/{side}Hand/{name}" for name in
+            f"/World/envs/env_{env_id}/{side}Hand/{name}" for name in
             ("finger14_link", "finger23_link", "finger33_link", "finger43_link", "finger53_link"))]
-    sim = SimpleNamespace(current_time_step_index=2, current_time=2*DT, is_playing=lambda: True)
-    def step(*, render):
-        assert render is False
-        calls.append(("physics",))
-        sim.current_time_step_index += 1
-        sim.current_time += DT
-    sim.step = step
+    if sim is None:
+        sim = SimpleNamespace(current_time_step_index=2, current_time=2*DT, is_playing=lambda: True)
+        def step(*, render):
+            assert render is False
+            calls.append(("physics",))
+            sim.current_time_step_index += 1
+            sim.current_time += DT
+        sim.step = step
     seed = torch.stack([h.data.root_pose_w[0] for h in hands.values()])[None]
     def measure():
         return dict(physics_step=sim.current_time_step_index, root_poses_w=seed.clone(),

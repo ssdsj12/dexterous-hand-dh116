@@ -4,6 +4,7 @@ This code is exercised with CPU doubles. It does not create an app, choose
 reset poses, grant native qualification, or feed rewards to PPO.
 """
 from copy import deepcopy
+from dataclasses import dataclass
 import json
 import math
 
@@ -17,6 +18,16 @@ from .tabletop_deformable_wrist_projection import project_policy_wrist_targets
 from .tabletop_dual_hand_rod_runtime import SIDES, write_composer_reactions
 from .tabletop_surface_contract import validate_actions
 from .tabletop_task import joint_safety_failure
+
+
+@dataclass(frozen=True)
+class _SubmittedSubstep:
+    connection: BimanualStepConnection
+    previous_rod_clock: dict
+    projection: dict
+    routes: dict
+    reaction_source_step: int | None
+    substep: int
 
 
 class FlexiblePhysicalExchange:
@@ -164,7 +175,7 @@ class FlexiblePhysicalExchange:
             return "excess_force"
         return None
 
-    def _step(self, action, substep):
+    def _prepare_substep(self, action, substep):
         read_clock = lambda: self._clock(substep)
         pre = read_clock()[0]
         expected = pre["physics_step"]
@@ -199,27 +210,39 @@ class FlexiblePhysicalExchange:
         previous_rod_clock = self._rod.clock()
         if any(pre.get(key) != value for key, value in previous_rod_clock.items()):
             raise ValueError("rod clock changed during the action submission")
-        sdk = step_thumb_physics(self._sim, expected, budget_end=self._end)
+        return _SubmittedSubstep(connection, previous_rod_clock, projection, routes, source_step, substep)
+
+    def _step(self, action, substep):
+        pending = self._prepare_substep(action, substep)
+        sdk = step_thumb_physics(self._sim, pending.previous_rod_clock["physics_step"], budget_end=self._end)
+        return self._complete_substep(pending, sdk)
+
+    def _complete_substep(self, pending, sdk):
+        previous_rod_clock = pending.previous_rod_clock
+        if sdk != previous_rod_clock["physics_step"] + 1 or self._sim.current_time_step_index != sdk:
+            raise ValueError("one complete SDK step is required before rod exchange")
+        substep = pending.substep
+        projection, routes = pending.projection, pending.routes
         for binding in self._bindings:
             binding.hand.update(DT)
         after = self._geometry(sdk, previous_rod_clock=previous_rod_clock)
         if self._rod.clock() != previous_rod_clock:
             raise ValueError("rod clock changed during the SDK-to-rod handoff")
         rod_row = self._rod.step(after["pad_poses"], after["centers_of_mass"], physics_step=sdk)
-        action_row = connection.finish(self._bindings, read_clock=read_clock)
+        action_row = pending.connection.finish(self._bindings, read_clock=lambda: self._clock(substep))
         guard_failure = self._guard_failure(action_row["post"]["hands"], rod_row["hand_wrenches_com_world"])
         self._palms, self._angles = projection["palm_offsets_m"], projection["projected_angles"]
         self._reaction = sdk, rod_row["hand_wrenches_com_world"]
         self._expected_sdk_step = sdk
         result = dict(physics_step=sdk, policy_step=self._control, substep=substep,
-                    reaction_source_physics_step=source_step, issued_composer_wrench=deepcopy(routes),
+                    reaction_source_physics_step=pending.reaction_source_step, issued_composer_wrench=deepcopy(routes),
                     rod=deepcopy(rod_row), action_readback=action_row, wrist_projection=projection,
                     guard_failure=guard_failure,
                     native_qualification=False, teacher_admission=False)
         if self._fresh_supported_binding is not None:
             result["fresh_supported_exchange_binding"] = deepcopy(self._fresh_supported_binding)
             result["issued_composer_wrench_source"] = (
-                "commanded_reset_zero_not_measured_contact" if source_step is None else "previous_measured_rod_step")
+                "commanded_reset_zero_not_measured_contact" if pending.reaction_source_step is None else "previous_measured_rod_step")
         return result
 
     def control(self, action, *, observe, select_substep_action=None, allow_left_index_after_reseat=False):
