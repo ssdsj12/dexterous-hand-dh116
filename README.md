@@ -1,3 +1,5 @@
+The Power handoff can freeze a supported partial-contact run with live rod clearance and reaction routing. [Report](docs/superpowers/reports/2026-11-23-teacher-power-bilateral-handoff.md)
+
 The wire Teacher diagnostic separates palm pose, force availability and force-value effects in the canonical 24D action. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-feedback-ablation.md)
 
 The sequential Power partial approach now has continuous target coverage on the same archived rod. [Report](docs/superpowers/reports/2026-11-23-teacher-power-bilateral-detour.md)

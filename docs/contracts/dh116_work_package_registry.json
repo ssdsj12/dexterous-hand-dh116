@@ -51433,6 +51433,36 @@
         "teacher_admission": false,
         "generalization_qualified": false
       }
+    },
+    "teacher.power-bilateral-handoff": {
+      "title": "Freeze and verify the live Power partial-contact handoff",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-bilateral-detour"
+      ],
+      "tests": [
+        "tests/test_dh116_power_bilateral_handoff.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_partial_stage_evidence.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_dh116_power_thumb_route.py",
+        "tests/test_dh116_power_bilateral_detour.py",
+        "tests/test_dh116_power_measured_reseat.py",
+        "tests/test_dh116_power_fixed_wrist_digits.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-bilateral-handoff.md",
+      "readiness": "docs/contracts/dh116_teacher_power_bilateral_handoff_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_frozen_power_partial_contact_native_pending",
+        "cpu_passed": 72,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

@@ -129,6 +129,7 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
                   np.asarray(box["center_m"])+np.asarray(box["size_m"])/2) for box in support_scene["supports"]]
         tube = None if reference_nodes is None else archived_tube(reference_nodes)
         active_probe = distal_probe is not None and distal_probe.active(sdk)
+        live_handoff = (active_probe and hasattr(distal_probe, "continuing") and distal_probe.continuing(sdk))
         failures = []
         for hand, body, vertices in clearance_shapes:
             world = rotated_points(frame_poses[0, hand, body], vertices)
@@ -141,12 +142,15 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
                 if len(names) != 1:
                     raise ValueError("one owned source envelope per selected cooked hull required")
                 record_refinement = lambda result, name=names[0]: source_audit.update({name: result})
-            failure = check_supported_shape(world, boxes, tube, contact_shape=contact_shape,
-                contact_penetration_m=(distal_probe.max_pad_penetration_m
-                    if active_probe and getattr(distal_probe, "continuous_cooked_hulls", None) else None),
-                reference_nodes=reference_nodes,
-                envelope_refinement=distal_probe.envelope_refinement if refined else None,
-                record_refinement=record_refinement)
+            if live_handoff:
+                failure = distal_probe.check_live_shape(sdk, world, reference_nodes, hand=hand, body=body)
+            else:
+                failure = check_supported_shape(world, boxes, tube, contact_shape=contact_shape,
+                    contact_penetration_m=(distal_probe.max_pad_penetration_m
+                        if active_probe and getattr(distal_probe, "continuous_cooked_hulls", None) else None),
+                    reference_nodes=reference_nodes,
+                    envelope_refinement=distal_probe.envelope_refinement if refined else None,
+                    record_refinement=record_refinement)
             if failure is not None:
                 side = SIDES[hand]
                 articulation = bindings[side].hand
@@ -159,23 +163,27 @@ def measure_links(sim, bindings, mesh_bindings, clearance_shapes, *, sdk, suppor
                 record_guard(dict(observed_sdk_step=sdk, current_sdk_clock=native.clock(sim),
                                   failures=failures, table_clearance_m=clearance))
             first = failures[0]
-            reason = ("live original hand source envelope intersects a support"
-                      if "support_clearance" in first["conditions"]
-                      else "live hand source envelope lost its staged rod clearance")
+            if "support_clearance" in first["conditions"]:
+                reason = ("live original hand source envelope lost its support clearance" if live_handoff
+                          else "live original hand source envelope intersects a support")
+            elif "hand_side" in first["conditions"]:
+                reason = "live hand source envelope crossed the task's left/right boundary"
+            else:
+                reason = "live hand source envelope lost its staged rod clearance"
             raise ValueError(f'{reason}: {first["side"]}.{first["body_name"]}')
         if active_probe:
-            if refined:
-                try:
+            try:
+                if refined:
                     distal_probe.check_pad_gaps(sdk, poses, reference_nodes,
                                                record_refinement=cooked_audit.update)
-                except ValueError:
-                    if record_guard is not None:
-                        record_guard(dict(observed_sdk_step=sdk,
-                                          source_envelope=source_audit, cooked_envelope=cooked_audit,
-                                          failure="selected_cooked_or_sdf_guard"))
-                    raise
-            else:
-                distal_probe.check_pad_gaps(sdk, poses, reference_nodes)
+                else:
+                    distal_probe.check_pad_gaps(sdk, poses, reference_nodes)
+            except ValueError as error:
+                if record_guard is not None and (refined or live_handoff):
+                    record_guard(dict(observed_sdk_step=sdk,
+                                      source_envelope=source_audit, cooked_envelope=cooked_audit,
+                                      failure="selected_cooked_or_sdf_guard", detail=str(error)))
+                raise
     if native.clock(sim)["sdk_step"] != sdk:
         raise ValueError("SDK moved during link and COM readback")
     if not np.isfinite(clearance).all() or np.any(clearance < CLEARANCE_M):
@@ -394,10 +402,13 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
             rod = power._base.last
 
             def record_guard(row):
+                from go2_pvcnn.control.dh116.tabletop_deformable_wrist_projection import CLEARANCE_M
+
+                continuing = hasattr(distal_probe, "continuing") and distal_probe.continuing(sdk)
                 native.write_new(output/f"{task}_geometry_guard_{sdk}.json", encode_owned(dict(
                     **row, rod_source_physics_step=rod["physics_step"],
                     rod_node_positions_world_m=rod["node_positions"],
-                    rod_clearance_limit_m=.00025, support_clearance_limit_m=1e-10)))
+                    rod_clearance_limit_m=.00025, support_clearance_limit_m=CLEARANCE_M if continuing else 1e-10)))
 
             options = {} if support_scene is None else dict(support_scene=support_scene,
                 reference_nodes=rod["node_positions"], distal_probe=distal_probe, record_guard=record_guard,
@@ -492,6 +503,10 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                         or actual["issued_composer_wrench"] != expected["issued_composer_wrench"]):
                     raise ValueError(f"{task} force seating replay did not match its sealed force source")
             if distal_probe is not None:
+                if hasattr(distal_probe, "continuing"):
+                    if distal_probe.continuing(row["physics_step"]):
+                        distal_probe.check_completed_rod(emitted, power._base.last, geometry)
+                    row = emitted
                 later = distal_probe.bilateral
                 if later is not None:
                     replay_sdk = later.get("replay_sdk", later["boundary_sdk"])
@@ -759,6 +774,11 @@ def run_shared(sim, owners, trace, output, *, profile, args, supported_acquire=N
                 probe = SupportedPalmProbe(meshes, clearance_shapes, bake_dirs={
                     "left": args.left_bake, "right": args.right_bake},
                     boundary_sdk=palm_request["boundary_sdk"], stations=palm_request["stations"])
+                if "bilateral_partial" in power_route:
+                    from scripts.verify_dh116_power_bilateral_handoff_probe import SupportedPowerHandoffProbe
+
+                    probe = SupportedPowerHandoffProbe(probe, meshes, clearance_shapes,
+                                                        power_route["bilateral_partial"], live_support_scene, project=ROOT)
             control_result = run_supported_action(sim, owners, trace, output, power=power, bindings=bindings,
                 meshes=meshes, clearance_shapes=clearance_shapes, setup=setup, action=action_after_settle, sdk_end=sdk_end,
                 verify_support_continuity=any(x is not None for x in (action_reference, tripod_archive, pinch_archive, power_open_archive)),
