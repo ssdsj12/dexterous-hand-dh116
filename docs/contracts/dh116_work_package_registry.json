@@ -51459,7 +51459,7 @@
       "native_runs": 0,
       "last_result": {
         "scope": "cpu_frozen_power_partial_contact_native_pending",
-        "cpu_passed": 72,
+        "cpu_passed": 73,
         "native_qualification": false,
         "teacher_admission": false
       }

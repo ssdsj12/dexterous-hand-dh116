@@ -17,6 +17,17 @@ ANCHOR_SDK = 6504
 WINDOWS = (284, 202, 88, 82, 307)
 STAGES = ("wrist_reseat", "thumb_first", "two_pad_closure", "right_approach", "left_approach")
 HOLD_WINDOWS = 1
+_PUBLICATION_RECORDS = (
+    "docs/contracts/dh116_release_manifest.json",
+    "docs/contracts/dh116_work_package_registry.json",
+    "docs/contracts/dh116_teacher_power_bilateral_handoff_v1.json",
+)
+
+
+def execution_file_inventory(files, *, project):
+    """Pin runtime inputs independently of records that report this plan's digest."""
+    publication = {str((project / item).resolve()) for item in _PUBLICATION_RECORDS}
+    return {path: digest for path, digest in files.items() if path not in publication}
 
 
 def compile_commands(blocks):
@@ -116,6 +127,7 @@ def load_handoff(args, *, project):
 
 def freeze(args):
     plan, config, parked = prefix.freeze(args)
+    plan["frozen_files"] = execution_file_inventory(plan["frozen_files"], project=shared.ROOT)
     commands, archive, stations, files = load_handoff(args, project=shared.ROOT)
     route = plan["power_high_route"]
     if plan["budget"]["sdk_steps"] != ANCHOR_SDK:

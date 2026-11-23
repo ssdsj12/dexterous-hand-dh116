@@ -106,3 +106,22 @@ def test_partial_opposition_requires_current_geometry_and_actual_previous_wrench
     changed["issued_composer_wrench"]["left"]["forces"][0,0,0] += .1
     with pytest.raises(ValueError, match="applied world wrench"):
         probe.observe(changed)
+
+
+def test_publication_evidence_does_not_change_fingerprint_but_runtime_sources_stay_pinned(tmp_path):
+    import json
+    from pathlib import Path
+
+    root = tmp_path
+    registry = str(root/"docs/contracts/dh116_work_package_registry.json")
+    manifest = str(root/"docs/contracts/dh116_release_manifest.json")
+    readiness = str(root/"docs/contracts/dh116_teacher_power_bilateral_handoff_v1.json")
+    physics = str(root/"docs/contracts/dh116_deformx_pad_sdf_evidence_lock.json")
+    source = str(root/"scripts/verify_dh116_power_bilateral_handoff.py")
+    before = {registry: "1", manifest: "2", source: "3", physics: "4"}
+    after = dict(before, **{registry: "5", manifest: "6", readiness: "7"})
+    filtered = handoff.execution_file_inventory(before, project=root)
+    assert json.dumps(filtered, sort_keys=True) == json.dumps(
+        handoff.execution_file_inventory(after, project=root), sort_keys=True)
+    assert set(map(Path, filtered)) == {Path(source), Path(physics)}
+    assert set(before) == {registry, manifest, source, physics}
