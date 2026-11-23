@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "status": "native_precontact_and_natural_exit_verified",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-native-approach.md",
+  "native_executed": true,
+  "actual": {
+    "outer_sha256": "3f404d60345a420e2d0e48141344f25b3eaa23c2531f871b4a8cc0c7faa385ca",
+    "plan_sha256": "3ac8ef83f5e3ca54655b24cf905c840f37962787d4f097ee4a5da50079224855",
+    "source_commit": "f3bd58446be8828e0899aaf3bbd426aae61c51db",
+    "frozen_sha256": "c7e3fd4631a78ca0dadd2c8d66641a5727121e00724ea9a38c700bfda5000dc6",
+    "artifact_count": 639,
+    "elapsed_s": 288.53218019683845,
+    "process_exit_code": 0,
+    "debugger_inferior_exit_code": 0,
+    "debugger_inferior_signal": null,
+    "forced_exit": false,
+    "natural_exit_verified": true,
+    "guard_failure": null,
+    "parked_rows": 238,
+    "controlled_rows": 328,
+    "interlock_sdk": [
+      240,
+      552,
+      568
+    ],
+    "last_completed_sdk": 568,
+    "new_candidate_rows": 16,
+    "known_solver_substep_count": 6792,
+    "first_action_difference_sdk": null,
+    "hand_pair_sdk": [],
+    "peak_support_load_n_in_candidate": {
+      "table": 0.0,
+      "support_0": 0.15754952179467355,
+      "support_1": 0.15769841724366027
+    },
+    "precontact_passed": true,
+    "teacher_admission": false,
+    "grasp_qualified": false,
+    "ppo_updates": 0
+  },
+  "budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "tripod_902_precontact_interlocked",
+    "sdk_setup_steps": 2,
+    "control_steps": 41,
+    "solver_steps": 6792,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 420,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 568
+  },
+  "plan_command": {
+    "launch": "scripts/python.sh -B -m scripts.verify_dh116_tripod_902_approach",
+    "cpu_gdb_verified": true,
+    "freeze_file_count": 2248
+  },
+  "tracking_peaks": {
+    "rod": 8.949637413024902e-05,
+    "left_pos": 5.613298089911363e-07,
+    "right_pos": 2.011314600056833e-05,
+    "left_rot": 0.0017414644759147686,
+    "right_rot": 0.001233418108260903,
+    "left_q": 5.066394805908203e-05,
+    "right_q": 0.0010174885392189026
+  },
+  "evidence_sha256": {
+    "verify.log": "42f17fbb0250be79ec3fad4aadcf66f8752d4dd17bd82c2d2bd676c4105382b1",
+    "outer.json": "3f404d60345a420e2d0e48141344f25b3eaa23c2531f871b4a8cc0c7faa385ca",
+    "native.log": "8d94c56097e286622a56c6fa40b16a492ea2709729fac91e38b83c1691c2a070",
+    "plan.json": "3ac8ef83f5e3ca54655b24cf905c840f37962787d4f097ee4a5da50079224855",
+    "verify_native.py": "81eaa982ec1b47a4ade4bc91722765fd8b299cab27a9e7c6d0cdb259f76b6c84",
+    "independent-tripod-902-audit.json": "40348bc531db55c752ad57f5a06e0fb3084a68aaf16b5f81df7ad510e6a28a63",
+    "two-window-tracking-reduction.json": "8cf1052699b7365f511845f16dbe59bd2ea4cc64a4b2fffde82095c728d94922",
+    "native/tripod_control_568.json": "1bc8dad63782345e3502afa72649c6a960b3cbd7a43d645168a38db4c666730f",
+    "native/tripod_902_interlock_240.json": "17dd8a44c13c09399970664d5682b0ef4bc1ae860b4ca87237f78d82d01cff69",
+    "native/tripod_902_interlock_552.json": "12a9715e827bb1ba0c81042128aae4b16456d141c19a50b6b3c766ae9bef98ea",
+    "native/tripod_902_interlock_568.json": "b6c955f25d180faefad6f40ad551b83abeb2e3cbc641d2108aab576d20965a19"
+  },
+  "native_precontact_verified": true,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "teacher_admission": false
+}
