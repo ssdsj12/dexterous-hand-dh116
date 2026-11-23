@@ -47,7 +47,9 @@ def compile_stage(start, end, *, retreat_world_m, flex_exponents):
     joint_speed = np.abs(delta[:, 6:])
     joint_speed[:, 1] *= flex_exponents
     duration = max(xyz_speed.max() / translation, rpy_speed.max() / rotation, joint_speed.max() / joint)
-    steps = max(1, math.ceil(CONTROL_HZ * duration))
+    # Leave one control window at an exact rate boundary instead of
+    # rounding the discrete normalized command just above its hard limit.
+    steps = max(1, math.ceil(CONTROL_HZ * duration + 1e-10))
     f = np.linspace(0., 1., steps + 1)
     states = start + f[:, None, None] * delta
     states[:, :, :3] -= np.sin(np.pi * f)[:, None, None] * retreat_world_m
@@ -136,7 +138,17 @@ def root_pose(state, seed):
     return np.r_[state[:3], q[[3, 0, 1, 2]]]
 
 
-def prove_stage(hand, states, targets, nodes, scene):
+def shape_speed_bounds(shapes, root, *, linear_speed, angular_speed, joint_motion):
+    """Bound point speeds, allowing joints to extend the wrist lever arm."""
+    return {
+        name: linear_speed + joint_motion[name] + angular_speed * (
+            np.linalg.norm(points - root, axis=1).max() + joint_motion[name])
+        for name, points in shapes.items()
+    }
+
+
+def prove_stage(hand, states, targets, nodes, scene, *, allow_concurrent=False,
+                max_samples=4096, max_seconds=150.):
     model, seed, origin = hand["model"], hand["seed"], hand["origin"]
     grid = hand["palm_grid"]
     offsets = states[:, :3] - origin
@@ -152,21 +164,24 @@ def prove_stage(hand, states, targets, nodes, scene):
     delta = np.diff(states, axis=0) * (len(states) - 1)
     xyz_speed = float(np.linalg.norm(delta[:, :3], axis=1).max())
     angular_speed = float(np.abs(delta[:, 3:6]).sum(axis=1).max())
-    # Stages change either the wrist or the fingers. Translation and intrinsic
-    # XYZ speeds are joint-independent. Joint travel is bounded per link.
+    # Bound each joint's rate by the maximum piecewise slope relative to
+    # its total travel. The ordinary stage mode holds wrist or joints fixed.
     q_delta = end[6:] - start[6:]
     moving = np.abs(q_delta) > 0.
-    if ((xyz_speed > 0. or angular_speed > 0.) and moving.any()
-            or np.any(delta[:, 6:][:, ~moving] != 0.)):
-        raise ValueError("Power swept bounds require separate wrist motion and monotone joint stages")
+    concurrent = (xyz_speed > 0. or angular_speed > 0.) and moving.any()
+    if ((concurrent and not allow_concurrent) or np.any(delta[:, 6:][:, ~moving] != 0.)
+            or np.any(delta[:, 6:] * q_delta < 0.)):
+        raise ValueError("Power swept bounds require monotone joint motion and explicit concurrent mode")
     factor = float(np.max(np.abs(delta[:, 6:][:, moving] / q_delta[moving]))) if moving.any() else 0.
     joint_motion = {}
     for kind in ("source", "cooked"):
         for link, travel in path_displacement_bound(model, start[6:], q_delta, cooked=kind == "cooked").items():
             joint_motion[f"{kind}:{link}"] = travel * factor
     shapes = shapes_world(model, start_pose, start[6:])
-    speeds = {name: xyz_speed + angular_speed * float(np.linalg.norm(points - start[:3], axis=1).max())
-              + joint_motion[name] for name, points in shapes.items()}
+    speeds = shape_speed_bounds(shapes, start[:3], linear_speed=xyz_speed,
+                                angular_speed=angular_speed, joint_motion=joint_motion)
+    if joint_motion["source:base_link"] != 0.:
+        raise ValueError("Power palm lattice must be fixed to the wrist")
     node_speeds = xyz_speed + angular_speed * (np.linalg.norm(nodes - start[:3], axis=1) + xyz_speed)
     # Scale both margins and rates so that every node uses the same
     # Lipschitz coefficient without inheriting the farthest node's speed.
@@ -213,7 +228,7 @@ def prove_stage(hand, states, targets, nodes, scene):
         return result
 
     bounds = {key: [value] for key, value in motion.items()}
-    proof = certify_box(margins, bounds, [0.], [1.], max_samples=4096, max_seconds=150.)
+    proof = certify_box(margins, bounds, [0.], [1.], max_samples=max_samples, max_seconds=max_seconds)
     verified = verify_box_certificate(proof, margins, bounds, [0.], [1.]) if proof["proved"] else None
     return dict(endpoints_passed=all(record["passed"] for record in endpoints), proof=proof, verified=verified,
                 travel_bounds_m=motion, endpoint_palm_gap_m=[record["palm_gap_m"] for record in endpoints])

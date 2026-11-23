@@ -1,3 +1,5 @@
+The right Power approach passes a conditional continuous geometry proof on the reference wire. [Report](docs/superpowers/reports/2026-11-23-teacher-power-right-concurrent-route.md)
+
 Bounded Power refitting found one right-hand palm and two-pad endpoint on the archived wire. [Report](docs/superpowers/reports/2026-11-23-teacher-power-free-wrist-refit.md)
 
 The archived Tripod audit separates left index pad motion from wire motion at first loss of contact. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-index-contact-loss.md)

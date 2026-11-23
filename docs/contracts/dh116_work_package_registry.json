@@ -51256,6 +51256,52 @@
         "new_native_runs": 0,
         "teacher_admission": false
       }
+    },
+    "teacher.power-right-concurrent-route": {
+      "title": "Certify right Power contact approach on the frozen wire",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-free-wrist-refit"
+      ],
+      "tests": [
+        "tests/test_dh116_power_partial_opposition.py",
+        "tests/test_dh116_power_partial_stage_evidence.py",
+        "tests/test_dh116_power_measured_reseat.py",
+        "tests/test_dh116_power_fixed_wrist_digits.py",
+        "tests/test_dh116_power_material_reach.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_wire_fixed_pregrasp_native_reset.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_power_thumb_clearance.py",
+        "tests/test_supported_wire_material_variants.py",
+        "tests/test_wire_variant_isaac_reset.py",
+        "tests/test_supported_wire_factorial_holdouts.py",
+        "tests/test_supported_wire_holdout_resets.py",
+        "tests/test_dh116_power_thumb_route.py",
+        "tests/test_dh116_owned_approach.py",
+        "tests/test_dh116_swept_wrist_projection.py",
+        "tests/test_dh116_power_preload.py",
+        "tests/test_dh116_power_surface_pairs.py",
+        "tests/test_dh116_wire_common_pregrasp.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-right-concurrent-route.md",
+      "readiness": "docs/contracts/dh116_teacher_power_right_concurrent_route_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_fixed_rod_right_target_and_left_hold",
+        "cpu_passed": 200,
+        "control_windows": 82,
+        "sdf_samples_passed": 657,
+        "geometry_proved": true,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
