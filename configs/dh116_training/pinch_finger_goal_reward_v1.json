@@ -1,0 +1,52 @@
+{
+  "costs_per_second": {
+    "command_rate": 0.05,
+    "slip": null,
+    "time": 0.1,
+    "velocity": null
+  },
+  "design_document_sha256": "a6a04d7dab20048d22b152762eb07018c3269cd63bfad77ed2b11799d7ed97d9",
+  "events": {
+    "prohibited_support": null,
+    "success": null,
+    "trusted_constraint_failure": -40.0
+  },
+  "finger_goal": {
+    "grasp": "pinch",
+    "reference_sha256": "da3d5a6fdd5e8bb4f5db1911a3659ad3b2b92c2fb99511e4ccbc055d3600512e",
+    "schema": "dh116-teacher-finger-goal-v1"
+  },
+  "finite_task_deadline": {
+    "enabled": false,
+    "remaining_s": null
+  },
+  "gamma_source": "ppo.gamma",
+  "legacy_r1_enabled": false,
+  "legacy_r2_enabled": false,
+  "potential_weights": {
+    "distance": 2.0
+  },
+  "ppo": {
+    "clip": 0.2,
+    "entropy": 0.005,
+    "epochs": 1,
+    "gae_lambda": 0.95,
+    "gamma": 0.995,
+    "kl_backtrack_steps": 3,
+    "learning_rate": 0.0001,
+    "max_grad_norm": 0.5,
+    "minibatches": 1,
+    "rollout_steps": 32,
+    "target_kl": 0.02,
+    "value": 0.5
+  },
+  "profile": "approach_wiring_smoke_v1",
+  "profile_version": 1,
+  "schema_sha256": "5c31eda15b12d7c364e541c8cf032e4d052dfb2faa1a284bff89fb0da5263655",
+  "success": {
+    "hold_s": 5.0,
+    "max_slip_m": 0.0005,
+    "net_lift_m": 0.03
+  },
+  "weight_status": "design_approved_native_unverified"
+}

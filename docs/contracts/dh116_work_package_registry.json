@@ -52052,6 +52052,28 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.pinch-finger-goal-smoke8-v1": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "evidence_scope": "pinch_finger_goal_smoke8_v1",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Pinch native finger-goal PPO diagnostic",
+      "command_spec": "configs/dh116_execution/pinch-finger-goal-smoke8-core-v1.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Verified native Reset, exact standing authorization and resource reservation required.",
+      "dependencies": [],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-pinch-finger-goal-ppo.md",
+      "actual_launch": {
+        "path": "configs/dh116_execution/pinch-finger-goal-smoke8-launch-v1.json",
+        "sha256": "d48eec74f148a3c28fcdea1ae486fb91c7854979dae8af17f9409c7bfb8885ac"
+      }
     }
   },
   "execution_target": {

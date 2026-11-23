@@ -129,6 +129,29 @@ class ResolvedResetManifest:
         return self
 
 
+def relocate_pinch_task_source(archived, current, current_task, relative_task):
+    """Normalize the verified content-identical task path in a replay copy."""
+    if archived == current:
+        return archived
+    current_paths = current["sources"]
+    original_paths = archived["sources"]
+    removed = set(original_paths) - set(current_paths)
+    added = set(current_paths) - set(original_paths)
+    if len(removed) != 1 or added != {str(current_task)}:
+        raise ValueError("numeric reset source profile differs beyond the Pinch task path")
+    original = Path(removed.pop())
+    if (not original.is_absolute() or original.parts[-len(relative_task.parts):] != relative_task.parts):
+        raise ValueError("archived Pinch task has an unexpected source path")
+    normalized = dict(original_paths)
+    normalized[str(current_task)] = normalized.pop(str(original))
+    comparable = dict(archived, sources=normalized)
+    if comparable != current:
+        raise ValueError("numeric reset source profile contents differ")
+    checked_file(original, current_paths[str(current_task)])
+    checked_file(current_task, current_paths[str(current_task)])
+    return comparable
+
+
 def load_reset_manifest(config, *, project=ROOT):
     try:
         if config["style"] == "tripod":
@@ -206,6 +229,10 @@ def load_reset_manifest(config, *, project=ROOT):
                 validate_numeric_reset_audit(audit, reset_receipt=receipt)
         else:
             with source.source_scope():
+                if config["style"] == "pinch":
+                    sources = relocate_pinch_task_source(
+                        audit["sources"], source.source_basis(), project / source.CONFIG, Path(source.CONFIG))
+                    audit = dict(audit, sources=sources)
                 validate_numeric_reset_audit(audit, reset_receipt=receipt)
         if receipt["seed"] != value["reset_seed"]:
             raise ValueError("resolved reset seed differs from original raw source")

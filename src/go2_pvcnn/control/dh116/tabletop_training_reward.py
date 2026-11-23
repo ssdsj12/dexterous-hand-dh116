@@ -15,6 +15,8 @@ import weakref
 from types import MappingProxyType
 from typing import Mapping
 
+from .tabletop_teacher_pose_goal import ERROR_FIELDS, FingerGoal, load_finger_goal
+
 PHYSICS_HZ = 480
 CONTROL_HZ = 60
 WINDOW_SUBSTEPS = 8
@@ -249,6 +251,7 @@ class RewardConfig:
     cost_max_per_second: float
     discounted_cost_bound: float
     success: Mapping = field(default_factory=lambda: SUCCESS)
+    finger_goal: FingerGoal | None = None
     # Data construction/replacement cannot inherit the loader's source binding.
     _source_path: str | None = field(default=None, init=False, repr=False, compare=False)
 
@@ -316,6 +319,8 @@ def _validate_reward_config(config):
         raise ValueError("primitive full config SHA256 identity required")
     if not _sha256_text(config.schema_sha256) or config.schema_sha256 != SCHEMA_SHA256:
         raise ValueError("loaded approved config schema SHA256 required")
+    if config.finger_goal is not None and (config.profile != SMOKE or type(config.finger_goal) is not FingerGoal):
+        raise ValueError("finger goal is restricted to a native approach diagnostic")
     weights, costs, events, ppo = _profile_spec(config.profile)
     _config_mapping(config.weights, weights, "weights")
     _config_mapping(config.costs, costs, "costs")
@@ -378,8 +383,9 @@ def load_config(path, *, ppo_gamma=None):
     bound = maximum / (CONTROL_HZ * (1. - gamma))
     if abs(events["trusted_constraint_failure"]) < bound:
         raise ValueError("failure penalty does not cover discounted cost bound; recompute approved bounds")
+    goal = load_finger_goal(data["finger_goal"]) if "finger_goal" in data else None
     result = RewardConfig(profile, 1, ppo, weights, costs, events, hashlib.sha256(raw).hexdigest(),
-                          SCHEMA_SHA256, maximum, bound, success)
+                          SCHEMA_SHA256, maximum, bound, success, goal)
     _validate_reward_config(result)
     object.__setattr__(result, "_source_path", str(source_path))
     return result
@@ -636,7 +642,11 @@ class TrainingReward:
         elif guards != self._guards:
             raise SourceFailure("original guard bundle schema changed or guard source missing")
         units.update((name, "dimensionless") for name in guards)
+        if self.config.finger_goal is not None:
+            units.update((name, "rad") for name in ERROR_FIELDS)
         values = {name: self._measurement(row, name, unit).raw for name, unit in units.items()}
+        if self.config.finger_goal is not None and any(values[name] < 0 for name in ERROR_FIELDS):
+            raise SourceFailure("nonnegative actual finger-goal errors required")
         if values["distance"] < 0:
             raise SourceFailure("nonnegative actual distance required")
         if self.config.profile in (FULL, CURRICULUM):
@@ -730,6 +740,8 @@ class TrainingReward:
         self._reset_tick = endpoint.stamp.physics_tick
         self._contact_start = self._hold_start = None
         self._contact_s = self._hold_s = 0.
+        self._finger_goal_dwell = 0
+        self._finger_goal_arrived = False
         self._slip = self._slip_status = None
         try:
             values = self._validate(endpoint, reset=True)
@@ -773,6 +785,12 @@ class TrainingReward:
         terms = {name: _excluded() for name in ("distance", "contact", "persistence", "geometry", "lift", "hold", "slip", "velocity", "prohibited_support", "task_deadline")}
         terms["distance"] = _term(values["distance"], "m", src("distance"), 2. * pd)
         phi = 2. * pd
+        goal = self.config.finger_goal
+        if goal is not None:
+            errors = tuple(values[name] for name in ERROR_FIELDS)
+            pose_phi = goal.potential(errors)
+            phi += pose_phi
+            terms["finger_goal"] = _term(errors, "rad", src(ERROR_FIELDS[0]), pose_phi)
         if self.config.profile in (FULL, CURRICULUM):
             tick = row.stamp.physics_tick
             contact = values["coverage_left"] == values["coverage_right"] == 1 and values["opposed_left"] and values["opposed_right"]
@@ -886,6 +904,7 @@ class TrainingReward:
         self._costs, self._substep_terms = [], []
         self._terminal = False
         self._event = 0.
+        self._finger_goal_arrival_pending = False
         self._reasons = ()
 
     def observe(self, endpoint):
@@ -904,6 +923,11 @@ class TrainingReward:
                 failures.append("table_contact_failure")
             full = self.config.profile in (FULL, CURRICULUM)
             if full and values["prohibited_support"]: failures.append("prohibited_support")
+            goal = self.config.finger_goal
+            if goal is not None and not self._finger_goal_arrived:
+                in_tolerance = not failures and all(values[name] <= goal.tolerance_rad for name in ERROR_FIELDS)
+                self._finger_goal_dwell = self._finger_goal_dwell + 1 if in_tolerance else 0
+                self._finger_goal_arrival_pending |= self._finger_goal_dwell >= goal.arrival_steps
             slip_w = (self.config.costs["slip"] or 0.) if full else 0.
             slip_thr = self.config.success["max_slip_m"]
             cost = .05 * self._qcmd + .10 + (slip_w * _source_math(_clip, self._slip / slip_thr, 0., 2.) if full and self._slip is not None else 0.)
@@ -941,22 +965,31 @@ class TrainingReward:
         if type(truncated) is not bool or type(buffer_full) is not bool or (truncated and buffer_full) or (self._terminal and truncated):
             raise ValueError("one unambiguous terminal/truncation/buffer boundary required")
         try:
-            event_terms = MappingProxyType({
+            event_terms = {
                 "trusted_constraint_failure": _term(bool(self._reasons and self._event < 0), "dimensionless",
                      ";".join(self._last.fields[n].stamp.source for n in self._reasons if n in self._last.fields),
                      self._event if self._event < 0 and "prohibited_support" not in self._reasons else 0.),
                 "prohibited_support": _term(self._last.fields["prohibited_support"].raw, "dimensionless",
                      self._last.fields["prohibited_support"].stamp.source, self._event if "prohibited_support" in self._reasons else 0.) if self.config.profile in (FULL, CURRICULUM) else _excluded(),
                 "success": _term(self._event == 100., "dimensionless", "derived:independent_reward_hold_predicate",
-                     self._event if self._event > 0 else 0.) if self.config.profile in (FULL, CURRICULUM) else _excluded()})
+                     self._event if self._event > 0 else 0.) if self.config.profile in (FULL, CURRICULUM) else _excluded()}
+            event = self._event
+            if self.config.finger_goal is not None:
+                arrived = self._finger_goal_arrival_pending and not self._terminal
+                bonus = self.config.finger_goal.arrival_reward if arrived else 0.
+                event += bonus
+                event_terms["finger_goal_arrived_once"] = _term(
+                    arrived, "dimensionless", "derived:measured_bilateral_active_joint_goal", bonus)
             packet = RewardPacket(token, self._request.policy_uid, self.config.profile, self.config.profile_version,
                 self.config.config_sha256, SCHEMA_SHA256,
-                _source_math(control_total, self._phi_pre, self._phi, self._costs, self.config.gamma, self._event, self._terminal),
+                _source_math(control_total, self._phi_pre, self._phi, self._costs, self.config.gamma, event, self._terminal),
                 len(self._costs) / PHYSICS_HZ, self._phi_pre, self._phi, 0. if self._terminal else self._phi,
-                tuple(self._costs), math.fsum(self._costs) / PHYSICS_HZ, self._event, self._reasons,
+                tuple(self._costs), math.fsum(self._costs) / PHYSICS_HZ, event, self._reasons,
                 self._last, self._context, self._terms, tuple(self._substep_terms), self._terminal, truncated, buffer_full,
                 self._terminal or truncated, self._last.stamp.scope, self.config.gamma,
-                self._pre_endpoint, self._pre_context, self._pre_terms, event_terms)
+                self._pre_endpoint, self._pre_context, self._pre_terms, MappingProxyType(event_terms))
+            if self.config.finger_goal is not None and arrived:
+                self._finger_goal_arrived = True
         except SourceFailure as exc:
             self._fail(str(exc), self._last)
         self._closed = self._terminal or truncated

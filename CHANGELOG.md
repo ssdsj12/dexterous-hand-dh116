@@ -1,5 +1,7 @@
 Tripod 902 verified a native supported approach and natural exit. Pinch passed its full staged CPU route, while Power remains at a verified partial CPU prefix. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round6.md)
 
+- Added a source-bound Pinch pose reward and a bounded native PPO diagnostic.
+
 Pinch paired endpoints, the Tripod two-window approach and exact 902 Reset preflight, and Power full-wrap reachability have separate geometry and native evidence. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round5.md)
 
 The Tripod Reset now has current-source native exit evidence, with independent Pinch, Tripod and Power follow-up results. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round4.md)

@@ -15,6 +15,7 @@ import torch
 
 from .tabletop_native_teacher_profile import profile_reader_scope
 from .tabletop_training_reward import RewardEndpoint,SourceStamp,Measurement,SubmittedRequest,SourceFailure
+from .tabletop_teacher_pose_goal import ERROR_FIELDS, measured_active_angles
 
 
 @contextmanager
@@ -64,7 +65,7 @@ class _NativeGeometrySources:
         return SourceStamp(clock["episode_uid"],clock["physics_step"],clock["solver_time_s"],
             self.reward_scope,source,env_id=clock["env_id"],reset_uid=str(clock["reset_id"]),rod_uid=clock["rod_uid"])
 
-    def _endpoint(self,clock,distance,health,guard):
+    def _endpoint(self,clock,distance,health,guard,*,hands=None):
         values=distance["auxiliary"]["samples"]["approach_distance_m"]["value"]
         identity=distance["auxiliary"]["identity"]
         if values is None or any(identity.get(k)!=clock[k] for k in identity):
@@ -88,6 +89,16 @@ class _NativeGeometrySources:
             numerical_health=measurement(code==0,"RopeBatch.last_error.same_owner"),
             constraint_failure=measurement(guard is not None,"original_joint_force_clearance_and_policy_source_geometry_guards"),
             original_guard_joint_force_clearance_geometry=measurement(guard is not None,"original_joint_force_clearance_and_policy_source_geometry_guards"))
+        goal = self.contract.reward_config.finger_goal
+        if goal is not None:
+            if goal.grasp != self.STYLE:
+                raise SourceFailure("finger goal grasp differs from the live owner")
+            try:
+                errors = goal.max_errors_rad(measured_active_angles(hands))
+            except (KeyError, TypeError, ValueError) as error:
+                raise SourceFailure("actual same-step finger goal readback required") from error
+            for name, value in zip(ERROR_FIELDS, errors):
+                fields[name] = measurement(value, "sdk_named_active_q", "rad")
         # IDs are fixed material identities, not freshly selected nearest nodes.
         return RewardEndpoint(stamp,tuple(str(i) for i in range(41)),fields)
 
@@ -104,7 +115,7 @@ class _NativeGeometrySources:
         d=self.reset_distance.capture_reset(receipt,self.parameters,grasp=self.STYLE)
         h=self._health(clock)
         self._reset_timestamp_s=clock["timestamp_s"]
-        self._reset_endpoint=self._last=self._endpoint(clock,d,h,None)
+        self._reset_endpoint=self._last=self._endpoint(clock,d,h,None,hands=receipt["hands"] if self.contract.reward_config.finger_goal is not None else None)
         self._reset_distance=self._last.fields["distance"].raw
         self._reset_nodes=torch.as_tensor(receipt["rod_reset"]["node_positions"],dtype=torch.float32).clone()
         self._rest=float(np.asarray(receipt["rod_reset"]["rest_lengths_m"]).sum())
@@ -183,7 +194,15 @@ class _NativeGeometrySources:
                 raise SourceFailure("required actual geometry/distance source unavailable")
             guard=checked["terminal_reason"] or geometry.get("terminal_reason")
             self.owner.ledger.emit("policy_"+self.STYLE+"_distance",d)
-            self._last=self._endpoint(row["rod"],d,row["native_teacher_health"],guard)
+            hands = None
+            if self.contract.reward_config.finger_goal is not None:
+                post = row["action_readback"]["post"]
+                clock = row["rod"]
+                keys = ("episode_uid", "env_id", "physics_step", "reset_id", "rod_tick", "rod_uid")
+                if len(post["identity"]) != 1 or any(post["identity"][0].get(key) != clock[key] for key in keys):
+                    raise SourceFailure("finger goal SDK/rod clock differs")
+                hands = post["hands"]
+            self._last=self._endpoint(row["rod"],d,row["native_teacher_health"],guard,hands=hands)
         return self._last
 
     def _remaining_wall(self):
