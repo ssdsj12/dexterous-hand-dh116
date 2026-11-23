@@ -196,11 +196,14 @@ def test_bilateral_feedback_does_not_close_blindly_when_only_opposition_is_missi
     assert report["hands"]["right"]["reason"] == "opposition_or_geometry_requires_retarget"
 
 
-def test_bilateral_loader_keeps_exact_anchor_and_replaces_old_serial_schedule(monkeypatch):
+@pytest.mark.parametrize("tracking", [False, True])
+def test_bilateral_loader_keeps_exact_anchor_and_replaces_old_serial_schedule(monkeypatch, tracking):
     from scripts import verify_dh116_supported_force_seating as seating
     from pathlib import Path
 
-    request = Path(seating.__file__).resolve().parents[1] / "configs/dh116_tasks/flexible_tripod_bilateral_load_feedback_v1.json"
+    file = ("flexible_tripod_bilateral_tracking_load_feedback_v1.json" if tracking
+            else "flexible_tripod_bilateral_load_feedback_v1.json")
+    request = Path(seating.__file__).resolve().parents[1] / "configs/dh116_tasks" / file
     anchor = {"physics_step":1296}
     source = Path("actual-receipt.json")
     def replay(receipt, actions, *, start_sdk):
@@ -211,7 +214,9 @@ def test_bilateral_loader_keeps_exact_anchor_and_replaces_old_serial_schedule(mo
     schedule, stage, files = seating.load_tripod_bilateral_feedback(source,prefix,start_sdk=240,request_path=request)
     np.testing.assert_array_equal(schedule[:132],prefix[:132])
     np.testing.assert_array_equal(schedule[132:],np.zeros((64,24)))
-    assert stage["archive"] is anchor and stage["variant"] == "bilateral_load_feedback_v1"
+    variant = "bilateral_tracking_load_feedback_v1" if tracking else "bilateral_load_feedback_v1"
+    assert stage["archive"] is anchor and stage["variant"] == variant
+    assert any(source_file.name == "verify_dh116_tripod_tracking_feedback.py" for source_file in files) == tracking
     assert stage["stop_sdk"] == 1808 and request in files and source in files
     import json
     assert json.loads(json.dumps(stage)) == stage
@@ -221,6 +226,7 @@ def test_bilateral_loader_keeps_exact_anchor_and_replaces_old_serial_schedule(mo
 @pytest.mark.parametrize("variant,windows,error", [
     ("bilateral_load_feedback_v1",1,None),
     ("left_coordinated_seating_v1",1,None),
+    ("bilateral_tracking_load_feedback_v1",1,None),
     ("unknown_feedback",1,"variant"),
     ("bilateral_load_feedback_v1",2,"consumed"),
 ])
@@ -234,6 +240,7 @@ def test_real_supported_action_hook_issues_feedback_before_physical_control(monk
     actual_commands = []
     written = {}
     coordinated = variant == "left_coordinated_seating_v1"
+    tracking = variant == "bilateral_tracking_load_feedback_v1"
     start_sdk = 1704 if coordinated else 1296
     power = SimpleNamespace(sdk=start_sdk, _base=SimpleNamespace(last={"physics_step":start_sdk}))
     power.clock = lambda: {"physics_step":power.sdk}
@@ -244,6 +251,8 @@ def test_real_supported_action_hook_issues_feedback_before_physical_control(monk
     probe = SimpleNamespace(previous={"physics_step":start_sdk,"rod":power._base.last},
         bilateral=dict(boundary_sdk=1136,midpoint_sdk=1000,seating=None if coordinated else stage),
         archive=None)
+    if tracking:
+        probe.previous = _tracking_physical(start_sdk, leads={"right": {"finger31": .0013}})
     def observe(row):
         probe.previous = row
         return {}, None
@@ -257,6 +266,12 @@ def test_real_supported_action_hook_issues_feedback_before_physical_control(monk
     monkeypatch.setattr(contacts,"measure_supported_distal_contact",
                         lambda rod,*,grasp:bilateral_evidence(left=(.19,.04,.12) if coordinated else (.319,.235,.133),
                                                             sdk=rod["physics_step"]))
+
+    if tracking:
+        from scripts import verify_dh116_tripod_tracking_feedback as tracking_module
+
+        monkeypatch.setattr(tracking_module, "measure_supported_distal_contact",
+                            lambda rod, *, grasp: bilateral_evidence(sdk=rod["physics_step"]))
 
     class PhysicalDriver:
         def __init__(self, sim, rod, bindings, **kwargs):
@@ -295,10 +310,10 @@ def test_real_supported_action_hook_issues_feedback_before_physical_control(monk
         decision=written["tripod_left_coord_command_1704.json"]
         assert decision["source_sdk_step"]==1704 and decision["minimum_pad_force_n"]["index"]==.04
         return
-    assert np.flatnonzero(actual_commands[0][0]).tolist() == [9]
+    assert np.flatnonzero(actual_commands[0][0]).tolist() == ([8] if tracking else [9])
     decision=written["tripod_bilateral_command_1296.json"]
     assert decision["source_sdk_step"] == 1296
-    assert decision["issued_action"][9] == pytest.approx(.03)
+    assert decision["issued_action"][8 if tracking else 9] == pytest.approx(.03)
     assert decision["hands"]["left"]["reason"] == "loaded_hold"
     assert len([name for name in written if name.startswith("tripod_control_") and name != "tripod_control_result.json"]) == 8
 
@@ -317,3 +332,107 @@ def test_bilateral_feedback_cannot_freeze_a_hand_on_a_forged_loaded_boolean():
 def test_bilateral_configuration_rejects_boolean_travel_instead_of_silently_disabling_a_finger():
     with pytest.raises(ValueError,match="travel"):
         bilateral_controller(max_travel_rad={1:0.,2:False,3:.0012,7:0.,8:.0012,9:.0018})
+
+
+
+def _tracking_physical(sdk, *, leads):
+    """Model the recorded post-SDK layout, with backend targets distinct from q."""
+    from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, JOINTS
+    from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import VERSION
+    from go2_pvcnn.control.dh116.tabletop_joint_target_readback import BACKEND_SOURCE, WRIST_ANGULAR, WRIST_LINEAR
+
+    identity = bilateral_evidence(sdk=sdk)["identity"]
+    clock = dict(identity, policy_step=131, substep=7, timestamp_s=sdk / 480,
+                 solver_time_s=(sdk - 2) / 480, clock_valid=True)
+    names = [*WRIST_LINEAR, *WRIST_ANGULAR, *JOINTS]
+    hands = {}
+    for side in ("left", "right"):
+        q = np.full((1, len(names)), .4)
+        target = q.copy()
+        for name, lead in leads.get(side, {}).items():
+            target[0, names.index(name)] += lead
+        hands[side] = dict(joint_names=names, active_indices=[names.index(name) for name in ACTIVE],
+                           prim_paths=[f"/World/{side}Hand/wrist_fixed"],
+                           q=q, backend_targets=target,
+                           backend_source=BACKEND_SOURCE,
+                           measured_source="physx_backend_get_dof_positions/get_dof_velocities",
+                           units_by_name={name: "rad" for name in JOINTS})
+    return dict(physics_step=sdk, policy_step=131, substep=7, guard_failure=None,
+                rod={key: value for key, value in clock.items() if key not in ("policy_step", "substep")},
+                action_readback=dict(version=VERSION, env_ids=[0],
+                                     post=dict(identity=[clock], hands=hands)))
+
+
+def _tracking_controller(monkeypatch, *, right=(.20, .06, .02), limits=None):
+    from scripts import verify_dh116_tripod_tracking_feedback as tracking
+
+    monkeypatch.setattr(tracking, "measure_supported_distal_contact",
+        lambda rod, *, grasp: bilateral_evidence(right=right, sdk=rod["physics_step"]))
+    return tracking.BilateralTrackingLoadFeedback(
+        start_sdk=1296, windows=2, action_step=.03, pad_target_n=.085,
+        max_travel_rad=limits or {1: 0., 2: .0006, 3: .0012, 7: 0., 8: .0012, 9: .0018})
+
+
+def test_tracking_feedback_skips_a_weak_pad_with_outstanding_closing_target(monkeypatch):
+    controller = _tracking_controller(monkeypatch)
+    physical = _tracking_physical(1296, leads={"right": {"finger21": -.002, "finger31": .0013}})
+    command, report = controller.decide(physical, sdk=1296)
+    assert np.flatnonzero(command).tolist() == [8]
+    assert command[8] == pytest.approx(.03)
+    assert report["hands"]["right"]["selected_pad"] == "index"
+    assert report["hands"]["right"]["signed_backend_target_lead_rad"]["middle"] == pytest.approx(.0013)
+    assert report["hands"]["left"]["reason"] == "loaded_hold"
+    assert not report["grasp_qualified"]
+
+
+def test_tracking_feedback_clips_next_positive_increment_to_one_window_of_lead(monkeypatch):
+    controller = _tracking_controller(monkeypatch)
+    existing_lead = .00013
+    physical = _tracking_physical(1296, leads={"right": {"finger31": existing_lead}})
+    command, report = controller.decide(physical, sdk=1296)
+    assert np.flatnonzero(command).tolist() == [9]
+    limit = report["target_lead_limit_rad"]
+    travel = report["requested_target_travel_rad"][9]
+    assert limit == pytest.approx(.00015)
+    assert existing_lead + travel == pytest.approx(limit)
+
+
+def test_tracking_feedback_uses_remaining_travel_before_ranking_deficient_pads(monkeypatch):
+    controller = _tracking_controller(monkeypatch, limits={1: 0., 2: .0006, 3: .0012,
+                                                           7: 0., 8: .0012, 9: .00015})
+    first, _ = controller.decide(_tracking_physical(1296, leads={}), sdk=1296)
+    after, _ = controller.decide(_tracking_physical(1304, leads={}), sdk=1304)
+    assert np.flatnonzero(first).tolist() == [9]
+    assert np.flatnonzero(after).tolist() == [8]
+
+
+def test_tracking_feedback_holds_if_only_deficient_pad_has_no_headroom(monkeypatch):
+    controller = _tracking_controller(monkeypatch, right=(.20, .12, .02))
+    physical = _tracking_physical(1296, leads={"right": {"finger31": .0013}})
+    command, report = controller.decide(physical, sdk=1296)
+    assert not command.any()
+    assert report["hands"]["right"]["reason"] == "deficient_pad_tracking_or_travel_exhausted"
+
+
+@pytest.mark.parametrize("damage", ["stale", "cross_reset", "missing_target", "cache", "duplicate_hand", "partial_window"])
+def test_tracking_feedback_requires_actual_sources_from_one_completed_window(monkeypatch, damage):
+    controller = _tracking_controller(monkeypatch)
+    physical = _tracking_physical(1296, leads={})
+    post = physical["action_readback"]["post"]
+    if damage == "stale":
+        post["identity"][0]["physics_step"] -= 8
+    if damage == "cross_reset":
+        post["identity"][0]["reset_id"] += 1
+    if damage == "missing_target":
+        post["hands"]["right"]["backend_targets"][0, 6] = np.nan
+    if damage == "cache":
+        post["hands"]["right"]["backend_source"] = "isaaclab_user_command_cache_joint_pos_target"
+    if damage == "duplicate_hand":
+        post["hands"]["right"] = post["hands"]["left"]
+    if damage == "partial_window":
+        physical["substep"] = post["identity"][0]["substep"] = 6
+    with pytest.raises(ValueError, match="tracking"):
+        controller.decide(physical, sdk=1296)
+    assert controller.next_sdk == 1296 and not controller.travel_rad.any()
+    command, _ = controller.decide(_tracking_physical(1296, leads={}), sdk=1296)
+    assert np.flatnonzero(command).tolist() == [9]

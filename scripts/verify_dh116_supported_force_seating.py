@@ -16,6 +16,7 @@ RIGHT_PADS = {8: "index", 9: "middle"}
 LEFT_PADS = {2: "index"}
 PADS_BY_HAND = {"left": LEFT_PADS, "right": RIGHT_PADS}
 DOSE_THRESHOLD_N = .085
+TRIPOD_TRACKING_FEEDBACK_VARIANT = "bilateral_tracking_load_feedback_v1"
 
 
 def validate_seating_schedule(schedule, pad_by_slot, *, max_travel_rad):
@@ -179,6 +180,9 @@ class BilateralLoadFeedback:
         self._identity = None
 
     def decide(self, evidence, *, sdk):
+        return self._decide(evidence, sdk=sdk)
+
+    def _decide(self, evidence, *, sdk, tracking=None):
         if type(sdk) is not int or sdk != self.next_sdk or sdk >= self.stop_sdk:
             raise ValueError("bilateral feedback requires the next unused control window")
         identity = evidence.get("identity", {})
@@ -228,30 +232,12 @@ class BilateralLoadFeedback:
             if hand["loaded"]:
                 report["reason"] = "loaded_hold"
             else:
-                # A weak pad wins over adding more force to already strong pads.
-                deficits = {pad: self.pad_target_n - minimums[pad] for pad in pads}
-                if max(deficits.values()) > 0.:
-                    weakest = max(pads, key=lambda pad: deficits[pad])
-                elif total.min() <= MIN_HAND_LOAD_N:
-                    # Magnitude-based diagnostic heuristic, not force-vector equilibrium proof.
-                    weakest = ("thumb" if minimums["thumb"] < minimums["index"] + minimums["middle"]
-                               else min(("index", "middle"), key=lambda pad: minimums[pad]))
-                else:
-                    weakest = None
-                if weakest is None:
-                    report["reason"] = "opposition_or_geometry_requires_retarget"
-                else:
-                    tied = [slot for slot, (hand_side, pad) in BILATERAL_PADS.items()
-                            if hand_side == side and (pad == "thumb") == (weakest == "thumb")
-                            and abs(minimums[pad] - minimums[weakest]) <= 1e-12]
-                    slot = next((slot for slot in tied if self._limits[slot] - self.travel_rad[slot] > 1e-12), tied[0])
-                    weakest = BILATERAL_PADS[slot][1]
-                    remaining = max(0., self._limits[slot] - self.travel_rad[slot])
-                    issued[slot] = min(self.action_step, remaining * 60 / ACTION_CONTRACT["joint_rate_rad_s"])
-                    report.update(selected_pad=weakest, selected_slot=slot,
-                                  reason="weakest_pad_travel_exhausted" if issued[slot] <= 1e-12 else "weakest_pad_acquire")
-                    if issued[slot] <= 1e-12:
-                        issued[slot] = 0.
+                slot, action, reason = self._select_unloaded(
+                    side, minimums, float(total.min()), tracking=tracking)
+                report["reason"] = reason
+                if slot is not None:
+                    issued[slot] = action
+                    report.update(selected_pad=BILATERAL_PADS[slot][1], selected_slot=slot)
             reports[side] = report
         self.travel_rad += np.abs(issued) * (ACTION_CONTRACT["joint_rate_rad_s"] / 60)
         self.next_sdk += 8
@@ -260,23 +246,55 @@ class BilateralLoadFeedback:
                             requested_target_travel_rad=self.travel_rad.tolist(),
                             diagnostic_only=True, grasp_qualified=False, teacher_admission=False)
 
+    def _select_unloaded(self, side, minimums, minimum_total, *, tracking):
+        pads = ("thumb", "index", "middle")
+        deficits = {pad: self.pad_target_n - minimums[pad] for pad in pads}
+        if max(deficits.values()) > 0.:
+            weakest = max(pads, key=lambda pad: deficits[pad])
+        elif minimum_total <= MIN_HAND_LOAD_N:
+            # Magnitude-based diagnostic heuristic, not force-vector equilibrium proof.
+            weakest = ("thumb" if minimums["thumb"] < minimums["index"] + minimums["middle"]
+                       else min(("index", "middle"), key=lambda pad: minimums[pad]))
+        else:
+            return None, 0., "opposition_or_geometry_requires_retarget"
+        tied = [slot for slot, (hand_side, pad) in BILATERAL_PADS.items()
+                if hand_side == side and (pad == "thumb") == (weakest == "thumb")
+                and abs(minimums[pad] - minimums[weakest]) <= 1e-12]
+        slot = next((slot for slot in tied if self._limits[slot] - self.travel_rad[slot] > 1e-12), tied[0])
+        remaining = max(0., self._limits[slot] - self.travel_rad[slot])
+        action = min(self.action_step, remaining * 60 / ACTION_CONTRACT["joint_rate_rad_s"])
+        if action <= 1e-12:
+            return slot, 0., "weakest_pad_travel_exhausted"
+        return slot, action, "weakest_pad_acquire"
+
 
 def load_tripod_bilateral_feedback(receipt, actions, *, start_sdk, request_path):
     """Keep the measured replay, replacing serial doses with live bilateral load feedback."""
     request = json.loads(Path(request_path).read_bytes())
     fields = {"version", "control_boundary_sdk", "control_windows", "normalized_action_step", "pad_target_n",
               "maximum_target_travel_rad", "scope", "thumb_dose_status"}
-    if (set(request) != fields or request.get("version") != "dh116-tripod-bilateral-load-feedback-v1"
+    version = request.get("version")
+    if (set(request) != fields or version not in ("dh116-tripod-bilateral-load-feedback-v1",
+                                                  "dh116-tripod-bilateral-tracking-load-feedback-v1")
             or request.get("control_boundary_sdk") != TRIPOD_SDK):
         raise ValueError("an independent bilateral force feedback request at SDK 1296 is required")
     options = dict(start_sdk=TRIPOD_SDK, windows=request["control_windows"],
                    action_step=request["normalized_action_step"], pad_target_n=request["pad_target_n"],
                    max_travel_rad=dict(request["maximum_target_travel_rad"]))
-    BilateralLoadFeedback(**options)
+    variant = "bilateral_load_feedback_v1"
+    closure = ()
+    if version == "dh116-tripod-bilateral-tracking-load-feedback-v1":
+        from scripts import verify_dh116_tripod_tracking_feedback as tracking
+
+        variant = TRIPOD_TRACKING_FEEDBACK_VARIANT
+        closure = (Path(tracking.__file__),)
+        tracking.BilateralTrackingLoadFeedback(**options)
+    else:
+        BilateralLoadFeedback(**options)
     prefix, stage, files = load_tripod_seating(receipt, actions, start_sdk=start_sdk)
     count = (TRIPOD_SDK-start_sdk)//8
     schedule = np.vstack((prefix[:count], np.zeros((options["windows"], 24))))
     stage.pop("pad_by_slot", None)
-    stage.update(variant="bilateral_load_feedback_v1", feedback=options,
+    stage.update(variant=variant, feedback=options,
                  stop_sdk=TRIPOD_SDK+8*options["windows"])
-    return schedule, stage, (*files, Path(request_path))
+    return schedule, stage, (*files, *closure, Path(request_path))

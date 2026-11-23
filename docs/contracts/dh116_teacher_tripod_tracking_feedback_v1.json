@@ -1,0 +1,178 @@
+{
+  "version": "dh116-teacher-tripod-tracking-feedback-v1",
+  "source_base_head": "125f2664d6797adde10225bec4b5b732ec9627b8",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-tracking-feedback.md",
+  "status": "blocked_no_eligible_positive_closure_in_archived_windows",
+  "source_sha256": {
+    "configs/dh116_tasks/flexible_tripod_bilateral_tracking_load_feedback_v1.json": "f6bc602b80dd68a1d4bce6a6789204d2fc384308b41fb6d8c183a0c54e0ca066",
+    "scripts/verify_dh116_power_shared_rod.py": "45641f3c2ee18da75c3938c81135ad6f66cb7e160c3641afcad2b393786e7329",
+    "scripts/verify_dh116_supported_force_seating.py": "cd9134ff1597e261d13403c0abc65aa1bd338933574c711457037b03ac157a79",
+    "scripts/verify_dh116_tripod_tracking_feedback.py": "7633e095711dd67419f24f1772e7be49b2df18561b5773c89dc3a524e9f92a75",
+    "tests/test_dh116_supported_force_seating.py": "dc0627aca0ce605fe2a638e8e763dd13731409f9eb3507717d825d0597b0edc7"
+  },
+  "archive_verification": {
+    "command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-tracking-20261123/sync-tripod-tracking-playback.py"
+    ],
+    "environment": {
+      "PYTHONPATH": "src:."
+    },
+    "implementation": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-tracking-20261123/sync-tripod-tracking-playback.py",
+      "sha256": "141a2f170a04cc365884709f456bb9541b81dd335c57c06db869cc34bc32c472"
+    },
+    "result": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-tracking-20261123/sync-tripod-tracking-playback-final.json",
+      "sha256": "dd0fd10dda733975f97ee107a8ee0736a4777c5eddfd9010c857582d2dfe2e63"
+    },
+    "summaries": {
+      "bilateral_feedback": {
+        "applied_new_physics_steps": 0,
+        "archive_control_windows": 64,
+        "candidate_commanded_slots": {},
+        "candidate_hand_reasons": {
+          "left": {
+            "deficient_pad_tracking_or_travel_exhausted": 63,
+            "loaded_hold": 1
+          },
+          "right": {
+            "deficient_pad_tracking_or_travel_exhausted": 30,
+            "loaded_hold": 34
+          }
+        },
+        "candidate_nonzero_windows": 0,
+        "left_index_lead_min_max_rad": [
+          0.0008642673492431641,
+          0.0016914010047912598
+        ],
+        "legacy_commanded_slots": {
+          "2": 4,
+          "9": 12
+        },
+        "legacy_logged_exact": true,
+        "legacy_nonzero_windows": 12,
+        "original_bilateral_loaded_boundary_rows": 0,
+        "proposals_changed": 12,
+        "receipt_sha256": "f60d0ad5ad4114a54761958f8ec45839416a79a7f932ec176eb432a74b0f54ce",
+        "source_head": "bf2d4cb66eb46f9224fd6d435a9895b2ffa3b48c",
+        "start_sdk": 1296,
+        "stop_sdk": 1808
+      },
+      "late_original_after_wrist": {
+        "applied_new_physics_steps": 0,
+        "archive_control_windows": 16,
+        "candidate_commanded_slots": {},
+        "candidate_hand_reasons": {
+          "left": {
+            "deficient_pad_tracking_or_travel_exhausted": 16
+          },
+          "right": {
+            "deficient_pad_tracking_or_travel_exhausted": 3,
+            "loaded_hold": 13
+          }
+        },
+        "candidate_nonzero_windows": 0,
+        "left_index_lead_min_max_rad": [
+          0.0017442703247070312,
+          0.00189286470413208
+        ],
+        "legacy_commanded_slots": {
+          "2": 4,
+          "9": 3
+        },
+        "legacy_logged_exact": false,
+        "legacy_nonzero_windows": 4,
+        "original_bilateral_loaded_boundary_rows": 0,
+        "proposals_changed": 4,
+        "receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+        "source_head": "6b155c0f8bf8e59612e22e6d740efe7b7bace17a",
+        "start_sdk": 2064,
+        "stop_sdk": 2192
+      },
+      "late_original_fixed_wrist": {
+        "applied_new_physics_steps": 0,
+        "archive_control_windows": 16,
+        "candidate_commanded_slots": {},
+        "candidate_hand_reasons": {
+          "left": {
+            "deficient_pad_tracking_or_travel_exhausted": 16
+          },
+          "right": {
+            "loaded_hold": 16
+          }
+        },
+        "candidate_nonzero_windows": 0,
+        "left_index_lead_min_max_rad": [
+          0.0017608404159545898,
+          0.001814424991607666
+        ],
+        "legacy_commanded_slots": {
+          "2": 4
+        },
+        "legacy_logged_exact": false,
+        "legacy_nonzero_windows": 4,
+        "original_bilateral_loaded_boundary_rows": 0,
+        "proposals_changed": 4,
+        "receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+        "source_head": "6b155c0f8bf8e59612e22e6d740efe7b7bace17a",
+        "start_sdk": 1928,
+        "stop_sdk": 2056
+      }
+    }
+  },
+  "freeze": {
+    "argv": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-tracking-20261123/sync-tripod-tracking-freeze-final-argv.json",
+      "sha256": "af9b1a95987e602539a04b647177213937c3d2831cda7157b79ec92465ed6b9e"
+    },
+    "plan": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-tracking-20261123/sync-tripod-tracking-frozen-plan-final.json",
+      "sha256": "b70200fb975b86d2f376d16b1f2550a1abea72abab45ff191671c0b57c6201db"
+    },
+    "verification": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-tracking-20261123/sync-tripod-tracking-freeze-final.log",
+      "sha256": "0ab2306e9c2e06b8372e5c40272fb7d6a159fece1f166e94398856767bf7a13d"
+    },
+    "frozen_sha256": "e62f64c83631e7c6c75c3bf1cfd3a116cb57b23d0fa065a3162f53ade5a622ba",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "tripod_bilateral_load_feedback_candidate",
+      "sdk_setup_steps": 2,
+      "control_steps": 196,
+      "solver_steps": 21672,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 600,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 6,
+      "episode_resets": 1,
+      "sdk_steps": 1808
+    },
+    "native_execution_performed": false
+  },
+  "cpu": {
+    "passed": 181,
+    "failed": 0,
+    "seconds": 114.62,
+    "command": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-tracking-20261123/sync-tripod-tracking-cpu-argv.json",
+      "sha256": "404945da8cb5cf231246b2b436edc542271837735564ab768ca814fde6fa1913"
+    },
+    "log": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-tracking-20261123/sync-tripod-tracking-cpu-verified.log",
+      "sha256": "489a9d7425e2e5e752e406d2e963a80d86d9d0b79b4f901927fe61ab46c14bb0"
+    }
+  },
+  "new_isaac_steps": 0,
+  "ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "next": "Screen and independently verify a correction that restores measured index tracking and bilateral opposition before unsupported lift."
+}

@@ -439,18 +439,27 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
         if distal_probe is not None and distal_probe.bilateral is not None:
             primary_seating = distal_probe.bilateral.get("seating")
         seatings = tuple(stage for stage in (primary_seating, force_seating, coordinated_seating) if stage is not None)
-        from scripts.verify_dh116_supported_force_seating import BilateralLoadFeedback
+        from scripts.verify_dh116_supported_force_seating import (
+            BilateralLoadFeedback, TRIPOD_TRACKING_FEEDBACK_VARIANT,
+        )
 
         bilateral_feedback = {}
         for stage in seatings:
-            if stage.get("variant") not in (None, "bilateral_load_feedback_v1", "left_coordinated_seating_v1"):
+            variant = stage.get("variant")
+            if variant not in (None, "bilateral_load_feedback_v1", "left_coordinated_seating_v1",
+                               TRIPOD_TRACKING_FEEDBACK_VARIANT):
                 raise ValueError("unknown force seating variant")
-            if stage.get("variant") == "bilateral_load_feedback_v1":
+            if variant in ("bilateral_load_feedback_v1", TRIPOD_TRACKING_FEEDBACK_VARIANT):
                 if task != "tripod" or (stage["sdk_step"], stage["stop_sdk"]) != (
                         stage["feedback"]["start_sdk"],
                         stage["feedback"]["start_sdk"] + 8 * stage["feedback"]["windows"]):
                     raise ValueError("bilateral feedback must match the frozen Tripod source and budget")
-                bilateral_feedback[stage["sdk_step"]] = BilateralLoadFeedback(**stage["feedback"])
+                controller = BilateralLoadFeedback
+                if variant == TRIPOD_TRACKING_FEEDBACK_VARIANT:
+                    from scripts.verify_dh116_tripod_tracking_feedback import BilateralTrackingLoadFeedback
+
+                    controller = BilateralTrackingLoadFeedback
+                bilateral_feedback[stage["sdk_step"]] = controller(**stage["feedback"])
 
         def observe(row):
             emitted = row
@@ -549,9 +558,12 @@ def run_supported_action(sim, owners, trace, output, *, power, bindings, meshes,
                 prior = distal_probe.previous
                 if prior is None or prior["physics_step"] != sdk:
                     raise ValueError("force seating requires the previously completed same-SDK solver sample")
-                evidence = measure_supported_distal_contact(prior["rod"], grasp=task)
-                if seating["sdk_step"] in bilateral_feedback:
-                    selected, decision = bilateral_feedback[seating["sdk_step"]].decide(evidence, sdk=sdk)
+                feedback = bilateral_feedback.get(seating["sdk_step"])
+                uses_tracking = seating.get("variant") == TRIPOD_TRACKING_FEEDBACK_VARIANT
+                if not uses_tracking:
+                    evidence = measure_supported_distal_contact(prior["rod"], grasp=task)
+                if feedback is not None:
+                    selected, decision = feedback.decide(prior if uses_tracking else evidence, sdk=sdk)
                     native.write_new(output/f"{task}_bilateral_command_{sdk}.json",
                         dict(decision, proposed_action=command.tolist(), issued_action=selected.tolist()))
                 elif seating.get("variant") == "left_coordinated_seating_v1":
