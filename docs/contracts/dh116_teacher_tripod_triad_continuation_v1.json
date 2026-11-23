@@ -1,0 +1,277 @@
+{
+  "version": "dh116-teacher-tripod-triad-continuation-v1",
+  "status": "conditional_triad_endpoint_progress_full_three_window_chain_blocked",
+  "base_head": "0c66182e3b783189e5cef837be7ec421cae9e6e5",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-triad-continuation.md",
+  "source_sha256": {
+    "scripts/audit_dh116_tripod_triad_continuation.py": "c721b01b5b87b538a243a3c8269eb876317dce2a6534c07cbc38b8bbf4f87428",
+    "tests/test_tripod_triad_continuation.py": "60ae55b34a3c56d082d77d6c463181873b4ee046f239d4ce78258780a496d519",
+    "scripts/audit_dh116_tripod_transverse_approach.py": "45670f59efbd2c84416b9c9c9400b05b0fc284dfe3b516a60edbcf387318b0e4",
+    "scripts/audit_dh116_tripod_early_boundary.py": "5e13794dc4bfd5e0283887d4ae837f650d20fdccd1db4ab7f6e6efda0b18b390",
+    "src/go2_pvcnn/control/dh116/tabletop_wire_continuous_clearance.py": "d167dfdae3310d062ad62677fd5891aaab8cf5306cf9eab33e5466fd5afd1b5d"
+  },
+  "archived_native": {
+    "original_receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+    "original_reset_seed_sha256": "9d16393ecdcc02d007c7518d2d25e79b16d14b268e8e228765a86935b0799704",
+    "prior_two_window_cutoff_proof_sha256": "ffbaee3e943e52409a54a93a0641b775a8a920931a7ad07afac94112c30cccc0",
+    "argv": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-triad-round6-20261123/sync-tripod-triad-final-argv.json",
+      "sha256": "a674d84d2feeef9ee797be23b97ec92d169e82f3a7ab931a6121858383d9e5b5"
+    },
+    "result": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-triad-round6-20261123/sync-tripod-triad-final.json",
+      "sha256": "c9d132d8b414581886d06b24d0835444149602f6f49fb034d8ecf1ff694e00af"
+    },
+    "control_start_sdk": 240,
+    "actual_archive_cutoff_sdk": 552,
+    "virtual_suffix_anchor_sdk": 568,
+    "virtual_suffix_policy": 41,
+    "virtual_suffix_sdk_interval": [
+      569,
+      576
+    ],
+    "source_rows_sha256": {
+      "528": "f70703fb92ccffd33348abc1d0f3a15fcc2f7c98bc6dff33b4282982adc8ecc3",
+      "529": "bfcca501fbbebf12ac10bc0c4f1ce44caa7f227c092ded42c1adab55234843b6",
+      "530": "985614a2e20d1a2aeba96aa64e09db0d3d7d70e62d7ca29f971c96e928af1f7b",
+      "531": "fff17b6ac66821b412e00a8466bd0e411eb0319ccfb45fd96aa12c8c3fa7fdc0",
+      "532": "2c3361230d4dc9771e57c6cd9b73f6a6827cfc4dcf6ead4cd12af24f8ac31151",
+      "533": "a8359c4b82f2fe48e3965af927a9b70af1610e51b1fb4644563f7732696350fa",
+      "534": "a3e29349ce01c63e4c2f154cd78febf7707627162f5bda80dfbe8976edc3f395",
+      "535": "884dd9c54e6c694ba38ddb5d7dd18cde9cc4bc0625a2b41a0b5a455cbe2177ec",
+      "536": "66adf8a2809b1b43c6b62ad194a1bdc500d28fa7ac84d71bffa0d1430f0101bf",
+      "537": "50187919954be6cc24c095790fd0c430a89d6bd1b80ed20e5d5bb3377acefc88",
+      "538": "0677d4c8fbb36e9d966f43684576dddc70f61be3d5f59cf20a07f6259a068791",
+      "539": "56871b1fc612cf7cc3f919cabb37ad68b63679e33140a71e649cbf03d6399c2a",
+      "540": "1f5c35ad3da64308a3ee2db3e89afb4699eeefbe2c58906f3e61fd0a47da6019",
+      "541": "b90e56f76d2484b1db0e9e86ba4ea8aff672c01b15ca2a5ac1762670c402bed8",
+      "542": "e3d61608d3928af01936d67c019d6c6907dfeef0d7de47c60c3f37543d1757b0",
+      "543": "0be5cf3dc4a5b1c3e6bc8b449da3236b1d01df602a9575810502b4d7e7fbfbbf",
+      "544": "393ee66c7c9d55023f0c681dcf3dec69a8046e1c067ad26906e639e088d266b4",
+      "545": "a4eae724c43c961ca55d2edf0364be0184e47aa5ddafd7b4c777b5612de4364f",
+      "546": "1158e1dbc49afa487d4350f259af08249bdca0955220af7116bcea28188f3429",
+      "547": "4d4fb050982a080ac7da0e4cce72ba291e641b622bcf4b4c067166dca29833f3",
+      "548": "f3a5e94eb283a471fa7f34be29564a46ef5d8e58031450ee76a92d8db8c70cbe",
+      "549": "0c279ee6a497b514897605f4bbdc4fe9f49f2443d8519f38bfe48ce5ac1eab1c",
+      "550": "0fd08ea68ffc5b129535c8865c820741cdfe004b5b78c87bd7e4ff3760e9d290",
+      "551": "f0649c77db6f3c0c8f2d0e02f838a4d9f32ce9abd68b89175f2416252d99cd2f",
+      "552": "62e27b9b439d919d6975a0c9a97929df6d5895ad9924e1d435c07eff951a791c"
+    },
+    "prefix_control": {
+      "passed": true,
+      "minimum_rod_margin_m": 2.8540684891436243e-05
+    },
+    "three_window_horizon": {
+      "covered_sdk_steps": 24,
+      "measured_prior_drift_m": 0.0001387298108563513,
+      "scaled_last_sdk_drift_m": 0.00013804443866616628,
+      "rod_allowance_m": 0.0001387298108563513,
+      "actual_prior_right_thumb_max_point_displacement_m": 0.0002573211801340815,
+      "exact_reserved_start_obstacle": true,
+      "exact_source_hull_blockers": {
+        "archived_offset_held": [
+          {
+            "side": "right",
+            "group": "source_colliders",
+            "link": "finger14_link",
+            "historical_hand_allowance_m": 0.00029876667175250064,
+            "exact_rod_upper_deficit_m": 1.229639692745452e-05,
+            "passed": false,
+            "rod": {
+              "passed": false,
+              "lower_m": 0.0002749877470379692,
+              "fast_lower_m": 0.0002749877470379692,
+              "segments_checked": 1,
+              "threshold_m": -0.00015,
+              "failed_segment": {
+                "group": 1,
+                "segment": 2,
+                "upper_m": 0.0002752000856813975
+              },
+              "reserve_m": 0.00043749648260885197
+            },
+            "table_margin_m": 0.05103645149648266,
+            "support_margin_m": 0.007342005087010653
+          }
+        ],
+        "absolute_backend": [
+          {
+            "side": "right",
+            "group": "source_colliders",
+            "link": "finger14_link",
+            "historical_hand_allowance_m": 0.00029876667175250064,
+            "exact_rod_upper_deficit_m": 3.201346613279459e-05,
+            "passed": false,
+            "rod": {
+              "passed": false,
+              "lower_m": 0.00025480039855483314,
+              "fast_lower_m": 0.00025480039855483314,
+              "segments_checked": 1,
+              "threshold_m": -0.00015,
+              "failed_segment": {
+                "group": 1,
+                "segment": 2,
+                "upper_m": 0.0002554830164760574
+              },
+              "reserve_m": 0.00043749648260885197
+            },
+            "table_margin_m": 0.05106924637871567,
+            "support_margin_m": 0.0073396850032161265
+          }
+        ]
+      }
+    },
+    "conditional_triad": {
+      "witness_nodes": {
+        "right.finger14_link": 3,
+        "right.finger23_link": 2,
+        "right.finger33_link": 4
+      },
+      "hold_endpoint": {
+        "archived_offset_held": {
+          "gaps_m": [
+            0.0011177809109442763,
+            0.0008944110283763615,
+            0.0013418153997369654
+          ],
+          "opposed_normals": true
+        },
+        "absolute_backend": {
+          "gaps_m": [
+            0.0011017144785332661,
+            0.0008108259711873582,
+            0.0012057008565557878
+          ],
+          "opposed_normals": true
+        }
+      },
+      "original_forward_endpoint": {
+        "archived_offset_held": {
+          "gaps_m": [
+            0.00105760289672236,
+            0.0008502044662890536,
+            0.00127431007527431
+          ],
+          "opposed_normals": true
+        },
+        "absolute_backend": {
+          "gaps_m": [
+            0.0010415504530415856,
+            0.0007666291616525382,
+            0.0011425197599237219
+          ],
+          "opposed_normals": true
+        }
+      },
+      "original_forward_action24": [
+        -0.0033525129159291587,
+        -0.004110485315322876,
+        -0.004627803961435954,
+        -0.0009467204411824545,
+        -2.4835268656412763e-06,
+        -1.986821492513021e-06,
+        0.12537057948069746,
+        0.19874223367265173,
+        0.018723864785414695,
+        0.07280650838709657,
+        -1.043081283569336e-05,
+        -1.1920928955078125e-05,
+        -0.002044690698560503,
+        0.0033020208214176727,
+        0.004971600620518046,
+        0.022942735740383302,
+        -0.010905408677076844,
+        0.014040860601985394,
+        -0.011997627489589375,
+        -0.011140603354708968,
+        -0.006425666391893063,
+        0.002385635023731507,
+        0.02970847597774536,
+        0.03916214694653272
+      ],
+      "direction_candidate": {
+        "action24": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          1.0,
+          1.0,
+          1.0,
+          1.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.5773502691896258,
+          -0.5773502691896258,
+          0.5773502691896258,
+          0.0,
+          0.0,
+          0.0,
+          -0.5773502691896258,
+          0.054881416048469016,
+          0.5773502691896258
+        ],
+        "endpoint": {
+          "archived_offset_held": {
+            "gaps_m": [
+              0.0007308312617713723,
+              0.00035151752210901745,
+              0.000864901593923397
+            ],
+            "opposed_normals": true
+          },
+          "absolute_backend": {
+            "gaps_m": [
+              0.0007190849018007999,
+              0.00026732398875279825,
+              0.0007326539326499943
+            ],
+            "opposed_normals": true
+          }
+        },
+        "minimum_same_node_gap_reduction_m": 0.00038262957673246625
+      },
+      "scope": "conditional_endpoint_no_swept_suffix_or_measured_force"
+    }
+  },
+  "cpu": {
+    "passed": 123,
+    "failed": 0,
+    "seconds": 5.34,
+    "environment": {
+      "PYTHONPATH": "src:."
+    },
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_tripod_triad_continuation.py",
+      "tests/test_tripod_transverse_approach.py",
+      "tests/test_tripod_early_boundary.py",
+      "tests/test_tripod_wrist_relief_command.py",
+      "tests/test_tripod_wrist_relief.py",
+      "tests/test_tripod_index_contact_loss.py",
+      "tests/test_dh116_supported_force_seating.py",
+      "tests/test_dh116_supported_distal_transfer.py",
+      "tests/test_dh116_deformable_bimanual_step.py",
+      "tests/test_wire_live_opposition.py"
+    ],
+    "log": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/sync-tripod-triad-round6-20261123/sync-tripod-triad-final-cpu.log",
+      "sha256": "70ebc5f6d6a8cf38ed3edaac423abfd1a4a789790c6574ff8d879952c9e3bb76"
+    }
+  },
+  "new_native_steps": 0,
+  "ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false
+}
