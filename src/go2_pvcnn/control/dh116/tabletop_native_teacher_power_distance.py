@@ -58,7 +58,7 @@ class NativePowerPoseApproach:
         self._check_layout(rod)
         identity = {key: rod[key] for key in IDENTITY}
         nodes = np.asarray(rod["node_positions"])
-        if nodes.shape != (1, 41, 3) or identity["clock_valid"] is not True:
+        if nodes.shape != (1, 41, 3) or rod.get("clock_valid") is not True:
             raise SourceFailure("actual same-clock 41 material nodes required")
         values, ids = power_pose_error(self.reference_nodes, self.targets, nodes[0], palms)
         source = dict(version=VERSION, goal_sha256=self.goal_sha, task_sha256=self.task_sha,

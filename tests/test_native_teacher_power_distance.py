@@ -24,3 +24,29 @@ def test_power_pose_error_rejects_incomplete_measured_rod():
     wrist_targets = np.zeros((2, 3))
     with pytest.raises(ValueError, match="41"):
         power_pose_error(initial, wrist_targets, initial[:40], wrist_targets)
+
+
+
+def test_power_source_reads_validity_from_the_rod_record():
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import IDENTITY, encode_owned
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_power_distance import NativePowerPoseApproach
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import digest
+    from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PROXIMAL_POWER_MESH_NAMES
+    from go2_pvcnn.control.dh116.tabletop_training_reward import SourceFailure
+
+    metric = object.__new__(NativePowerPoseApproach)
+    metric.scope = "cpu_fixture"
+    metric.reference_nodes = np.zeros((41, 3))
+    metric.targets = np.zeros((2, 3))
+    metric.goal_sha = metric.task_sha = "fixture"
+    bindings = {"left.base_link": {"prim_path": "/leftHand/base_link"}}
+    metric.mesh_sha = digest(encode_owned(bindings))
+    rod = dict.fromkeys(IDENTITY, 0)
+    rod.update(clock_valid=True, node_positions=np.zeros((1, 41, 3)),
+               mesh_names=PROXIMAL_POWER_MESH_NAMES, mesh_bindings=bindings)
+    packet = metric._metric(rod, metric.targets, binding="fixture")
+    assert packet["auxiliary"]["samples"]["approach_distance_m"]["value"] == [0., 0.]
+    assert packet["contact_observed"] is None
+    rod["clock_valid"] = False
+    with pytest.raises(SourceFailure, match="same-clock"):
+        metric._metric(rod, metric.targets, binding="fixture")

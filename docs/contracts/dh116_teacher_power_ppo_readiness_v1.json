@@ -1,7 +1,7 @@
 {
   "version": "dh116-teacher-power-ppo-readiness-v1",
   "style": "power",
-  "status": "native_reset_verified_ppo_prepared",
+  "status": "native_reset_verified_ppo_clock_fix_prepared",
   "cpu": {
     "passed": 29,
     "failed": 0,
@@ -9,7 +9,12 @@
       "passed": 138,
       "failed": 0
     },
-    "additional_existing_fixture_failure": "test_b_post_exit_audits_same_clock_and_new_episode[None]: frozen fixture has no preflight.reward_config"
+    "additional_existing_fixture_failure": "test_b_post_exit_audits_same_clock_and_new_episode[None]: frozen fixture has no preflight.reward_config",
+    "power_clock_v2": {
+      "passed": 139,
+      "failed": 0,
+      "real_reset_replay": true
+    }
   },
   "sdk_setup_steps": 2,
   "episode_resets": 1,
@@ -24,5 +29,14 @@
   "outer_receipt_sha256": "d1aa0fbe8ba495ede23da425d4c46cc7f8c2dbc5377471dad1ad788cea4af8af",
   "reset_manifest_sha256": "e068a0c1b45bd01a0ab5de14930d14c5f79f91814c0ad612a3fd82ae58c62876",
   "native_exit_code": 0,
-  "elapsed_s": 102.56508994312026
+  "elapsed_s": 102.56508994312026,
+  "first_ppo_attempt": {
+    "ppo_updates": 0,
+    "controlled_sdk_steps": 0,
+    "outer_exit_code": 1,
+    "gdb_signal": null,
+    "failure": "Power pose summary looked for clock_valid in identity projection",
+    "failure_lifecycle_sha256": "d331222919ea300d3ce8656dbd064f7f9348745a8791b1369aa68e066766ae00",
+    "receipt_sha256": "365dff1923708a0bf2af37998857409e5f9eb206f32c5da92f2892d95d4580e3"
+  }
 }

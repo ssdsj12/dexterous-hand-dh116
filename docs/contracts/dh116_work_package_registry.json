@@ -52166,8 +52166,8 @@
       "evidence_scope": "power_pose_current_reset_v1",
       "command_spec": "configs/dh116_execution/power-pose-current-reset-smoke8-core-v1.json",
       "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Current native Reset is verified. One bounded PPO execution is pending.",
+      "blocker_kind": "failed_native_execution",
+      "reason": "Native Reset completed. Pose-source clock validity lookup failed before any control or update.",
       "dependencies": [
         "teacher.power-current-reset-for-ppo-v1"
       ],
@@ -52175,6 +52175,37 @@
       "actual_launch": {
         "path": "configs/dh116_execution/power-pose-current-reset-smoke8-launch-v1.json",
         "sha256": "6466a383ba734566187d55e6769d1cf5c0fe0fbc612e28960e93fc4dece854b7"
+      },
+      "native_runs": 1,
+      "last_result": {
+        "passed": 0,
+        "failed": 1,
+        "ppo_updates": 0,
+        "native_qualification": false
+      }
+    },
+    "teacher.power-pose-current-reset-smoke8-v2": {
+      "executor": "native_bounded",
+      "requires_approval": true,
+      "resource_class": "isaac_single_gpu",
+      "retry_policy": {
+        "max_attempts_per_code_config": 1,
+        "retry_requires_change": true
+      },
+      "tests": [],
+      "title": "Power current Reset and pose-guided native PPO",
+      "evidence_scope": "power_pose_current_reset_v2",
+      "command_spec": "configs/dh116_execution/power-pose-current-reset-smoke8-core-v2.json",
+      "status": "blocked",
+      "blocker_kind": "approval",
+      "reason": "Current native Reset is verified. One bounded PPO execution is pending.",
+      "dependencies": [
+        "teacher.power-current-reset-for-ppo-v1"
+      ],
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-supported-reset.md",
+      "actual_launch": {
+        "path": "configs/dh116_execution/power-pose-current-reset-smoke8-launch-v2.json",
+        "sha256": "78971e787c0aafb5cdade484c5677096071007f42a456c95abd3ca6991dbedf3"
       }
     }
   },
