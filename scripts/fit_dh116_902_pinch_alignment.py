@@ -44,7 +44,8 @@ def opposed_at_station(side, gaps, stations, opposition):
                 and opposition < OPPOSITION_LIMIT)
 
 
-def _side_fit(side, row, nodes, tube, boxes, grids, table_top, model, *, max_evaluations, starts):
+def _side_fit(side, row, nodes, tube, boxes, grids, table_top, model, *,
+              max_evaluations, starts, alternate=None, move_scale=MOVE_SCALE):
     # Align candidate FK to the same-clock measured links. For the unobserved
     # colliders use original USD FK. The result remains a CPU endpoint estimate.
     hand = row["action_readback"]["post"]["hands"][side]
@@ -74,13 +75,13 @@ def _side_fit(side, row, nodes, tube, boxes, grids, table_top, model, *, max_eva
     reset_origin = projection["projected_root_poses"][0, index, :3] - projection["palm_offsets_m"][0, index]
     lower = np.r_[reset_origin + WRIST["palm_lower_m"] - origin, [-np.inf] * 3, low[:3] - active[:3]]
     upper = np.r_[reset_origin + WRIST["palm_upper_m"] - origin, [np.inf] * 3, high[:3] - active[:3]]
-    lower = np.maximum(-1., lower / MOVE_SCALE)
-    upper = np.minimum(1., upper / MOVE_SCALE)
+    lower = lower / move_scale
+    upper = upper / move_scale
     if np.any(lower >= upper) or np.any(lower > 0) or np.any(upper < 0):
         raise ValueError("measured state is outside the original 902 wrist or finger workspace")
 
     def geometry(coordinates):
-        delta = coordinates * MOVE_SCALE
+        delta = coordinates * move_scale
         target = np.r_[origin + delta[:3],
                        (rotation * Rotation.from_rotvec(delta[3:6])).as_quat()[[3, 0, 1, 2]]]
         q = active.copy()
@@ -156,9 +157,9 @@ def _side_fit(side, row, nodes, tube, boxes, grids, table_top, model, *, max_eva
     pad_mask = np.array([name in PADS for name, _ in shapes.values()])
     rod_limits = np.where(pad_mask, -.00012, NONPAD_RESERVE_M + .00003)
 
-    def residual(coordinates):
+    def residual(coordinates, material_station, center):
         _, _, transforms, world = geometry(coordinates)
-        gaps, _, opposition = pad_metrics(transforms, station)
+        gaps, _, opposition = pad_metrics(transforms, material_station)
         rod = np.array([separation(vertices, *tube) for vertices in world.values()])
         support = np.array([support_clearance_lower(vertices, lo, hi)
                             for vertices in world.values() for lo, hi in boxes])
@@ -167,26 +168,44 @@ def _side_fit(side, row, nodes, tube, boxes, grids, table_top, model, *, max_eva
                      np.maximum(rod_limits - rod, 0.) * 12000,
                      np.maximum(SUPPORT_RESERVE_M - support, 0.) * 12000,
                      np.maximum(TABLE_RESERVE_M - table, 0.) * 12000,
-                     2. * max(opposition - OPPOSITION_LIMIT, 0.), .02 * coordinates]
+                     2. * max(opposition - OPPOSITION_LIMIT, 0.), .02 * (coordinates - center)]
 
-    rng = np.random.default_rng(902)
-    seeds = [np.zeros(9), *rng.uniform(-.3, .3, size=(starts - 1, 9))]
-    candidates = []
-    for seed in seeds:
-        result = least_squares(residual, np.clip(seed, lower, upper), bounds=(lower, upper),
-                               max_nfev=max_evaluations)
+    if alternate is None:
+        rng = np.random.default_rng(902)
+        seeds = [np.zeros(9), *rng.uniform(-.3, .3, size=(starts - 1, 9))]
+        cases = [(station, None, seed, np.zeros(9)) for seed in seeds]
+    else:
+        cases = []
+        for case in alternate(station, rotation):
+            seed = case.delta / move_scale
+            center = np.r_[seed[:3], np.zeros(6)]
+            cases.append((case.station, case.approach, seed, center))
+
+    candidates, unreachable = [], []
+    for material_station, approach, seed, center in cases:
+        bounds = np.maximum(lower, center - 1.), np.minimum(upper, center + 1.)
+        if np.any(bounds[0] >= bounds[1]):
+            unreachable.append(dict(station=material_station, approach=approach))
+            continue
+        result = least_squares(residual, np.clip(seed, *bounds), bounds=bounds,
+                               args=(material_station, center), max_nfev=max_evaluations)
         report = measure(result.x)
+        if alternate is not None:
+            report.update(search_station=material_station, seed_approach=approach)
+            if report["pad_stations"] != [material_station] * 2:
+                report["failures"].append("requested_station")
+                report["endpoint_passed"] = False
         candidates.append(dict(**report, residual_cost=float(result.cost), solver_nfev=result.nfev))
+    if not candidates:
+        raise ValueError("no requested station reaches the original wrist workspace")
     best = min(candidates, key=lambda candidate: (not candidate["endpoint_passed"], candidate["residual_cost"]))
-    return dict(measured=measured, best=best, starts=len(candidates))
+    outcome = dict(measured=measured, best=best, starts=len(candidates))
+    if alternate is not None:
+        outcome.update(candidates=candidates, unreachable=unreachable)
+    return outcome
 
 
-def fit(receipt, *, max_evaluations=48, starts=3):
-    """Search near both measured hands with the original per-link clearance tests."""
-    if type(max_evaluations) is not int or not 1 <= max_evaluations <= 96:
-        raise ValueError("explicit bounded CPU iteration count required")
-    if type(starts) is not int or not 1 <= starts <= 6:
-        raise ValueError("explicit bounded CPU starts required")
+def _boundary_context(receipt, *, sides):
     from go2_pvcnn.control.dh116 import tabletop_dual_hand_scene_preparation as scene
     from scripts.audit_dh116_pinch_initial_pose import load_geometry
 
@@ -201,23 +220,34 @@ def fit(receipt, *, max_evaluations=48, starts=3):
               np.asarray(b["center_m"]) + np.asarray(b["size_m"]) / 2) for b in supports]
     table = reference["table"]
     top = table["center_m"][2] + table["size_m"][2] / 2
-    models = {side: load_geometry(ROOT, side=side) for side in SIDES}
-    if any(models[side]["usd"]["sha256"] != reference["hand_usd_sha256"][side] for side in SIDES):
+    models = {side: load_geometry(ROOT, side=side) for side in sides}
+    if any(models[side]["usd"]["sha256"] != reference["hand_usd_sha256"][side] for side in sides):
         raise ValueError("original side-specific USD required")
     grids = scene.load_sdf_arrays(scene.prepare_scene(ROOT))
-    hands = {side: _side_fit(side, rows[-1], nodes, tube, boxes, grids, top, models[side],
+    context = dict(row=rows[-1], nodes=nodes, tube=tube, boxes=boxes, grids=grids, table_top=top)
+    source = dict(sdk_range=[sdk - 8, sdk], fit_source_sha256=sha(Path(__file__)),
+                  outer_sha256=sha(receipt), last_row_sha256=sha(archive_files[-2]),
+                  archive_sha256=[sha(path) for path in archive_files[3:-1]],
+                  configuration_sha256={str(path.relative_to(ROOT)): sha(path) for path in config_files},
+                  geometry_sources={side: model["source_sha256"] for side, model in models.items()})
+    return context, models, source
+
+
+def fit(receipt, *, max_evaluations=48, starts=3):
+    """Search near both measured hands with the original per-link clearance tests."""
+    if type(max_evaluations) is not int or not 1 <= max_evaluations <= 96:
+        raise ValueError("explicit bounded CPU iteration count required")
+    if type(starts) is not int or not 1 <= starts <= 6:
+        raise ValueError("explicit bounded CPU starts required")
+    context, models, source = _boundary_context(receipt, sides=SIDES)
+    hands = {side: _side_fit(side, **context, model=models[side],
                             max_evaluations=max_evaluations, starts=starts) for side in SIDES}
-    return dict(version="dh116-902-pinch-measured-alignment-v1", sdk_range=[sdk - 8, sdk],
-                fit_source_sha256=sha(Path(__file__)),
+    return dict(version="dh116-902-pinch-measured-alignment-v1", **source,
+                scope="cpu_geometric_endpoint_only",
                 budget=dict(starts=starts, max_evaluations_per_start=max_evaluations),
                 guards=dict(pad_penetration_limit_m=PAD_LIMIT_M, nonpad_rod_reserve_m=NONPAD_RESERVE_M,
                             support_reserve_m=SUPPORT_RESERVE_M, table_reserve_m=TABLE_RESERVE_M,
                             pad_normal_dot_limit=OPPOSITION_LIMIT),
-                scope="cpu_geometric_endpoint_only", outer_sha256=sha(receipt),
-                last_row_sha256=sha(archive_files[-2]),
-                archive_sha256=[sha(path) for path in archive_files[3:-1]],
-                configuration_sha256={str(path.relative_to(ROOT)): sha(path) for path in config_files},
-                geometry_sources={side: model["source_sha256"] for side, model in models.items()},
                 hands=hands, bilateral_endpoint_passed=all(h["best"]["endpoint_passed"] for h in hands.values()),
                 command_path_qualified=False, native_contact_verified=False, teacher_admission=False)
 
