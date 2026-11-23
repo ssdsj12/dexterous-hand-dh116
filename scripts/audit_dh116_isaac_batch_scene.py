@@ -18,8 +18,8 @@ import numpy as np
 
 def scene_lanes(count, table_size):
     size = np.asarray(table_size, dtype=float)
-    if count not in (2, 32, 64) or size.shape != (3,) or not np.isfinite(size).all() or (size <= 0).any():
-        raise ValueError("2, 32 or 64 lanes and a positive original table size required")
+    if count not in (2, 32, 64, 128) or size.shape != (3,) or not np.isfinite(size).all() or (size <= 0).any():
+        raise ValueError("2, 32, 64 or 128 lanes and a positive original table size required")
     columns = math.ceil(math.sqrt(count))
     spacing = float(max(size[:2]) + 1.0)
     return [(f"/World/DH116BatchAudit/lane_{i:03d}",
@@ -42,8 +42,8 @@ def batch_snapshot(references):
     from scripts.dh116_pinch_startup_v3 import snapshot_for_startup
 
     items = list(references.items())
-    if len(items) > 8 * 64 + 1:
-        raise ValueError("resource witnesses exceed the bounded 64-lane probe")
+    if len(items) > 8 * 128 + 1:
+        raise ValueError("resource witnesses exceed the bounded 128-lane probe")
     summary = snapshot_for_startup({})
     for first in range(0, len(items), 32):
         snapshot = snapshot_for_startup(dict(items[first:first+32]))
@@ -409,7 +409,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--style", choices=("pinch", "tripod", "power"), default="power")
     parser.add_argument("--coupled", action="store_true", help="add the original live rod and reaction exchange")
-    parser.add_argument("--num-envs", type=int, choices=(32,64), required=True)
+    parser.add_argument("--num-envs", type=int, choices=(32,64,128), required=True)
     parser.add_argument("--gpu", type=int, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
     parser.add_argument("--receipt-sha256", required=True)

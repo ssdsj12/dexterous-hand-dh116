@@ -102,4 +102,7 @@ def read_compact_pair_capture(solver, *, physics_step, rod_ticks, mesh_names,
         raise ValueError("stale capture, changed solver status or lane binding")
     tensors = compact_pair_capture(raw, dt_s=1/480, device=device)
     return dict(tensors, physics_step=physics_step, rod_ticks=ticks, mesh_names=names,
-                owner_time_s=expected_owner_time_s, dt_s=1/480)
+                owner_time_s=expected_owner_time_s, dt_s=1/480,
+                buffer_metadata=tuple({key:lane[key] for key in (
+                    "substeps","mesh_count","capacity","attempted","overflow")}
+                    for lane in raw["lanes"]))

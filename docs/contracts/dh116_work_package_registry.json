@@ -52395,7 +52395,7 @@
     },
     "teacher.shared-pair-compact-gpu-v1": {
       "title": "Compact GPU shared pair reduction",
-      "executor": "offline",
+      "executor": "prepared",
       "status": "passed",
       "scope": "compact reduction and 128-lane solver-only probes",
       "dependencies": [],
@@ -52407,7 +52407,7 @@
     },
     "teacher.shared-rod-owner-v1": {
       "title": "Shared solver step and reaction ownership",
-      "executor": "offline",
+      "executor": "prepared",
       "status": "passed",
       "scope": "ownership CPU/CUDA probes and two-lane static Isaac startup",
       "dependencies": [
@@ -52449,7 +52449,7 @@
     },
     "teacher.shared-source-model-v1": {
       "title": "Explicit shared source, frame-normalized observations and CUDA model update",
-      "executor": "offline",
+      "executor": "prepared",
       "status": "passed",
       "scope": "source/model CPU and actual CUDA regression only",
       "branch": "11-17",
@@ -52474,6 +52474,63 @@
       "native_ppo_updates": 0,
       "scope": "two-lane archived physical action replay and diagnostic mean only",
       "teacher_admission": false
+    },
+    "teacher.shared-native-ppo-software-v1": {
+      "title": "Shared measured on-policy collector, original R0/PPO and exclusive checkpoint",
+      "executor": "prepared",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.shared-native-inputs-v1"
+      ],
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "scope": "CPU/CUDA software regression; no native grasp admission",
+      "teacher_admission": false
+    },
+    "teacher.shared-native-ppo-pinch-two-v1": {
+      "title": "Shared pinch two-lane two-update Reset continuation",
+      "executor": "gated",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.shared-native-ppo-software-v1"
+      ],
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "scope": "two-lane wiring smoke/finger-goal only",
+      "native_ppo_updates": 2,
+      "teacher_admission": false,
+      "receipt_sha256": "cbc6c0899a7339ec61348630c33da8e47b064cc8f123cef193ad19aea2bee7be"
+    },
+    "teacher.shared-native-ppo-power-two-v1": {
+      "title": "Shared power two-lane two-update Reset continuation",
+      "executor": "gated",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.shared-native-ppo-software-v1"
+      ],
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "scope": "two-lane wiring smoke/finger-goal only",
+      "native_ppo_updates": 2,
+      "teacher_admission": false,
+      "receipt_sha256": "29d7ba36a1ba31fdd121dd685a1539009e67f072efb13a4372040e5e3f0ea68d"
+    },
+    "teacher.shared-native-ppo-tripod-two-v1": {
+      "title": "Shared Tripod two-lane on-policy Reset continuation",
+      "executor": "gated",
+      "status": "failed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.shared-native-ppo-software-v1"
+      ],
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "scope": "22 real windows; unchanged left finger33 contact penetration guard at SDK190",
+      "teacher_admission": false,
+      "native_ppo_updates": 0
     }
   },
   "execution_target": {

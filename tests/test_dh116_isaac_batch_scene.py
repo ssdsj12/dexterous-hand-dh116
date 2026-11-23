@@ -139,3 +139,17 @@ def test_reset_fingerprint_reads_numeric_cuda_views(monkeypatch):
     positions[0, 0, 0] = np.nan
     with pytest.raises(ValueError, match="finite"):
         reset_rod_fingerprint(rope, "cuda:0")
+
+def test_shared_128_scene_layout_and_full_resource_tail():
+    from weakref import ref
+    lanes=audit.scene_lanes(128,[.6,.8,.3])
+    assert len(lanes)==128 and len({x for x,_ in lanes})==128
+    origins=np.array([x for _,x in lanes])
+    assert np.all(origins[:,2]==0)
+    delta=np.abs(origins[:,None,:2]-origins[None,:,:2])
+    far=(delta[...,0]>=.6)|(delta[...,1]>=.8)
+    assert np.all(far|np.eye(128,dtype=bool))
+    class Owner: pass
+    live=Owner()
+    refs={str(i):ref(live) for i in range(8*128+1)}
+    assert set(audit.batch_snapshot(refs)["resources"])==set(refs)

@@ -136,3 +136,15 @@ def test_atomic_reader_binds_current_owner_and_separate_lane_clocks():
     solver.last_error = 1
     with pytest.raises(ValueError):
         read_compact_pair_capture(solver, **kwargs)
+
+def test_atomic_reader_retains_actual_allocation_metadata_for_downstream_audit():
+    from go2_pvcnn.control.dh116.tabletop_batched_pair_capture import read_compact_pair_capture
+    raw=packet()
+    class Solver:
+        last_error=0
+        def contact_pair_samples_batched_v1(self): return raw
+    result=read_compact_pair_capture(Solver(),physics_step=3,rod_ticks=(2,2,2),
+        mesh_names=("pad","table"),expected_owner_time_s=raw["lanes"][0]["owner_time_s_before"],device="cpu")
+    for i,lane in enumerate(raw["lanes"]):
+        assert result["buffer_metadata"][i] == {k:lane[k] for k in
+            ("substeps","mesh_count","capacity","attempted","overflow")}

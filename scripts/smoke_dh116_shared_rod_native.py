@@ -14,6 +14,17 @@ from scripts.audit_dh116_deformx_shared_pairs import load_inputs, make_solver
 from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
 
 
+
+def make_live_reader(sim, group, *, clock, names, shapes):
+    """Preserve ten inspected pad identities and bind all supported contact links."""
+    from go2_pvcnn.control.dh116.tabletop_dual_hand_rod_runtime import HAND_NAMES
+    from go2_pvcnn.control.dh116.tabletop_deformable_live_geometry import LiveGeometryReader
+    inspected = dict(identity=[clock()], table_top_m=.30,
+                     pad_bindings={key: value for key, value in names.items() if key in HAND_NAMES},
+                     shapes=shapes)
+    return LiveGeometryReader(sim, group, inspected, read_clock=clock,
+                              contact_bindings=names)
+
 def command_for_tick(commands, *, physics_step, start_step, env_id):
     """Keep the archived action unchanged for its original eight SDK ticks."""
     index = physics_step - start_step - 1
@@ -130,7 +141,7 @@ def reset_live_lane(sim, scenes, seed, archive, runtime, bindings, lane, *, star
         solver_time_s=before_time, reset_sdk_steps=0, reset_solver_steps=0)
 
 
-def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, end, *, reset, backend, commands=None, reset_last_window=False, teacher_source_audit=False):
+def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, end, *, reset, backend, commands=None, reset_last_window=False, teacher_source_audit=False, policy_factory=None, training_height=None):
     import torch
     from scripts.audit_dh116_batch_rod_exchange import _live_contact_geometry
     from scripts.verify_dh116_deformx_thumb_contact import step_thumb_physics
@@ -138,6 +149,8 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
     from go2_pvcnn.control.dh116.tabletop_native_teacher_collector import NativeJournal
     from go2_pvcnn.control.dh116.tabletop_shared_rod_owner import SharedRodOwner
     from go2_pvcnn.control.dh116.tabletop_dual_hand_rod_runtime import route_world_wrenches, write_composer_reactions
+    if archive.style != "pinch":
+        from go2_pvcnn.control.dh116.tabletop_power_shared_rod import route_world_wrenches, write_composer_reactions
     from go2_pvcnn.control.dh116.linear_coupling import ACTIVE, MIMIC, active_limits
     from go2_pvcnn.control.dh116.tabletop_task import joint_safety_failure
     from go2_pvcnn.control.dh116.tabletop_batch_geometry import collision_clearance
@@ -145,7 +158,14 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
 
     # Reuse measured original hand Reset, isolation and eight-step scene checks.
     _exercise(sim, scenes, seed, prepared, output, gpu, write_new)
-    if commands is not None:
+    if training_height is not None:
+        if policy_factory is None:
+            raise ValueError("independent training height requires policy-owned execution")
+        from go2_pvcnn.control.dh116.tabletop_shared_training_height import derive_height_seed
+        seed, height_proof = derive_height_seed(seed, grasp=archive.style, **training_height)
+        height_proof["sdk_step_before_restore"] = sim.current_time_step_index
+        write_new(output / "height_seed_derivation.json", dict(proof=height_proof, derived_seed=seed))
+    if commands is not None or policy_factory is not None:
         restore_hand_seed(sim, scenes, seed)
     plan = archive.mesh_plan
     bindings = []
@@ -161,13 +181,45 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
     owners.keep("shared_rod_solver", solver)
     measured = [_live_contact_geometry(scene, names)
                 for scene, names in zip(scenes, bindings, strict=True)]
-    for slot, entry in enumerate(plan["entries"]):
-        name = entry["name"]
-        if name in bindings[0]:
-            positions = np.asarray([row[0][name][0] for row in measured], dtype=np.float32)
-            rotations = np.asarray([row[0][name][1] for row in measured], dtype=np.float32)
-            solver.set_mesh_poses(slot, positions, rotations, teleport=True)
-    runtime = SharedRodOwner(solver, run_uuid="native-shared-rod-probe",
+    if policy_factory is not None:
+        from go2_pvcnn.control.dh116.tabletop_shared_training_height import initial_mesh_world_poses
+        positions, rotations = initial_mesh_world_poses(solver, plan, measured)
+        before_time = float(solver.time)
+        solver.reset_env_mesh_poses(np.arange(len(scenes), dtype=np.int32), positions, rotations)
+        snapshot = solver.mesh_state_snapshot()
+        for phase in ("current", "target", "solver"):
+            np.testing.assert_array_equal(snapshot[phase+"_positions_world_m"], positions)
+            np.testing.assert_allclose(snapshot[phase+"_quaternions_xyzw"], rotations, rtol=0, atol=2e-6)
+        for key in ("solver_linear_velocity_world_m_s", "solver_angular_velocity_world_rad_s",
+                    "motion_delta_world_m", "motion_rotation_world_rad", "pending_teleport"):
+            if np.any(snapshot[key]):
+                raise ValueError("initial native mesh commit retained motion")
+        if float(solver.time) != before_time or solver.last_error:
+            raise ValueError("initial mesh commit advanced solver or failed")
+        from go2_pvcnn.control.dh116.tabletop_deformable_bimanual_step import _owned
+        clearance = collision_clearance(np.stack([np.stack([
+            _owned(hand.root_physx_view.get_link_transforms())[0]
+            for hand in scene["hands"]]) for scene in scenes])[..., [0,1,2,6,3,4,5]],
+            [(side_id, scenes[0]["hands"][side_id].body_names.index(name), row["vertices"])
+             for side_id, side in enumerate(("left","right"))
+             for name, row in prepared["hands"][side]["source_colliders"].items()])[0]
+        if float(clearance.min()) < CLEARANCE_M:
+            raise ValueError("derived initial state violates original table clearance")
+        write_new(output / "initial_mesh_commit.json", dict(sdk_step=sim.current_time_step_index,
+            solver_time_s=before_time,seed_sha256=seed["sha256"],environments=len(scenes),
+            current_target_solver_equal=True,mesh_motion_zero=True,reset_physics_steps=0,
+            minimum_source_clearance_m=float(clearance.min()),hand_seed_source=seed["source_description"],
+            teacher_admission=False))
+    else:
+        for slot, entry in enumerate(plan["entries"]):
+            name = entry["name"]
+            if name in bindings[0]:
+                positions = np.asarray([row[0][name][0] for row in measured], dtype=np.float32)
+                rotations = np.asarray([row[0][name][1] for row in measured], dtype=np.float32)
+                solver.set_mesh_poses(slot, positions, rotations, teleport=True)
+    if policy_factory is not None:
+        import uuid
+    runtime = SharedRodOwner(solver, run_uuid=(uuid.uuid4().hex if policy_factory is not None else "native-shared-rod-probe"),
         physics_step=sim.current_time_step_index,
         episodes=tuple(f"native:{i}:1" for i in range(len(scenes))),
         mesh_names=tuple(row["name"] for row in plan["entries"]),
@@ -194,8 +246,8 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
         group = tuple(HandBinding(side, hand, {lane: hand.root_physx_view.prim_paths[0]}, MountView(hand))
             for side, hand in zip(("left", "right"), scene["hands"], strict=True))
         hand_bindings.append(group)
-        readers.append(LiveGeometryReader(sim, group, dict(identity=[lane_clock(lane)],
-            table_top_m=.30, pad_bindings=names, shapes=shapes), read_clock=lambda lane=lane: lane_clock(lane)))
+        readers.append(make_live_reader(sim, group, names=names, shapes=shapes,
+            clock=lambda lane=lane: lane_clock(lane)))
         root = np.asarray(seed["reset_root_pose_w"]).copy()
         root[:, :3] += scene["origin"]
         roots.append(torch.as_tensor(root[None], dtype=torch.float64))
@@ -205,8 +257,12 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
     reaction = None
     reset_receipt = None
     journal = NativeJournal(output / "shared_coupling.jsonl")
-    input_audit = None
+    input_audit = policy = None
     try:
+        if policy_factory is not None:
+            if commands is not None or teacher_source_audit or reset_last_window:
+                raise ValueError("policy, archived commands and standalone diagnostic Reset are exclusive")
+            policy=policy_factory(runtime,sim,scenes,seed,bindings,hand_bindings,archive,output)
         if teacher_source_audit:
             from scripts.audit_dh116_shared_teacher_native_inputs import NativeInputAudit
             input_audit = NativeInputAudit(runtime,sim,scenes,seed,bindings,hand_bindings,archive,output)
@@ -214,14 +270,15 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
             control_index, substep_index = divmod(sdk - start_step - 1, 8)
             transactions = []
             for lane in range(len(scenes)):
-                if commands is None:
+                if commands is None and policy is None:
                     transactions.append(None)
                     continue
                 read_clock = lambda lane=lane: [lane_clock(lane)]
                 geometry = readers[lane]()
                 connection = BimanualStepConnection(env_ids=(lane,), solver_substeps=12)
-                action = torch.as_tensor(command_for_tick(commands, physics_step=sdk,
-                    start_step=start_step, env_id=lane))[None]
+                action = (policy.action(sdk,lane)[None] if policy is not None else
+                    torch.as_tensor(command_for_tick(commands, physics_step=sdk,
+                        start_step=start_step, env_id=lane))[None])
                 request = connection.begin(hand_bindings[lane], action, read_clock=read_clock,
                     palms=palms[lane], angles=angles[lane])
                 projection = project_policy_wrist_targets(root_seed_w=roots[lane],
@@ -231,6 +288,7 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                     angles_rad=angles[lane], requested_angles_rad=request["requested_angles_rad"],
                     allowed=torch.ones(1, dtype=torch.bool), live=torch.ones(1, dtype=torch.bool))
                 transactions.append((connection, projection, read_clock))
+            issued_routes = []
             for lane, (scene, names, (poses, centers)) in enumerate(zip(scenes, bindings, measured, strict=True)):
                 w = (np.zeros((len(plan["entries"]), 6)) if reaction is None
                      else reaction["mesh_wrenches"][lane].detach().cpu().numpy())
@@ -243,6 +301,7 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                     nonzero[lane] += 1
                 composers = {side: hand.permanent_wrench_composer
                              for side, hand in zip(("left", "right"), scene["hands"], strict=True)}
+                issued_routes.append(routes)
                 write_composer_reactions(composers, routes,
                     to_tensor=lambda value: torch.as_tensor(value, dtype=torch.float32, device=sim.device))
                 transaction = transactions[lane]
@@ -257,9 +316,9 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                         hand.write_data_to_sim()
             step_thumb_physics(sim, sdk - 1, budget_end=end)
             all_links = []
-            for scene in scenes:
+            for lane, scene in enumerate(scenes):
                 links = []
-                for hand in scene["hands"]:
+                for side_id, hand in enumerate(scene["hands"]):
                     hand.update(1 / 480)
                     q = hand.root_physx_view.get_dof_positions().detach().cpu().numpy()[0]
                     indices = [hand.joint_names.index(name) for name in ACTIVE]
@@ -267,11 +326,19 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                              for f, m, ratio, offset in MIMIC]
                     failure = joint_safety_failure(q[indices], np.stack(active_limits(), -1), mimic)
                     if failure:
+                        if policy is not None:
+                            policy.fail("original_joint_guard",dict(sdk_step=sdk,lane=lane,side_id=side_id,
+                                failure=failure,joint_names=hand.joint_names,q=q.copy(),
+                                qd=hand.root_physx_view.get_dof_velocities().detach().cpu().numpy(),
+                                mimic_error=np.asarray(mimic)))
                         raise ValueError("original joint guard: " + failure)
                     links.append(hand.root_physx_view.get_link_transforms().detach().cpu().numpy()[0])
                 all_links.append(links)
             clearance = collision_clearance(np.asarray(all_links)[..., [0,1,2,6,3,4,5]], shapes)[0]
             if float(clearance.min()) < CLEARANCE_M:
+                if policy is not None:
+                    policy.fail("original_table_clearance",dict(sdk_step=sdk,clearance_m=clearance,
+                        link_poses_xyzw=np.asarray(all_links),required_clearance_m=CLEARANCE_M))
                 raise ValueError("original table clearance guard failed")
             measured = [_live_contact_geometry(scene, names)
                         for scene, names in zip(scenes, bindings, strict=True)]
@@ -288,9 +355,19 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                     connection, projection, read_clock = transaction
                     action_readbacks.append(connection.finish(hand_bindings[lane], read_clock=read_clock))
                     palms[lane], angles[lane] = projection["palm_offsets_m"], projection["projected_angles"]
-            journal.emit("shared_step", dict(sdk_step=sdk, rod_ticks=list(runtime.ticks),
-                action_readbacks=action_readbacks, counts=capture["counts"].cpu().numpy(), mesh_wrenches=capture["mesh_wrenches"].cpu().numpy(),
-                source_solver_id=id(solver), min_table_clearance_m=float(clearance.min())))
+            if policy is None:
+                journal.emit("shared_step", dict(sdk_step=sdk, rod_ticks=list(runtime.ticks),
+                    action_readbacks=action_readbacks, counts=capture["counts"].cpu().numpy(), mesh_wrenches=capture["mesh_wrenches"].cpu().numpy(),
+                    source_solver_id=id(solver), min_table_clearance_m=float(clearance.min())))
+            else:
+                done=policy.after_step(action_readbacks,transactions,capture,measured,issued_routes)
+                if sdk+8<=end:
+                    for lane in done:
+                        reset_live_lane(sim,scenes,seed,archive,runtime,bindings,lane,start_step=start_step)
+                        palms[lane].zero_();angles[lane].zero_()
+                        policy.after_reset(lane)
+                    if done:
+                        measured=[_live_contact_geometry(scene,names) for scene,names in zip(scenes,bindings,strict=True)]
             if input_audit is not None:
                 input_audit.after_step(action_readbacks)
             if reset_last_window and sdk == end - 8:
@@ -311,11 +388,24 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
             physics_rows=end - start_step, contact_replay=commands is not None,
             local_reset=reset_receipt, per_lane_resets=runtime.resets, per_lane_rod_ticks=runtime.ticks,
             native_qualification=False, teacher_admission=False)
+        if policy is not None:
+            result["ppo"]=policy.finish()
+            result["ppo_updates"]=result["ppo"]["updates"]
+            result["teacher_queries"]=policy.control*len(scenes)
         if input_audit is not None:
             result["teacher_input_audit"] = input_audit.finish()
         write_new(output / "shared_result.json", result)
         return result
+    except BaseException as exc:
+        if policy is not None:
+            try:
+                policy.fail(type(exc).__name__+":"+str(exc))
+            except BaseException:
+                pass
+        raise
     finally:
+        if policy is not None:
+            policy.close()
         if input_audit is not None:
             input_audit.close()
         journal.close()

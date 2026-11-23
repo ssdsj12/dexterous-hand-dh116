@@ -1,3 +1,5 @@
+Actual shared native Teacher PPO now completes two updates and local Reset continuation for two-lane Pinch/Power, with exclusive checkpoint roundtrips and natural exit 0. Three-grasp 128-lane training and grasp qualification remain pending. [Report](docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md)
+
 The separate DeformX build captured per-environment raw pairs for all three grasp seeds at 128 and 512 solver lanes. Isaac batch training still uses the original backend. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-pair-scale-probe.md)
 
 The GPU 3 Pinch batch has a compact training journal and an optional full audit. A two-lane native window completed in 4.14 seconds. The earlier 64-lane run stopped at the original geometry guard before PPO updated. [Report](docs/superpowers/reports/2026-11-23-dh116-compact-teacher-rollout.md)

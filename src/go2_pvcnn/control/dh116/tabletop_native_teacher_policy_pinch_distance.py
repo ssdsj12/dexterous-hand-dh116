@@ -66,6 +66,9 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
         except (ValueError,KeyError,TypeError,IndexError) as exc:
             raise SourceFailure("policy-owned SDK source capture: "+str(exc)) from exc
 
+    def _radius(self, exchange):
+        return _radius(exchange)
+
     def _evaluate(self,raw,exchange):
         expected=_identity(exchange)
         _require(raw["identity"]==expected and _bytes(raw["joint_readback"])==_bytes(exchange["action_readback"]["post"]),
@@ -79,7 +82,7 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
         _require(np.array_equal(nodes,_array(exchange["rod"]["node_positions"],(1,41,3))[0]),"actual fixed material41 nodes differ")
         packet_scope=exchange["material_director"].get("source_scope")
         _require((packet_scope=="cpu_fixture")==(self.scope=="cpu_fixture"),"parameter/source fixture scope differs")
-        radius=_radius(exchange)["value"]
+        radius=self._radius(exchange)["value"]
         # Existing conservative support certificate is defined at this unchanged
         # locked task radius. An incompatible radius is unknown, never relabelled.
         from .tabletop_polyline_support_certificate import certify,validate as validate_certificate,RADIUS

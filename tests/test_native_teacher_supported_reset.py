@@ -152,3 +152,16 @@ def test_supported_live_reader_rejects_override_of_inspected_pad_binding(monkeyp
     wrong["left.finger14_link"]["body_index"] = hands[0].body_names.index("finger23_link")
     with pytest.raises(ValueError, match="inspected"):
         LiveGeometryReader(sim, bindings, inspected, read_clock=rod.clock, contact_bindings=wrong)
+
+
+def test_shared_native_projection_uses_inspected_pads_and_retains_extended_contacts(monkeypatch):
+    from scripts.smoke_dh116_shared_rod_native import make_live_reader
+    existing, rod, hands, bindings, sim, inspected = live_supported_reader_case(monkeypatch)
+    before = deepcopy(rod.bindings)
+    reader = make_live_reader(sim, bindings, clock=rod.clock,
+                              names=rod.bindings, shapes=inspected["shapes"])
+    packet = reader()
+    assert set(packet["pad_poses"]) == set(packet["centers_of_mass"]) == set(before)
+    assert len(packet["pad_poses"]) == 14
+    assert packet["clearance_m"][0].tolist() == pytest.approx([.25, .36], abs=1e-7)
+    assert rod.bindings == before

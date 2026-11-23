@@ -1941,5 +1941,238 @@
       "real on-policy two-lane PPO with local Reset continuation",
       "Pinch/Tripod/Power 128 or 512 Isaac training"
     ]
+  },
+  "shared_native_ppo": {
+    "status": "pinch_power_two_updates_verified_tripod_guard_failed",
+    "basis_head": "346730e53ea1eaabc2773f763ddbe779d9cbdeb6",
+    "source_family": "shared_batched_solver_v1",
+    "pinch": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-pinch-height-v4-gpu3-6yudf67z",
+      "receipt_sha256": "cbc6c0899a7339ec61348630c33da8e47b064cc8f123cef193ad19aea2bee7be",
+      "exit_code": 0,
+      "signal": null,
+      "forced_exit": false,
+      "elapsed_s": 108.61779772490263,
+      "grasp": "pinch",
+      "environments": 2,
+      "sdk_step": 522,
+      "updates": 2,
+      "controls": 64,
+      "result_sha256": "396ab1f2c0d9b83686afdbd0fd440d28a2fea32f9b9f558ad4b86d46458e4084",
+      "metrics": [
+        {
+          "updates": 1,
+          "iteration_seconds": 26.272236303891987,
+          "rollout_seconds": 26.032589653972536,
+          "optimizer_seconds": 0.1495714399497956,
+          "checkpoint_seconds": 0.09007520996965468,
+          "checkpoint_sha256": "3071839d6a23ae96db691e12c838567e96aa82f68f6797a60295b6fb867f1084",
+          "checkpoint_roundtrip_verified": true,
+          "peak_cuda_allocated_bytes": 26885120,
+          "accepted_exact_kl": 0.0014404254034161568,
+          "accepted_lr": 1e-05
+        },
+        {
+          "updates": 2,
+          "iteration_seconds": 25.791705835144967,
+          "rollout_seconds": 25.658962761051953,
+          "optimizer_seconds": 0.0454268550965935,
+          "checkpoint_seconds": 0.0873162189964205,
+          "checkpoint_sha256": "bee2c8a615a856b4f1e36c813c57e369bda596f5286954d83205b23905a0d3c5",
+          "checkpoint_roundtrip_verified": true,
+          "peak_cuda_allocated_bytes": 28724224,
+          "accepted_exact_kl": 0.0008425889536738396,
+          "accepted_lr": 1e-05
+        }
+      ],
+      "nonzero_hand_reaction_steps": [
+        0,
+        0
+      ],
+      "final_resets": [
+        2,
+        2
+      ],
+      "final_rod_ticks": [
+        3072,
+        3072
+      ]
+    },
+    "power": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-power-gpu3-4r0qeoto",
+      "receipt_sha256": "29d7ba36a1ba31fdd121dd685a1539009e67f072efb13a4372040e5e3f0ea68d",
+      "exit_code": 0,
+      "signal": null,
+      "forced_exit": false,
+      "elapsed_s": 102.33762450609356,
+      "grasp": "power",
+      "environments": 2,
+      "sdk_step": 522,
+      "updates": 2,
+      "controls": 64,
+      "result_sha256": "4c3cd1cc6cf32db9161bf1513e499c0bbb4f3f71ffdf90920ecca64dab58ae8f",
+      "metrics": [
+        {
+          "updates": 1,
+          "iteration_seconds": 18.87753517087549,
+          "rollout_seconds": 18.62851216387935,
+          "optimizer_seconds": 0.1550098811276257,
+          "checkpoint_seconds": 0.09401312586851418,
+          "checkpoint_sha256": "9e1d07c01c88db8be9d20b3e2d8d63d0b126f26b2fb03edb8856fa1f91b91ec4",
+          "checkpoint_roundtrip_verified": true,
+          "peak_cuda_allocated_bytes": 26502656,
+          "accepted_exact_kl": 0.001325865276157856,
+          "accepted_lr": 1e-05
+        },
+        {
+          "updates": 2,
+          "iteration_seconds": 18.578992036171257,
+          "rollout_seconds": 18.43625180888921,
+          "optimizer_seconds": 0.04731617611832917,
+          "checkpoint_seconds": 0.0954240511637181,
+          "checkpoint_sha256": "3f1166b894d9eb93090e09173ef0a148623fdc519f9496008b75a6b2082925c9",
+          "checkpoint_roundtrip_verified": true,
+          "peak_cuda_allocated_bytes": 28214272,
+          "accepted_exact_kl": 0.0007307808846235275,
+          "accepted_lr": 1e-05
+        }
+      ],
+      "nonzero_hand_reaction_steps": [
+        0,
+        0
+      ],
+      "final_resets": [
+        2,
+        2
+      ],
+      "final_rod_ticks": [
+        3072,
+        3072
+      ]
+    },
+    "failed_attempts": [
+      {
+        "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-pinch-gpu3-u76lqve9",
+        "receipt_sha256": "5aa1c0f9a6b0fc11b7578d0f96c07fc4e770d2f35e3d2b91acb3c8d4e498ad0d",
+        "exit_code": 1,
+        "signal": null,
+        "forced_exit": false,
+        "elapsed_s": 61.40152979106642,
+        "reason": "original_table_clearance",
+        "sdk_step": 61,
+        "committed_controls": 6,
+        "updates": 0,
+        "failure_sha256": "3d15cbf252698e7cda14f07980e5ee0f236a266f9dd0dfbf9be6826f0aa95503"
+      },
+      {
+        "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-tripod-gpu3-b0ur28vz",
+        "receipt_sha256": "274fee5acb9dec006fef146b4d75f32aa5d26ba6295b574facbf61371982cf87",
+        "exit_code": 1,
+        "signal": null,
+        "forced_exit": false,
+        "elapsed_s": 51.63330315798521
+      },
+      {
+        "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-tripod-readerfix-gpu3-h0ucnf_2",
+        "receipt_sha256": "1878af0720faa250e56a621dcad2c828dd93869359ef6b56247dbf94fca19593",
+        "exit_code": 1,
+        "signal": null,
+        "forced_exit": false,
+        "elapsed_s": 146.25479759695008,
+        "reason": "original_geometry_guard",
+        "sdk_step": 132,
+        "committed_controls": 15,
+        "updates": 0,
+        "failure_sha256": "212d07c851a8649f54180450addcb1fabc074ade29ebe59ac8577e737ede2b5a"
+      },
+      {
+        "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-pinch-height-gpu3-ozlwbe44",
+        "receipt_sha256": "c44c97d40acec98cfcd81e070efea3e64ef299a8567658349caaa8d4062cff53",
+        "exit_code": 1,
+        "signal": null,
+        "forced_exit": false,
+        "elapsed_s": 42.60155954584479
+      },
+      {
+        "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-pinch-height-v2-gpu3-yzcsvipv",
+        "receipt_sha256": "fba225572d0a8632aa52f4bb0237352dbe12bcfd6ea1ea6a86bd8b92f2ec694a",
+        "exit_code": 1,
+        "signal": null,
+        "forced_exit": false,
+        "elapsed_s": 57.23208511597477,
+        "reason": "original_table_clearance",
+        "sdk_step": 61,
+        "committed_controls": 6,
+        "updates": 0,
+        "failure_sha256": "f0d1d62992c0196335efa9e5aa46a04883d8d2d4ce2fd989538967d58525030b"
+      },
+      {
+        "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-pinch-height-v3-gpu3-aqf59dz6",
+        "receipt_sha256": "5e0daf6837dd46bf981cfd42fdee820a30a44e762f57a47ec42dc7a39aebf5b5",
+        "exit_code": 1,
+        "signal": null,
+        "forced_exit": false,
+        "elapsed_s": 80.3254712051712,
+        "reason": "ValueError:explicit string dictionary keys required",
+        "sdk_step": 266,
+        "committed_controls": 32,
+        "updates": 1,
+        "failure_sha256": "65c3a6d4539e1f3304905befb2e06494c47895a631c5f9845d405874d873aa09"
+      }
+    ],
+    "teacher_admission": false,
+    "grasp_qualified": false,
+    "actual_isaac_training_envs": 2,
+    "requested_envs_per_grasp": [
+      128,
+      512
+    ],
+    "pending": [
+      "Tripod actual two-update/reset completion",
+      "128-lane native timing and PPO",
+      "three-grasp Lift/Hold/Slip qualification"
+    ],
+    "cpu": {
+      "passed": 44,
+      "skipped": 2,
+      "failed": 0,
+      "log_sha256": "2b51be430513475e1a032d8c985de2c616c7175ccc6b3e371896bba3ae6e48fe"
+    },
+    "cuda_checkpoint": {
+      "passed": 2,
+      "failed": 0,
+      "log_sha256": "18a321c436f937eb2d8da591b2b209cf90f79cbeacc73d96d77f9a18d617dcf3"
+    },
+    "registry": {
+      "passed": 60,
+      "failed": 0,
+      "log_sha256": "926d5447fcb386759cfbab26fb306c18830c81a1cfdfadcdab5fe8a3a66440b4"
+    },
+    "report": "docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md",
+    "release_cpu": {
+      "passed": 104,
+      "skipped": 2,
+      "failed": 0,
+      "seconds": 36.55,
+      "log_sha256": "e0ace5406267635bc40587eb09013d5d72a3ff7c535a527eb5a8f1284b016abf"
+    },
+    "tripod": {
+      "status": "failed_original_geometry_guard",
+      "environments": 2,
+      "sdk_step": 190,
+      "committed_controls": 22,
+      "updates": 0,
+      "receipt_sha256": "e3848b602f714f176b49def6ddee6397c00595fcb23044d91a138d9c63459908",
+      "failure_sha256": "50e038d21677d46542864952544b88d2df52c84877f7a9d4977d87ecd0e6e4c0",
+      "exit_code": 1,
+      "signal": null,
+      "forced_exit": false,
+      "elapsed_s": 159.77413174603134,
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-tripod-height-gpu3-n0zpints",
+      "delta_z_m": [
+        0.002,
+        0.002
+      ]
+    }
   }
 }

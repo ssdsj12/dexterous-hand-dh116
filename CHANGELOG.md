@@ -1,3 +1,5 @@
+Actual shared native Teacher PPO now completes two updates and local Reset continuation for two-lane Pinch/Power, with exclusive checkpoint roundtrips and natural exit 0. Three-grasp 128-lane training and grasp qualification remain pending. [Report](docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md)
+
 Add a bounded per-environment DeformX raw-pair option in an isolated build and a three-grasp native CUDA scale audit. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-pair-scale-probe.md)
 
 Batch Pinch collection retains raw failure evidence in memory and verifies one owning geometry result per SDK step. Full per-step audit is opt-in. [Report](docs/superpowers/reports/2026-11-23-dh116-compact-teacher-rollout.md)
