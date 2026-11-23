@@ -34607,6 +34607,36 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.tripod-index-contact-loss",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-index-contact-loss.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_index_contact_loss_v1.json",
+      "status": "passed_cpu_archived_contact_loss_replay",
+      "cpu_tests": {
+        "passed": 101,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "archived_first_loss_pairs": 69,
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "953730596955a4aa06b8d454c8541d5ef36926e1",
+        "source_tree": "2fc1020a42ce050e721db190899347cd14b8d305",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
