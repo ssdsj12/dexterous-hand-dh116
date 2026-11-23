@@ -35081,6 +35081,142 @@
         "errors": 1,
         "same_cases_at_baseline": 23
       }
+    },
+    {
+      "package": "teacher.tripod-current-reset-freeze-r3",
+      "branch": "11-17",
+      "status": "current_tripod_reset_cpu_frozen_only",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-full-lift-replay-tripod-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round3_v1.json",
+      "cpu_tests": {
+        "passed": 132,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 188,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "6b8d2fc1c81623fb19629f17fb4b1552f4391c64",
+        "source_tree": "1ad0e4a85d97a6b4bcbcf0b92ab0693e61c1e226",
+        "remote_branch": "11-17",
+        "files_verified": 2,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.power-coupled-wrist-r3",
+      "branch": "11-17",
+      "status": "coupled_endpoints_0_of_15_passed",
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-coupled-wrist.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round3_v1.json",
+      "cpu_tests": {
+        "passed": 96,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 188,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "325e95f149e63983b5402195afc6e224ed77544d",
+        "source_tree": "4d3bd1cd5e08873e7fc08d2a05795923d7af71fe",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.tripod-wrist-command-r3",
+      "branch": "11-17",
+      "status": "canonical_command_passed_but_continuous_clearance_and_contact_blocked",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-wrist-relief-command.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round3_v1.json",
+      "cpu_tests": {
+        "passed": 110,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 188,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "2dc9b0511365825563a5cc80a68c6b2d90b408b5",
+        "source_tree": "e105c1b839759b3423acce6c4f7173ba403d7c32",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
+    },
+    {
+      "package": "teacher.902-pinch-coupled-r3",
+      "branch": "11-17",
+      "status": "bilateral_geometry_improved_positive_pad_gaps_remain",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-coupled-alignment.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round3_v1.json",
+      "cpu_tests": {
+        "passed": 171,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 188,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "5683e49514de9f79a5149d485c1e7e4a7bcb568e",
+        "source_tree": "1e411a308ce9dda802fd030f291afe9cd0296d26",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      }
     }
   ]
 }

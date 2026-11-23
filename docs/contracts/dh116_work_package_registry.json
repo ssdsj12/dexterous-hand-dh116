@@ -51596,6 +51596,94 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-current-reset-freeze-r3": {
+      "title": "teacher full lift replay tripod reset",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-relief-round2"
+      ],
+      "tests": [
+        "tests/test_tripod_supported_reset_capture.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-full-lift-replay-tripod-reset.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round3_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "current_tripod_reset_cpu_frozen_only",
+        "cpu_passed": 132,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.power-coupled-wrist-r3": {
+      "title": "sync power coupled wrist",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-remaining-digits"
+      ],
+      "tests": [
+        "tests/test_dh116_power_coupled_wrist.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-coupled-wrist.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round3_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "coupled_endpoints_0_of_15_passed",
+        "cpu_passed": 96,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.tripod-wrist-command-r3": {
+      "title": "teacher tripod wrist relief command",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-relief-round2"
+      ],
+      "tests": [
+        "tests/test_tripod_wrist_relief_command.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-wrist-relief-command.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round3_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "canonical_command_passed_but_continuous_clearance_and_contact_blocked",
+        "cpu_passed": 110,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.902-pinch-coupled-r3": {
+      "title": "teacher 902 pinch coupled alignment",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-pinch-alignment-round2"
+      ],
+      "tests": [
+        "tests/test_dh116_902_pinch_coupled.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-coupled-alignment.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round3_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "bilateral_geometry_improved_positive_pad_gaps_remain",
+        "cpu_passed": 171,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
