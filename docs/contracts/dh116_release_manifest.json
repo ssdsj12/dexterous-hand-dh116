@@ -35941,6 +35941,34 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.three-grasp-isaac-32-64-coupling-v1",
+      "branch": "11-17",
+      "status": "native_held_pose_coupling_verified_ppo_collection_pending",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-three-grasp-isaac-coupling.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "cpu_tests": {
+        "passed": 129,
+        "failed": 0
+      },
+      "native_cases": 6,
+      "physx_envs_per_grasp": [
+        32,
+        64
+      ],
+      "native_hand_contact_pairs": 0,
+      "ppo_updates": 0,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "cb335122fa861ebcf3a1ede1a82190d3ff4d5b8a",
+        "source_tree": "2c85f87297d6a0b368172307bbbec1fd2e260607",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
