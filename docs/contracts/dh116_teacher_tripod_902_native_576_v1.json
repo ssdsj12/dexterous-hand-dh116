@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "status": "native_right_precontact_to_sdk576_and_natural_exit",
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-902-native-576.md",
+  "native_executed": true,
+  "actual": {
+    "outer_sha256": "274640fdb9af3a8074776301cc6bd5205abbec891bc4482cedaf07f054c9e3f9",
+    "plan_sha256": "185cb825472015d0f6259ca3a794d48c8ba92937a6aa15e25cbca7b9853aa7e9",
+    "source_commit": "5832c560be90aa70021f2c3dac874bea8b2ed604",
+    "frozen_sha256": "c8e896f3b33b422332d5098c4e56f704d33369af81e4f0c521b64e8ea36ebbef",
+    "artifact_count": 656,
+    "elapsed_s": 202.02076570200734,
+    "process_exit_code": 0,
+    "debugger_inferior_exit_code": 0,
+    "debugger_inferior_signal": null,
+    "forced_exit": false,
+    "natural_exit_verified": true,
+    "guard_failure": null,
+    "parked_rows": 238,
+    "controlled_rows": 336,
+    "interlock_sdk": [
+      240,
+      552,
+      568,
+      576
+    ],
+    "last_completed_sdk": 576,
+    "new_candidate_rows": 8,
+    "known_solver_substep_count": 6888,
+    "first_action_difference_sdk": null,
+    "hand_pair_sdk": [],
+    "peak_support_load_n_in_candidate": {
+      "table": 0.0,
+      "support_0": 0.15772645881334418,
+      "support_1": 0.15780044460533535
+    },
+    "right_continuation_precontact_passed": true,
+    "teacher_admission": false,
+    "grasp_qualified": false,
+    "ppo_updates": 0
+  },
+  "budget": {
+    "gpu": 2,
+    "num_envs": 1,
+    "mode": "tripod_902_live_continuation_interlocked",
+    "sdk_setup_steps": 2,
+    "control_steps": 42,
+    "solver_steps": 6888,
+    "teacher_queries": 0,
+    "ppo_updates": 0,
+    "model_loads": 0,
+    "explicit_app_updates_for_stop": 1,
+    "soft_wall_seconds": 420,
+    "auto_retries": 0,
+    "auto_kill": false,
+    "new_power_sdf_bakes": 0,
+    "new_power_mesh_registrations": 6,
+    "episode_resets": 1,
+    "sdk_steps": 576
+  },
+  "worker": "scripts/python.sh -B -m scripts.verify_dh116_tripod_902_approach",
+  "measured_witness_gaps": {
+    "fixed_witness_nodes": {
+      "right.finger14_link": 3,
+      "right.finger23_link": 2,
+      "right.finger33_link": 4
+    },
+    "first_m": {
+      "right.finger14_link": 0.0010833418646392793,
+      "right.finger23_link": 0.0009000488705817565,
+      "right.finger33_link": 0.0013354825192495633
+    },
+    "last_m": {
+      "right.finger14_link": 0.0010439615006029674,
+      "right.finger23_link": 0.0008692676880399852,
+      "right.finger33_link": 0.0012923023123500707
+    },
+    "last_minus_first_m": {
+      "right.finger14_link": -3.938036403631183e-05,
+      "right.finger23_link": -3.078118254177132e-05,
+      "right.finger33_link": -4.318020689949263e-05
+    },
+    "whole_rod_motion_m": 4.133582842769101e-05,
+    "all_four_ring_little_targets_bitwise_held": true,
+    "max_actual_ring_little_q_shift_rad": 1.1920928955078125e-06,
+    "sdk": [
+      568,
+      569,
+      570,
+      571,
+      572,
+      573,
+      574,
+      575,
+      576
+    ],
+    "source": "actual recorded SDK link and rod poses with locked SDF, not force"
+  },
+  "evidence_sha256": {
+    "verify.log": "7343137a9fff9743472c0a17ba822d2da487cc59f1f980c2de0c55dbfdb33ddf",
+    "outer.json": "274640fdb9af3a8074776301cc6bd5205abbec891bc4482cedaf07f054c9e3f9",
+    "native.log": "cd37d231a652e5fc6432fde32c6d9ab61a11bea4f75fb9b4f4c3c5863656eecf",
+    "plan.json": "185cb825472015d0f6259ca3a794d48c8ba92937a6aa15e25cbca7b9853aa7e9",
+    "verify_native.py": "8f5afa15707b1cae617587b6e130fbec9a2b3ebfa7b23dc6dafceedac6cdd757",
+    "independent-tripod-902-live-576-audit.json": "05bd37035999d11c05baeeaf925cbc53d4eda3785bbbfe22d1684f7ddf00b8d5",
+    "native-gaps.py": "925ace954e3f48e94f53943e56f9c188d0922618c3b9f39a5d8b286dc9679edb",
+    "native-gaps-argv.json": "1180b3ead1af3ab98f17e04f7bad0cfe3fc3385e1dc7893820cb5911436d4aa7",
+    "native-gaps.json": "5e9338b4c11067886e5a4d754753f2a53a89d986297b6902f1eed048da44567c",
+    "native/tripod_control_576.json": "e8517f91d7d523e310f0b04c2496ed0402724c57be2eaa1ddba04b0f3b924e0d",
+    "native/tripod_902_interlock_568.json": "d0fd7e0fbed9534e60ae148495d3d6e5b5c897ec3d97b0181349cb9454076f45",
+    "native/tripod_902_interlock_576.json": "8f5b1a59cd8598357a7ee02a9b278a7a1090e321135bdf9aee0aac7c0e98fce4"
+  },
+  "native_precontact_verified": true,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "teacher_admission": false
+}
