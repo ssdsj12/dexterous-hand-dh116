@@ -1,0 +1,136 @@
+{
+  "version": "dh116-teacher-tripod-index-contact-loss-v1",
+  "status": "passed_cpu_archived_contact_loss_replay",
+  "source_commit_base": "b6c9685c69f4d7c3ad99031797dd4b30f231257b",
+  "source_sha256": {
+    "scripts/audit_dh116_tripod_index_contact_loss.py": "f5ae37265ee57223fd0ca91e702cbff097fd4660888b93e16667457e74f06fa6",
+    "tests/test_tripod_index_contact_loss.py": "923fefae278bd60d51edcc251fa943298da949720a4e648c6040a7b29deaa548"
+  },
+  "cpu": {
+    "passed": 101,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_tripod_index_contact_loss.py",
+      "tests/test_supported_wire_grasp_feedback.py",
+      "tests/test_supported_wire_factorial_holdouts.py",
+      "tests/test_supported_wire_holdout_resets.py",
+      "tests/test_wire_feedback_teacher.py",
+      "tests/test_wire_live_palm_approach.py",
+      "tests/test_wire_live_opposition.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "517ae722556be9e2c17de78eac377c899933cd0e92160b410e98be9da68b9e71",
+    "missing_implementation_failure_log_sha256": "d34b10eca3d055ab72b5113f05d1a0dd32bac6fab909068731d37bbbc836f440",
+    "wrong_target_index_failure_log_sha256": "46e8331ba87e9c319731c171ca3102609715b8b48fcb28be6623a6da9e636724",
+    "missing_palm_separation_failure_log_sha256": "47f21f17dd2bde5eb17a24f5cd4ae555e4f4946cdb650a6fec4f1ef573c9e276",
+    "invalid_palm_quaternion_failure_log_sha256": "3ddeb82cb7083e204ea850c500bc800eee977b72f7130dad6aebf9895b2fc93a"
+  },
+  "archived_native": {
+    "receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+    "cohort_sha256": "f2ef5c46dd3833c2f56cd0f36dbb4a5bd784c3717c09453f0b8587f35ba9f0f1",
+    "sdf_sha256": "cf96dbb5cfb36eeacab34c48bacae18eb9030d3fb916a3358da3b521568d38c3",
+    "readback_sha256": "2cfe1a8ada1d65ea771d0a469f6a94e02f0fe6748c4f0c5af9c8140fa57d9f74",
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "scripts.audit_dh116_tripod_index_contact_loss",
+      "--run",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ref902/tripod-left-wrist-seating-v1/native-run-v2",
+      "--receipt-sha256",
+      "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+      "--cohort",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/wire-feedback-policy-tripod-first-contact-loss-v1.json",
+      "--cohort-sha256",
+      "f2ef5c46dd3833c2f56cd0f36dbb4a5bd784c3717c09453f0b8587f35ba9f0f1",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/tripod-index-motion-final-v3.json"
+    ],
+    "adjacent_losses": 69,
+    "same_node_gap_crossings": 69,
+    "wire_radius_m": 0.005,
+    "median_rod_effect_m": -3.1181964308848835e-06,
+    "median_link_effect_m": 3.1452351660827584e-05,
+    "matched_index_wrenches": 69,
+    "valid_palm_and_finger_splits": 69,
+    "median_palm_effect_m": -1.8791832019139122e-07,
+    "median_finger_effect_m": 3.1610093803247346e-05,
+    "max_split_error_m": 0.0,
+    "existing_index_close_increments": 16,
+    "wrist_command_changes": 0,
+    "off_support_lift_rows": 0,
+    "solver_substep_causality_established": false
+  },
+  "holdout": {
+    "catalog": {
+      "train": 11,
+      "validation": 2,
+      "test": 8,
+      "diameter_mm": [
+        9.2,
+        10.5
+      ],
+      "length_mm": [
+        475,
+        525
+      ],
+      "elastic_modulus_multiplier": [
+        0.7,
+        1.3
+      ]
+    },
+    "placement_screen": {
+      "pinch": {
+        "clear": 24,
+        "total": 104
+      },
+      "tripod": {
+        "clear": 72,
+        "total": 104
+      },
+      "power": {
+        "clear": 0,
+        "total": 104
+      }
+    },
+    "paired_policy_evaluation": [
+      "frozen_baseline",
+      "palm_local_pose",
+      "palm_local_pose_and_measured_reaction"
+    ],
+    "heldout_spec_identity_on_actor": false,
+    "native_completed_episodes": 0
+  },
+  "new_native_steps": 0,
+  "new_native_ppo_updates": 0,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "antigravity": {
+    "reviewed": true,
+    "workspace_head": "b6c9685c69f4d7c3ad99031797dd4b30f231257b",
+    "rounds": [
+      "DH116 Tripod 左食指保持 R1",
+      "DH116 Tripod 左食指保持 R2",
+      "DH116 Tripod 左食指保持 R3",
+      "DH116 Tripod 左食指保持 R4"
+    ],
+    "reviewed_source": {
+      "audit_sha256": "99cbfae29d23280f89ef939bdec343febca43c7bce0b203dac9810fac7377bf4",
+      "test_sha256": "bbeab904deb88f72967251c37d74e260b666bee676cdb8acbcae305c47a902dd"
+    },
+    "follow_up_done": [
+      "validate palm XYZW before transform",
+      "regress rotation with a finite lever arm",
+      "regress mounted wrist target indexing"
+    ],
+    "final_revision_verified_by_codex": true
+  }
+}

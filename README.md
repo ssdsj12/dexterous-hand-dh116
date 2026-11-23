@@ -1,3 +1,5 @@
+The archived Tripod audit separates left index pad motion from wire motion at first loss of contact. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-index-contact-loss.md)
+
 The independent CPU Teacher candidate updates wire feedback branches using the original PPO. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-feedback-policy.md)
 
 The Tripod Contact worker can record causal wire feedback in an independent diagnostic journal. [Report](docs/superpowers/reports/2026-11-23-teacher-live-wire-feedback.md)

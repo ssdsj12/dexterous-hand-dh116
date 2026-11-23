@@ -51179,6 +51179,36 @@
         "native_actor_feedback_active": false,
         "teacher_admission": false
       }
+    },
+    "teacher.tripod-index-contact-loss": {
+      "title": "Audit first Tripod index unload against original material nodes and measured response",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.wire-feedback-policy"
+      ],
+      "tests": [
+        "tests/test_tripod_index_contact_loss.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_supported_wire_factorial_holdouts.py",
+        "tests/test_supported_wire_holdout_resets.py",
+        "tests/test_wire_feedback_teacher.py",
+        "tests/test_wire_live_palm_approach.py",
+        "tests/test_wire_live_opposition.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-index-contact-loss.md",
+      "readiness": "docs/contracts/dh116_teacher_tripod_index_contact_loss_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "archived_supported_tripod_at_native_sdk_endpoints",
+        "cpu_passed": 101,
+        "measured_adjacent_losses": 69,
+        "new_native_runs": 0,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
