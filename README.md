@@ -1,3 +1,5 @@
+The held-pose native coupling audit verified 6 Pinch, Tripod and Power capacity cases across 32 and 64 independent lanes. Multi-environment PPO collection and episode recovery remain pending. [Report](docs/superpowers/reports/2026-11-23-dh116-three-grasp-isaac-coupling.md)
+
 Power scene capacity has been verified at 32 and 64 Isaac lanes. The native multi-environment Teacher PPO path still needs the coupled rod and episode loop. [Report](docs/superpowers/reports/2026-11-23-dh116-isaac-32-64-scene-capacity.md)
 
 The Power solver capacity probe reached 1024 rods in a shared-SDF batch. Approval for multi-environment Isaac PPO is pending native integration and raw pair provenance. [Report](docs/superpowers/reports/2026-11-23-teacher-power-1024-capacity.md)

@@ -53,26 +53,94 @@ def batch_snapshot(references):
     return summary
 
 
+def verify_mesh_layout(style, names):
+    from go2_pvcnn.control.dh116.tabletop_dual_hand_rod_runtime import MESH_NAMES
+    from go2_pvcnn.control.dh116.tabletop_power_shared_rod import PROXIMAL_POWER_MESH_NAMES
+
+    expected = {"pinch": MESH_NAMES, "tripod": PROXIMAL_POWER_MESH_NAMES,
+                "power": PROXIMAL_POWER_MESH_NAMES}
+    if style not in expected or tuple(names) != expected[style]:
+        raise ValueError("original grasp-specific mesh layout required")
+
+
+def load_grasp_archive(style, receipt_path, digest):
+    """Read the exact grasp's measured Reset inputs before loading Isaac."""
+    from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
+    from go2_pvcnn.control.dh116.tabletop_dual_pinch_builder import load_bound_pair_proposal
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
+
+    outer = json.loads(checked_file(receipt_path, digest))
+    root = receipt_path.parent / "native"
+    inventory = outer["artifact_sha256"]
+
+    def checked_json(name):
+        return json.loads(checked_file(root/name, inventory[name]))
+
+    if outer["exit_code"] != 0 or outer.get("forced_exit", False):
+        raise ValueError("successful source-grasp Reset required")
+    captured = checked_json("reset_capture.json")
+    closed = checked_json("app_close_returned.json")
+    if (captured["sdk_step"] != 2 or captured["actual_rod_tick"] != 0
+            or not captured["clearance_passed"] or captured["ppo_updates"] != 0
+            or not closed["app_close_returned"] or closed["close_mode"] != "normal"):
+        raise ValueError("measured original two-step Reset and normal close required")
+    mesh_plan = decode_owned(checked_json("mesh_reset_state.json"))["mesh_plan"]
+    verify_mesh_layout(style, [row["name"] for row in mesh_plan["entries"]])
+    if style == "pinch":
+        if (outer.get("style") != style or outer.get("auto_kill") is not False
+                or captured["pair_proposal"] != outer["pair_proposal"]):
+            raise ValueError("archived Pinch pair ownership differs")
+        packet = load_bound_pair_proposal(outer["pair_proposal"])
+        frozen = json.loads(checked_file(root/"frozen_plan.json", outer["plan_sha256"]))
+        if frozen["pair_proposal"] != outer["pair_proposal"]:
+            raise ValueError("Pinch pair differs from the recorded launch")
+        task = None
+    else:
+        if (captured["style"] != style or outer["debugger_inferior_exit_code"] != 0
+                or outer["debugger_inferior_signal"] is not None
+                or captured["mesh_plan_sha256"] != mesh_plan["sha256"]
+                or captured["task_config"] != mesh_plan["task_config"]):
+            raise ValueError("separate supported grasp Reset and source plan required")
+        frozen = checked_json("frozen_plan.json")
+        task_ref = captured["task_config"]
+        task = json.loads(checked_file(Path(task_ref["path"]), task_ref["sha256"]))
+        packet = None
+    experience = frozen["experience"]
+    checked_file(Path(experience), frozen["frozen_files"][experience])
+    return SimpleNamespace(style=style, mesh_plan=mesh_plan, task=task, pair=packet,
+                           experience=experience, reset_receipt_sha256=digest,
+                           task_seed_sha256=captured.get("reset_seed_sha256"))
+
+
 def _gpu_memory(gpu):
     return int(subprocess.check_output(
         ["nvidia-smi", "-i", str(gpu), "--query-gpu=memory.used", "--format=csv,noheader,nounits"],
         text=True).strip())
 
 
-def _author(sim, owners, trace, project, prepared, task, lanes):
+def _author(sim, owners, trace, project, prepared, archive, lanes):
     from go2_pvcnn.control.dh116 import tabletop_dual_hand_scene_preparation as assets
     from go2_pvcnn.control.dh116.tabletop_deformx_end_supported_scene import _bind_support_material
     from go2_pvcnn.control.dh116.tabletop_dual_pinch_builder import _Composers
     from go2_pvcnn.control.dh116.tabletop_end_supported_scene import author_end_supports
-    from go2_pvcnn.control.dh116.tabletop_power_supported_task import prepare_initial_state
+    from go2_pvcnn.control.dh116.tabletop_power_supported_task import (POWER_SCOPE, TRIPOD_SCOPE, prepare_initial_state)
     from go2_pvcnn.control.dh116.tabletop_vec_isaac import spawn_scene
 
-    seed, active, _, _ = prepare_initial_state(task, prepared["table"])
     args, layout, sources = assets.spawn_parameters(project, prepared)
-    for side_id, side in enumerate(assets.SIDES):
-        layout["hand_roots"][side] = np.asarray(seed["authored_root_seed_w"][side_id]).copy()
-        layout["hand_roots"][side][2] -= assets.BUILDER_OFFSET_M
-        layout["active_joints"][side] = active[side_id].copy()
+    if archive.style == "pinch":
+        from go2_pvcnn.control.dh116.tabletop_dual_pinch_builder import _paired_sources
+        _paired_sources(project, archive.pair, prepared)
+        seed = archive.pair["reset_seed"]
+        rod_nodes = np.asarray(archive.pair["rod_seed"]["proposed_nodes_m"], dtype=np.float32)
+    else:
+        scope = {"tripod": TRIPOD_SCOPE, "power": POWER_SCOPE}[archive.style]
+        seed, active, rod_nodes, _ = prepare_initial_state(archive.task, prepared["table"], expected_scope=scope)
+        if seed["sha256"] != archive.task_seed_sha256:
+            raise ValueError("current supported reset seed differs from archived readback")
+        for side_id, side in enumerate(assets.SIDES):
+            layout["hand_roots"][side] = np.asarray(seed["authored_root_seed_w"][side_id]).copy()
+            layout["hand_roots"][side][2] -= assets.BUILDER_OFFSET_M
+            layout["active_joints"][side] = active[side_id].copy()
 
     scenes = owners.keep("scenes", [])
     for lane, (prefix, origin) in enumerate(lanes):
@@ -82,16 +150,17 @@ def _author(sim, owners, trace, project, prepared, task, lanes):
             raise ValueError("original hands and no duplicate wire required")
         scoped = dict(prepared, prefix=prefix, env_id=lane, table=dict(prepared["table"],
                       center_m=(np.asarray(prepared["table"]["center_m"]) + origin).tolist()))
-        support = deepcopy(task["support_scene"])
-        for box in support["supports"]:
-            box["center_m"] = (np.asarray(box["center_m"]) + origin).tolist()
         assets._bind_materials(sim.stage, scoped)
         report = assets.inspect_source_stage(sim.stage, scoped)
         if report["original_colliders"] != 34:
             raise ValueError("complete 34 original colliders per lane required")
-        paths = author_end_supports(sim.stage, prefix, support)
-        material = prepared["candidate_physics"]["table"]
-        _bind_support_material(sim.stage, prefix, paths, material["mu_s"], material["mu_k"])
+        if archive.task is not None:
+            support = deepcopy(archive.task["support_scene"])
+            for box in support["supports"]:
+                box["center_m"] = (np.asarray(box["center_m"]) + origin).tolist()
+            paths = author_end_supports(sim.stage, prefix, support)
+            material = prepared["candidate_physics"]["table"]
+            _bind_support_material(sim.stage, prefix, paths, material["mu_s"], material["mu_k"])
         for side, hand in zip(assets.SIDES, scene["hands"], strict=True):
             trace.watch(f"{lane}_{side}_hand", hand, owner="batch_scene_audit",
                         release="owned scope then SDK STOP", callbacks=True)
@@ -115,10 +184,10 @@ def _author(sim, owners, trace, project, prepared, task, lanes):
     assets.validate_simulation_settings(sim, prepared)
     if sim.current_time_step_index != 2:
         raise ValueError("one global reset and two SDK initialization steps required")
-    return scenes, seed
+    return scenes, seed, rod_nodes
 
 
-def _exercise(sim, scenes, seed, prepared, output, gpu, write_new):
+def _exercise(sim, scenes, seed, prepared, output, gpu, write_new, *, rod_spec=None):
     import torch
     from go2_pvcnn.control.dh116.tabletop_dual_hand_reset import _targets
     from go2_pvcnn.control.dh116.tabletop_palm_mount import JOINT_NAMES, MountView
@@ -145,7 +214,7 @@ def _exercise(sim, scenes, seed, prepared, output, gpu, write_new):
             q.append(local_q)
         return np.asarray(q), np.asarray(poses)
 
-    for scene in scenes:
+    def write_seed(scene):
         for side_id, hand in enumerate(scene["hands"]):
             q, qd = _targets(seed, side_id, hand.joint_names)
             pose = np.asarray(seed["reset_root_pose_w"])[side_id:side_id + 1].copy()
@@ -159,6 +228,8 @@ def _exercise(sim, scenes, seed, prepared, output, gpu, write_new):
             hand.set_joint_position_target(tensor(q), env_ids=ids)
             MountView(hand).reset(tensor(pose), ids)
             hand.write_data_to_sim()
+    for scene in scenes:
+        write_seed(scene)
     sim.physics_sim_view.update_articulations_kinematic()
     baseline_q, baseline_poses = sample()
     write_new(output / "initialized.json", dict(sdk_step=sim.current_time_step_index,
@@ -202,22 +273,41 @@ def _exercise(sim, scenes, seed, prepared, output, gpu, write_new):
 
     minimum = clearance(restored_poses)
     started = perf_counter()
-    for expected in range(3, 11):
+
+    def step(expected):
+        nonlocal minimum
         sim.step(render=False)
         if sim.current_time_step_index != expected:
             raise ValueError("unexpected shared 480 Hz SDK boundary")
         _, poses = sample()
         minimum = min(minimum, clearance(poses))
+
+    def reset_hand_lane(scene):
+        before, before_poses = sample()
+        write_seed(scene)
+        sim.physics_sim_view.update_articulations_kinematic()
+        after, after_poses = sample()
+        if not np.array_equal(before[:-1], after[:-1]) or not np.array_equal(before_poses[:-1], after_poses[:-1]):
+            raise ValueError("zero-step restore changed another native hand lane")
+
+    coupled = {"solver_steps": 0}
+    if rod_spec is None:
+        for expected in range(3, 11):
+            step(expected)
+    else:
+        from scripts.audit_dh116_batch_rod_exchange import coupled_probe
+        archive, nodes, owners = rod_spec
+        coupled = coupled_probe(sim, scenes, archive, nodes, owners, reset_hand_lane, step, output)
     result = dict(physics_rows=8, environments=len(scenes), articulations=2*len(scenes),
         isolated_joint_restore=True, sdk_step=sim.current_time_step_index,
         min_source_clearance_m=minimum, step_and_readback_seconds=perf_counter()-started,
         gpu_used_mib=_gpu_memory(gpu), process_peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-        solver_steps=0, teacher_queries=0, ppo_updates=0)
+        teacher_queries=0, ppo_updates=0, **coupled)
     write_new(output / "scene_observations.json", result)
     return result
 
 
-def _run(project, task, experience, gpu, num_envs, output):
+def _run(project, archive, gpu, num_envs, output, *, coupled):
     from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
     assert_clean_import_boundary()
     from isaaclab.app import AppLauncher
@@ -225,7 +315,7 @@ def _run(project, task, experience, gpu, num_envs, output):
     try:
         sys.argv = argv[:1]
         app = AppLauncher(headless=True, device="cuda:0", enable_cameras=False,
-                          fast_shutdown=False, experience=experience).app
+                          fast_shutdown=False, experience=archive.experience).app
     finally:
         sys.argv = argv
     entered = False
@@ -272,8 +362,10 @@ def _run(project, task, experience, gpu, num_envs, output):
             from go2_pvcnn.control.dh116.tabletop_dual_hand_scene_preparation import prepare_scene
             prepared = prepare_scene(project)
             lanes = scene_lanes(num_envs, prepared["table"]["size_m"])
-            scenes, seed = _author(sim, owners, trace, project, prepared, task, lanes)
-            result = _exercise(sim, scenes, seed, prepared, output, gpu, write_new)
+            scenes, seed, rod_nodes = _author(sim, owners, trace, project, prepared, archive, lanes)
+            result = _exercise(sim, scenes, seed, prepared, output, gpu, write_new,
+                rod_spec=(archive, rod_nodes, owners) if coupled else None)
+            result["style"] = archive.style
             completed_step = result["sdk_step"]
             return result
 
@@ -311,6 +403,8 @@ def _run(project, task, experience, gpu, num_envs, output):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--style", choices=("pinch", "tripod", "power"), default="power")
+    parser.add_argument("--coupled", action="store_true", help="add the original live rod and reaction exchange")
     parser.add_argument("--num-envs", type=int, choices=(32,64), required=True)
     parser.add_argument("--gpu", type=int, required=True)
     parser.add_argument("--receipt", type=Path, required=True)
@@ -320,29 +414,27 @@ def main():
     if os.getenv("CUDA_VISIBLE_DEVICES") != str(args.gpu):
         raise ValueError("explicit matching physical CUDA device required")
     os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    from scripts.audit_dh116_power_solver_capacity import load_power_inputs
     from scripts.run_dh116_work_packages import NATIVE_LOCK, native_file_lock
-    from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
     from scripts.diagnose_dh116_teacher_initialization import write_new
 
     project = Path(__file__).resolve().parents[1]
-    plan, _ = load_power_inputs(args.receipt, args.receipt_sha256)
-    task_ref = plan["task_config"]
-    task = json.loads(checked_file(project/"configs/dh116_tasks"/Path(task_ref["path"]).name,
-                                   task_ref["sha256"]))
-    receipt = json.loads(checked_file(args.receipt, args.receipt_sha256))
-    frozen = json.loads(checked_file(args.receipt.parent/"native/frozen_plan.json",
-                                    receipt["artifact_sha256"]["frozen_plan.json"]))
-    experience = frozen["experience"]
-    checked_file(Path(experience), frozen["frozen_files"][experience])
+    archive = load_grasp_archive(args.style, args.receipt, args.receipt_sha256)
     args.output.mkdir(exist_ok=False)
     with native_file_lock(NATIVE_LOCK):
         if _gpu_memory(args.gpu) > 512:
             raise RuntimeError("GPU in use before batch scene launch")
         write_new(args.output/"probe_plan.json", dict(environments=args.num_envs, gpu=args.gpu,
-            receipt_sha256=args.receipt_sha256, task_config_sha256=task_ref["sha256"],
-            max_sdk_steps=10, solver_steps=0, ppo_updates=0))
-        _run(project, task, experience, args.gpu, args.num_envs, args.output)
+            receipt_sha256=args.receipt_sha256, style=args.style, coupled=args.coupled,
+            max_sdk_steps=10, ppo_updates=0))
+        if args.coupled:
+            from go2_pvcnn.control.dh116.tabletop_mesh_observation_source import BACKEND, BACKEND_SHA
+            from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
+            checked_file(BACKEND, BACKEND_SHA)
+            sys.path.insert(0, str(BACKEND.parents[1]))
+            from ropesim import _ropesim
+            if Path(_ropesim.__file__).resolve() != BACKEND:
+                raise ValueError("the locked DeformX binary must own the coupled probe")
+        _run(project, archive, args.gpu, args.num_envs, args.output, coupled=args.coupled)
 
 
 if __name__ == "__main__":
