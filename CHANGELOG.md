@@ -1,3 +1,5 @@
+Extended the isolated Power solver capacity audit. Separate owners preserve raw pairs at 640 rods. A single shared-SDF batch verified aggregate forces and Reset at 1024 rods. [Report](docs/superpowers/reports/2026-11-23-teacher-power-1024-capacity.md)
+
 Add the lockstep Teacher physical barrier and same-clock source packing for 32 lanes, with a 32-owner CUDA capacity probe. The Isaac multi-environment launcher is pending. [Report](docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md)
 
 Tripod 902 verified a native supported approach and natural exit. Pinch passed its full staged CPU route, while Power remains at a verified partial CPU prefix. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round6.md)

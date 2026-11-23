@@ -1,3 +1,5 @@
+The Power solver capacity probe reached 1024 rods in a shared-SDF batch. Approval for multi-environment Isaac PPO is pending native integration and raw pair provenance. [Report](docs/superpowers/reports/2026-11-23-teacher-power-1024-capacity.md)
+
 Teacher PPO now has a 32-lane physical and policy preflight. The verified native setup still runs one Isaac environment per job. [Report](docs/superpowers/reports/2026-11-23-teacher-ppo32-preflight.md)
 
 Tripod 902 verified a native supported approach and natural exit. Pinch passed its full staged CPU route, while Power remains at a verified partial CPU prefix. [Report](docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round6.md)

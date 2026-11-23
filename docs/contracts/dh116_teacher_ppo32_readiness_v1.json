@@ -150,5 +150,247 @@
   },
   "native_isaac_envs": 0,
   "native_ppo_updates": 0,
-  "teacher_admission": false
+  "teacher_admission": false,
+  "capacity_followup": {
+    "basis_head": "41eef7fe564192dac4d8d337b3959f3b4d9e8b80",
+    "report": "docs/superpowers/reports/2026-11-23-teacher-power-1024-capacity.md",
+    "gpu_index": 2,
+    "gpu_model": "NVIDIA GeForce RTX 4090",
+    "cpu_tests": {
+      "passed": 66,
+      "failed": 0,
+      "log_sha256": "9620ffd9ff9b89316aad57e00e7d5c01ffb58fa5a87583d355a7df254d1cd6a3"
+    },
+    "separate_raw_pairs": {
+      "32": {
+        "status": "passed",
+        "num_solver_owners": 32,
+        "physics_equivalent_steps": 2,
+        "pairs_allocated_per_env": 8364,
+        "step_and_pair_readback_seconds": 0.07564398902468383,
+        "gpu_usage_mib_at_allocation": 1392,
+        "gpu_usage_mib_end": 1400,
+        "gpu_free_mib_at_allocation": 22689,
+        "isolated_reset_verified": true,
+        "exit_code": 0,
+        "sha256": "be1b11e6ad271dc8aaf433c4b6a580346368f9f052d7a55bc520b294cf23720b"
+      },
+      "64": {
+        "status": "passed",
+        "num_solver_owners": 64,
+        "physics_equivalent_steps": 2,
+        "pairs_allocated_per_env": 8364,
+        "step_and_pair_readback_seconds": 0.15374769805930555,
+        "gpu_usage_mib_at_allocation": 2384,
+        "gpu_usage_mib_end": 2398,
+        "gpu_free_mib_at_allocation": 21697,
+        "isolated_reset_verified": true,
+        "exit_code": 0,
+        "sha256": "5be2f3e2ee8f9999e478dc83fd344688c2705998e6a6e4a450746a3206e7c685"
+      },
+      "128": {
+        "status": "passed",
+        "num_solver_owners": 128,
+        "physics_equivalent_steps": 2,
+        "pairs_allocated_per_env": 8364,
+        "step_and_pair_readback_seconds": 0.30850966996513307,
+        "gpu_usage_mib_at_allocation": 4366,
+        "gpu_usage_mib_end": 4394,
+        "gpu_free_mib_at_allocation": 19715,
+        "isolated_reset_verified": true,
+        "exit_code": 0,
+        "sha256": "d244de7eeb8eae6b91564417a86d4efa1db965284901837dfeac7a06f83c012d"
+      },
+      "256": {
+        "status": "passed",
+        "num_solver_owners": 256,
+        "physics_equivalent_steps": 2,
+        "pairs_allocated_per_env": 8364,
+        "step_and_pair_readback_seconds": 0.6225643700454384,
+        "gpu_usage_mib_at_allocation": 8328,
+        "gpu_usage_mib_end": 8384,
+        "gpu_free_mib_at_allocation": 15753,
+        "isolated_reset_verified": true,
+        "exit_code": 0,
+        "sha256": "1679a879108d799aa52b9f7b5e98e2d51e1e453ccc102a0c19c73459e0838a7b"
+      },
+      "512": {
+        "status": "passed",
+        "num_solver_owners": 512,
+        "physics_equivalent_steps": 2,
+        "pairs_allocated_per_env": 8364,
+        "step_and_pair_readback_seconds": 1.2439915090799332,
+        "gpu_usage_mib_at_allocation": 16252,
+        "gpu_usage_mib_end": 16364,
+        "gpu_free_mib_at_allocation": 7829,
+        "isolated_reset_verified": true,
+        "exit_code": 0,
+        "sha256": "eb00eadbb4737685c0425384b263209879e51f2857f2bb5cdced9b21976f9786"
+      },
+      "640": {
+        "status": "passed",
+        "num_solver_owners": 640,
+        "physics_equivalent_steps": 2,
+        "pairs_allocated_per_env": 8364,
+        "step_and_pair_readback_seconds": 1.5669644339941442,
+        "gpu_usage_mib_at_allocation": 20214,
+        "gpu_usage_mib_end": 20352,
+        "gpu_free_mib_at_allocation": 3867,
+        "isolated_reset_verified": true,
+        "exit_code": 0,
+        "sha256": "1cfb62d6a44e842d6bdce70b9272379f9b85889d76583d0cb1f9aae3ff85fd3a"
+      },
+      "1024": {
+        "status": "gpu_memory_reserve_reached",
+        "num_solver_owners": 699,
+        "physics_equivalent_steps": 0,
+        "gpu_usage_mib_at_allocation": 22042,
+        "gpu_free_mib_at_allocation": 2039,
+        "isolated_reset_verified": false,
+        "exit_code": 2,
+        "sha256": "77b4b20a816fecf43a6c96ab500a2f55462fa9acc151e5c2621591fdbd3b943c"
+      }
+    },
+    "shared_sdf_aggregate": {
+      "2": {
+        "status": "passed_aggregate_only",
+        "num_solver_lanes": 2,
+        "num_solver_owners": 1,
+        "physics_equivalent_steps": 2,
+        "step_and_aggregate_readback_seconds": 0.003209242830052972,
+        "gpu_usage_mib_at_allocation": 434,
+        "gpu_usage_mib_end": 436,
+        "gpu_free_mib_at_allocation": 23647,
+        "isolated_reset_verified": true,
+        "raw_pair_capture": false,
+        "exit_code": 0,
+        "sha256": "eee7230593946f7f106e88d3ec7ecd3c6af712972107d96ff289b15dd884d25c",
+        "lanes_with_reaction_each_tick": [
+          1,
+          1
+        ]
+      },
+      "32": {
+        "status": "passed_aggregate_only",
+        "num_solver_lanes": 32,
+        "num_solver_owners": 1,
+        "physics_equivalent_steps": 2,
+        "step_and_aggregate_readback_seconds": 0.0038450509309768677,
+        "gpu_usage_mib_at_allocation": 436,
+        "gpu_usage_mib_end": 438,
+        "gpu_free_mib_at_allocation": 23645,
+        "isolated_reset_verified": true,
+        "raw_pair_capture": false,
+        "exit_code": 0,
+        "sha256": "8fdecbe2fc9254ad8312ddfb4f09e66ca5dde1778d7f85a213c8e555f220d82b",
+        "lanes_with_reaction_each_tick": [
+          31,
+          31
+        ]
+      },
+      "64": {
+        "status": "passed_aggregate_only",
+        "num_solver_lanes": 64,
+        "num_solver_owners": 1,
+        "physics_equivalent_steps": 2,
+        "step_and_aggregate_readback_seconds": 0.0036630642134696245,
+        "gpu_usage_mib_at_allocation": 438,
+        "gpu_usage_mib_end": 440,
+        "gpu_free_mib_at_allocation": 23643,
+        "isolated_reset_verified": true,
+        "raw_pair_capture": false,
+        "exit_code": 0,
+        "sha256": "0957256cb85d010b296ff1415e30206a2215a8eeeec6e537961eddf63905c0ee",
+        "lanes_with_reaction_each_tick": [
+          63,
+          63
+        ]
+      },
+      "128": {
+        "status": "passed_aggregate_only",
+        "num_solver_lanes": 128,
+        "num_solver_owners": 1,
+        "physics_equivalent_steps": 2,
+        "step_and_aggregate_readback_seconds": 0.003796630073338747,
+        "gpu_usage_mib_at_allocation": 444,
+        "gpu_usage_mib_end": 446,
+        "gpu_free_mib_at_allocation": 23637,
+        "isolated_reset_verified": true,
+        "raw_pair_capture": false,
+        "exit_code": 0,
+        "sha256": "6183ab4f4aaf07ad16ee89ae2aa9a1e39cd58e9f8d755cfdfc3bd36d87de8af4",
+        "lanes_with_reaction_each_tick": [
+          127,
+          127
+        ]
+      },
+      "256": {
+        "status": "passed_aggregate_only",
+        "num_solver_lanes": 256,
+        "num_solver_owners": 1,
+        "physics_equivalent_steps": 2,
+        "step_and_aggregate_readback_seconds": 0.004075172124430537,
+        "gpu_usage_mib_at_allocation": 452,
+        "gpu_usage_mib_end": 454,
+        "gpu_free_mib_at_allocation": 23629,
+        "isolated_reset_verified": true,
+        "raw_pair_capture": false,
+        "exit_code": 0,
+        "sha256": "c01d54bf06843d6295b7a51bfaa7a3052a4ad5ae468ca791fd2e7310efc107fc",
+        "lanes_with_reaction_each_tick": [
+          255,
+          255
+        ]
+      },
+      "512": {
+        "status": "passed_aggregate_only",
+        "num_solver_lanes": 512,
+        "num_solver_owners": 1,
+        "physics_equivalent_steps": 2,
+        "step_and_aggregate_readback_seconds": 0.004599950974807143,
+        "gpu_usage_mib_at_allocation": 472,
+        "gpu_usage_mib_end": 474,
+        "gpu_free_mib_at_allocation": 23609,
+        "isolated_reset_verified": true,
+        "raw_pair_capture": false,
+        "exit_code": 0,
+        "sha256": "8f5cfe8284cdd090707e7fa6c7e61f18d1aab676ae10bacf1a8a00e0fa62fdac",
+        "lanes_with_reaction_each_tick": [
+          511,
+          511
+        ]
+      },
+      "1024": {
+        "status": "passed_aggregate_only",
+        "num_solver_lanes": 1024,
+        "num_solver_owners": 1,
+        "physics_equivalent_steps": 2,
+        "step_and_aggregate_readback_seconds": 0.006699786055833101,
+        "gpu_usage_mib_at_allocation": 506,
+        "gpu_usage_mib_end": 508,
+        "gpu_free_mib_at_allocation": 23575,
+        "isolated_reset_verified": true,
+        "raw_pair_capture": false,
+        "exit_code": 0,
+        "sha256": "b870851b59632f33f9eff24f1c5edccf28509179baa4dbebce59dad29702691d",
+        "lanes_with_reaction_each_tick": [
+          1023,
+          1023
+        ]
+      }
+    },
+    "failed_setup_logs_sha256": {
+      "shared-2.log": "8e3fedbc95ead098f8888f72c045a3f63fcf1476f1f47c1aa5a610881018e732",
+      "shared-v2-2.log": "3ec4f3579a84b50fb1a6c6f0e75e91060d8c95e0cd691ba7f868aa1588f9f792"
+    },
+    "native_isaac_envs": 0,
+    "ppo_updates": 0,
+    "teacher_admission": false,
+    "deformx_backend_sha256": "8817010163946945495c987923d11f3ade4fbd52482a83bbdd48f017d3149340",
+    "nodes_per_env": 41,
+    "meshes_per_env": 17,
+    "ticks_per_completed_case": 2,
+    "gpu_reserve_mib": 2048,
+    "shared_sdf_raw_pair_rejection": "pair capture requires one rope, mesh forces, and a bounded one-time allocation"
+  }
 }
