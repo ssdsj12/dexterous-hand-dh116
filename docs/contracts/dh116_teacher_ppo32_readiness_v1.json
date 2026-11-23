@@ -1400,5 +1400,146 @@
     },
     "isaac_envs_with_shared_solver": 0,
     "ppo_updates": 0
+  },
+  "shared_pair_compact_reduction": {
+    "status": "solver_probe_passed_isaac_integration_pending",
+    "gpu": 3,
+    "solver_lanes_per_grasp": 128,
+    "runs": [
+      {
+        "grasp": "pinch",
+        "environments": 128,
+        "native_calls": 3,
+        "isolated_overflow_probe_steps": 1,
+        "per_field_independent_error": {
+          "vectors": 7.238368561957031e-05,
+          "mesh_positions_world_m": 0.0,
+          "mesh_quaternions_xyzw": 0.0,
+          "surface_gap_m": 0.0,
+          "normal_force_n": 0.0,
+          "node_forces_on_rod_world_n": 4.2067076719831675e-05,
+          "mesh_wrenches_on_mesh_world": 7.652715794392861e-08
+        },
+        "reset_lane": 0,
+        "continued_post_reset": true,
+        "counts": [
+          62484,
+          62484
+        ],
+        "step_and_pair_seconds": [
+          0.009051929926499724,
+          0.012391229858621955
+        ],
+        "compact_gpu_validation_seconds": [
+          0.21640358096919954,
+          0.012074246071279049
+        ],
+        "maximum_shared_vs_independent_error": 7.238368561957031e-05,
+        "independent_parity_at_1e_5": false,
+        "maximum_capture_observer_error": 5.960464477539063e-08,
+        "raw_pair_capacity_per_env": 5412,
+        "free_device_mib": 23429,
+        "isaac_envs": 0,
+        "ppo_updates": 0
+      },
+      {
+        "grasp": "tripod",
+        "environments": 128,
+        "native_calls": 3,
+        "isolated_overflow_probe_steps": 1,
+        "per_field_independent_error": {
+          "vectors": 0.0002422325051156804,
+          "mesh_positions_world_m": 0.0,
+          "mesh_quaternions_xyzw": 0.0,
+          "surface_gap_m": 0.0,
+          "normal_force_n": 0.0,
+          "node_forces_on_rod_world_n": 4.677733522839844e-05,
+          "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+        },
+        "reset_lane": 0,
+        "continued_post_reset": true,
+        "counts": [
+          3048,
+          3048
+        ],
+        "step_and_pair_seconds": [
+          0.004182188073173165,
+          0.003952127182856202
+        ],
+        "compact_gpu_validation_seconds": [
+          0.00701665785163641,
+          0.006019397173076868
+        ],
+        "maximum_shared_vs_independent_error": 0.0002422325051156804,
+        "independent_parity_at_1e_5": false,
+        "maximum_capture_observer_error": 0.0,
+        "raw_pair_capacity_per_env": 8364,
+        "free_device_mib": 23291,
+        "isaac_envs": 0,
+        "ppo_updates": 0
+      },
+      {
+        "grasp": "power",
+        "environments": 128,
+        "native_calls": 3,
+        "isolated_overflow_probe_steps": 1,
+        "per_field_independent_error": {
+          "vectors": 0.0002422325051156804,
+          "mesh_positions_world_m": 0.0,
+          "mesh_quaternions_xyzw": 0.0,
+          "surface_gap_m": 0.0,
+          "normal_force_n": 0.0,
+          "node_forces_on_rod_world_n": 4.677733522839844e-05,
+          "mesh_wrenches_on_mesh_world": 4.677733522839844e-05
+        },
+        "reset_lane": 0,
+        "continued_post_reset": true,
+        "counts": [
+          3048,
+          3048
+        ],
+        "step_and_pair_seconds": [
+          0.00419932696968317,
+          0.004024705151095986
+        ],
+        "compact_gpu_validation_seconds": [
+          0.006753694033250213,
+          0.006041370099410415
+        ],
+        "maximum_shared_vs_independent_error": 0.0002422325051156804,
+        "independent_parity_at_1e_5": false,
+        "maximum_capture_observer_error": 0.0,
+        "raw_pair_capacity_per_env": 8364,
+        "free_device_mib": 23291,
+        "isaac_envs": 0,
+        "ppo_updates": 0
+      }
+    ],
+    "evidence_sha256": "c57f24fbcca05a292082a2db731ee313cd2d757f97fdec6815a8edd9a54a2975",
+    "gpu_regression_log_sha256": "24e4aee97f1d1b8a496e233cad536f49b40107d020e8fbcc68991dbe854e6e5a",
+    "isaac_shared_solver_envs": 0,
+    "ppo_updates": 0,
+    "pending": [
+      "single-consumer solver/episode/reset and reaction ownership",
+      "live Isaac shared exchange and local Reset",
+      "Pinch translated input comparison",
+      "reward/guard/action parity at 1e-5"
+    ],
+    "cpu_regression": {
+      "passed": 73,
+      "skipped": 2,
+      "failed": 0,
+      "log_sha256": "fb02f52896a2b9990ff91e9d25243c970ca56ef7d76cfdf0a335a75b7f230ad8"
+    },
+    "gpu_regression": {
+      "passed": 47,
+      "skipped": 0,
+      "failed": 0
+    },
+    "protected_files": {
+      "matched": 528,
+      "changed": 0,
+      "historical_tmp_checkpoints": "paths_absent_unverified"
+    }
   }
 }

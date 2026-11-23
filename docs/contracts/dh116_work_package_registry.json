@@ -52375,6 +52375,18 @@
         "receipt_sha256": "6c32cdbc9d1b5b4ef4bf52ced80f7f3de39c6db9069d51d3aab8c5ad36a84fd0",
         "manifest_sha256": "f63472da8ae1683022d338bb9f6a284b4452c1f6e5b0189f7b0b999fb6f71fc6"
       }
+    },
+    "teacher.shared-pair-compact-gpu-v1": {
+      "title": "Compact GPU shared pair reduction",
+      "executor": "offline",
+      "status": "passed",
+      "scope": "compact reduction and 128-lane solver-only probes",
+      "dependencies": [],
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-batched-pair-reduction.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "isaac_envs": 0,
+      "ppo_updates": 0
     }
   },
   "execution_target": {

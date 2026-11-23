@@ -11,6 +11,7 @@ import torch
 
 from go2_pvcnn.control.dh116.tabletop_deformable_grasp_runtime import material_mapping
 from go2_pvcnn.control.dh116.tabletop_deformx_pair_capture import validate_pair_capture
+from go2_pvcnn.control.dh116.tabletop_batched_pair_capture import compact_pair_capture
 from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import checked_file
 from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import decode_owned
 from scripts.audit_dh116_isaac_batch_scene import load_grasp_archive
@@ -110,7 +111,7 @@ def audit(backend, plan, reset, num_envs, *, style):
     if not all(np.array_equal(initial[i], position(solver)[0])
                for i, solver in enumerate((reference_0, reference_1))):
         raise ValueError("identical independent constructor poses required")
-    raw_times, counts = [], []
+    raw_times, counts, compact_times = [], [], []
     errors = {}
     observer_error = 0.
     for _ in range(2):
@@ -130,6 +131,12 @@ def audit(backend, plan, reset, num_envs, *, style):
                 raise ValueError("mixed or incomplete native pair bucket")
             validate_pair_capture(lane, dt_s=DT, node_forces=raw[FORCES][env_id],
                                   mesh_wrenches=raw[WRENCHES][env_id])
+        now = perf_counter()
+        compact = compact_pair_capture(raw, dt_s=DT, device="cuda")
+        torch.cuda.synchronize()
+        compact_times.append(perf_counter() - now)
+        np.testing.assert_allclose(compact["node_forces"].cpu().numpy(), raw[FORCES], atol=3e-4, rtol=5e-5)
+        np.testing.assert_allclose(compact["mesh_wrenches"].cpu().numpy(), raw[WRENCHES], atol=3e-4, rtol=5e-5)
         aggregate_reference.step_free(DT, SUBSTEPS)
         for observed, reference in ((position(batch), position(aggregate_reference)),
                                      (raw[FORCES], aggregate_reference.contact_forces()),
@@ -179,7 +186,7 @@ def audit(backend, plan, reset, num_envs, *, style):
     max_error = max(errors.values())
     return dict(environments=num_envs, native_calls=3, isolated_overflow_probe_steps=1,
                 per_field_independent_error=errors, reset_lane=0, continued_post_reset=True, counts=counts,
-                step_and_pair_seconds=raw_times, maximum_shared_vs_independent_error=max_error,
+                step_and_pair_seconds=raw_times, compact_gpu_validation_seconds=compact_times, maximum_shared_vs_independent_error=max_error,
                 independent_parity_at_1e_5=max_error < 1e-5, maximum_capture_observer_error=observer_error,
                 raw_pair_capacity_per_env=capacity, free_device_mib=torch.cuda.mem_get_info()[0] >> 20,
                 isaac_envs=0, ppo_updates=0)
