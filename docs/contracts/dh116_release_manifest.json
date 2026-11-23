@@ -34486,6 +34486,35 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-clearance-refit",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-clearance-refit.md",
+      "readiness": "docs/contracts/dh116_teacher_power_clearance_refit_v1.json",
+      "status": "cpu_replay_no_loaded_static_candidate",
+      "cpu_tests": {
+        "passed": 183,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 66,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "ac66b8d08ee9dfaffae43317392e25032278314b",
+        "source_tree": "f443ad6bc4fb591e4a3be017b3f3cc48d1ddd98d",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
