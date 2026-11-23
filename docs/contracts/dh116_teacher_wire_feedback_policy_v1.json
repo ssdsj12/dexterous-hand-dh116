@@ -1,0 +1,85 @@
+{
+  "version": "dh116-teacher-wire-feedback-policy-v1",
+  "status": "passed_cpu_feedback_conditioning_and_archived_action_equivalence",
+  "source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_wire_feedback_teacher.py": "fb080cfea381210fd594f7f4fa01a5c125ac846e3b3335e779f3b2094458ca04",
+    "tests/test_wire_feedback_teacher.py": "f51429180ea0b500ac988d8354d96484365f4784756c3e24520d0e9128e3e289"
+  },
+  "source_commit_base": "b81d867715134fbcc78b01035156325fd513a38b",
+  "archive": {
+    "readback_sha256": "ee7bc5dc085610dc8aa8308700be487636db116c6a45ea241fd1a5c981f3cc7f",
+    "query_sha256": "566d42b02c204e8d74f78be1d987979e304f9949a4f8e6ee7e1fcdd4701cd7c5",
+    "query_command": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/wire-feedback-policy-archived-tripod-query.py"
+    ],
+    "actions": 16,
+    "source_journal_sha256": "984c0c241daa098b01e61415305f3a5e98a887c0c46d9699feef4e8d1445e151",
+    "source_trace_sha256": "e7a82d3c7374dbf332e929895c1ade32841ee8b4e2196990fd601456413c0194",
+    "original_checkpoint_sha256": "b2242925b780569fe4917662b9fcf06b0688136baaada9cb8b257893bafd5196",
+    "inherited_weights_role": "read_only_initialization_from_unqualified_diagnostic",
+    "source_training_config_sha256": "0f373f4502aaaa3b4852a72244d4c1888de7be842d976e390d19d57d8b8fd44a",
+    "candidate_identity_sha256": "9f14a3f378b8174dce596da287ba7028ba2f076f3d632c97c5ad530ac9edc8bc",
+    "new_native_runs": 0,
+    "new_ppo_updates": 0,
+    "teacher_admission": false
+  },
+  "tripod_contact_loss_audit": {
+    "consecutive_status_sha256": "cc276d63e9c6f8605fe816c2be4a40338409484c10e98f2843bfc21e9b71b62e",
+    "first_loss_sha256": "f2ef5c46dd3833c2f56cd0f36dbb4a5bd784c3717c09453f0b8587f35ba9f0f1",
+    "first_loss_query_sha256": "fff93d4b8514d9e64972a4737c60f346b0221e255b13c341211ea2d0828a57dd",
+    "next_row_left_index_under_original_threshold": 69,
+    "next_row_left_index_minimum_zero": 69,
+    "bilateral_single_sdk_steps": 69,
+    "supports_cleared_rows": 0
+  },
+  "cpu": {
+    "passed": 316,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_wire_feedback_teacher.py",
+      "tests/test_native_teacher_model.py",
+      "tests/test_native_teacher_model_v2.py",
+      "tests/test_native_teacher_checkpoint.py",
+      "tests/test_supported_wire_grasp_feedback.py",
+      "tests/test_native_teacher_collector.py",
+      "tests/test_native_teacher_contact_sources.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "a0ad4037cf7e5fd457d7c478bb8554224a0458e7cbae72cc7e6e4a57415fe289",
+    "focused_final_log_sha256": "4a23ac7c242fd7105767342f1f8dc6fdfa45e9a17a2aea7063c31a5a48f0e53d",
+    "grasps": [
+      "pinch",
+      "tripod",
+      "power"
+    ],
+    "synthetic_only_ppo_updates": 1,
+    "synthetic_only_ppo_samples": 4,
+    "max_initial_archive_action_delta": 0.0,
+    "policy_weights_only_roundtrip": true,
+    "optimizer_resume_qualified": false
+  },
+  "new_native_runs": 0,
+  "new_native_ppo_updates": 0,
+  "actor_live_feedback": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "antigravity": {
+    "reviewed": true,
+    "model_sha256": "fb080cfea381210fd594f7f4fa01a5c125ac846e3b3335e779f3b2094458ca04",
+    "tests_sha256": "f51429180ea0b500ac988d8354d96484365f4784756c3e24520d0e9128e3e289",
+    "rounds": [
+      "DH116 \u529b\u53cd\u9988\u7b56\u7565 R1",
+      "DH116 \u529b\u53cd\u9988\u7b56\u7565 R2"
+    ]
+  }
+}

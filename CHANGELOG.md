@@ -1,3 +1,5 @@
+The independent CPU Teacher candidate updates wire feedback branches using the original PPO. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-feedback-policy.md)
+
 The Tripod Contact worker can record causal wire feedback in an independent diagnostic journal. [Report](docs/superpowers/reports/2026-11-23-teacher-live-wire-feedback.md)
 
 Wire pose and reaction feedback now covers a full 60 Hz interval in verified native-record replay. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-control-feedback.md)

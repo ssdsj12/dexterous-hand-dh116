@@ -51149,6 +51149,36 @@
         "native_actor_feedback_active": false,
         "teacher_admission": false
       }
+    },
+    "teacher.wire-feedback-policy": {
+      "title": "Validate independent wire-feedback Teacher conditioning with original CPU PPO",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.live-wire-feedback"
+      ],
+      "tests": [
+        "tests/test_wire_feedback_teacher.py",
+        "tests/test_native_teacher_model.py",
+        "tests/test_native_teacher_model_v2.py",
+        "tests/test_native_teacher_checkpoint.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_native_teacher_collector.py",
+        "tests/test_native_teacher_contact_sources.py",
+        "tests/test_dh116_work_packages.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-feedback-policy.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_feedback_policy_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_feedback_conditioning_and_archive_replay",
+        "cpu_passed": 316,
+        "archive_frames": 16,
+        "native_actor_feedback_active": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
