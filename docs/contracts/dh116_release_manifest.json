@@ -34778,6 +34778,36 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.wire-feedback-ablation",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-wire-feedback-ablation.md",
+      "readiness": "docs/contracts/dh116_teacher_wire_feedback_ablation_v1.json",
+      "status": "cpu_same_state_pose_force_diagnostic",
+      "cpu_tests": {
+        "passed": 249,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "native_grasp_verified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "26864bede026dc7f481bd99d4f58d4c602d67283",
+        "source_tree": "5cc25d3eb7aff48dd2e0fdd6bd2fc6e128276fc2",
+        "remote_branch": "11-17",
+        "files_verified": 7,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
