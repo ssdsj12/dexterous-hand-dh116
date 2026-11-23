@@ -56,7 +56,8 @@ def _solver_interval_matches(previous, current, *, native_smoke):
     if math.isclose(interval, step, rel_tol=0., abs_tol=1e-9):
         return True
     if not (native_smoke and current.scope == "unqualified_source"
-            and current.source in ("policy_owned_pinch_endpoint_v1","policy_owned_tripod_endpoint_v1")):
+            and current.source in ("policy_owned_pinch_endpoint_v1", "policy_owned_tripod_endpoint_v1",
+                                    "policy_owned_power_endpoint_v1")):
         return False
     times = (previous.solver_time_s, current.solver_time_s)
     # The native RopeBatch getter returns binary32 seconds. Keep these

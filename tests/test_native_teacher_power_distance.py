@@ -50,3 +50,18 @@ def test_power_source_reads_validity_from_the_rod_record():
     rod["clock_valid"] = False
     with pytest.raises(SourceFailure, match="same-clock"):
         metric._metric(rod, metric.targets, binding="fixture")
+
+
+
+def test_power_reward_accepts_native_float32_clock_but_rejects_a_skipped_sdk_step():
+    from go2_pvcnn.control.dh116.tabletop_training_reward import SourceStamp, _solver_interval_matches
+
+    def stamp(tick, seconds):
+        return SourceStamp("power-episode", tick, seconds, "unqualified_source",
+                           "policy_owned_power_endpoint_v1", env_id=0, reset_uid="1", rod_uid="rod0")
+
+    previous = stamp(17, 0.03125)
+    current = stamp(18, 0.03333333507180214)
+    skipped = stamp(19, 0.03541666641831398)
+    assert _solver_interval_matches(previous, current, native_smoke=True)
+    assert not _solver_interval_matches(previous, skipped, native_smoke=True)

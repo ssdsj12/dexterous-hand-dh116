@@ -14,6 +14,11 @@
       "passed": 139,
       "failed": 0,
       "real_reset_replay": true
+    },
+    "power_clock_v3": {
+      "passed": 140,
+      "failed": 0,
+      "measured_sdk17_to_18_replay": true
     }
   },
   "sdk_setup_steps": 2,
@@ -38,5 +43,26 @@
     "failure": "Power pose summary looked for clock_valid in identity projection",
     "failure_lifecycle_sha256": "d331222919ea300d3ce8656dbd064f7f9348745a8791b1369aa68e066766ae00",
     "receipt_sha256": "365dff1923708a0bf2af37998857409e5f9eb206f32c5da92f2892d95d4580e3"
+  },
+  "second_ppo_attempt": {
+    "ppo_updates": 0,
+    "controlled_sdk_steps": 16,
+    "recorded_transitions": 1,
+    "stop": "Power endpoint omitted from exact binary32 clock path",
+    "last_physics_step": 18,
+    "outer_exit_code": 1,
+    "gdb_signal": null,
+    "duration_s": 150.06670613307506,
+    "receipt_sha256": "0b2886d502fcb61b8ffc058c456a6b36210a8b4772d7a984bff38997f3da9109"
+  },
+  "multi_environment_probe": {
+    "rod_batch": 2,
+    "sdk_instances": 0,
+    "solver_substeps_per_lane": 48,
+    "lane0_contact_norm_peak_n": 35.04236602783203,
+    "lane1_contact_norm_peak_n": 0,
+    "separate_reset_verified": true,
+    "raw_pair_capture_supported_for_batched_solver": false,
+    "production_multi_env_verified": false
   }
 }
