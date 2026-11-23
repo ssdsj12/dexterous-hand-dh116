@@ -1,0 +1,182 @@
+{
+  "version": 1,
+  "branch": "11-17",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-full-lift-replay-tripod-reset.md",
+  "source_commit": "d415dd7610b6614daaa60801cd275c994ba33886",
+  "native_isaac_runs": 0,
+  "ppo_updates": 0,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "full_lift_replay": {
+    "cases": {
+      "pinch": {
+        "receipt_sha256": "ac6345ae0b377b70a098155786571e14cd91855af3a252471529ed7218d360f7",
+        "first_physics_step": 3,
+        "last_physics_step": 432,
+        "row_count": 430,
+        "bilateral_rows": 0,
+        "longest_bilateral_steps": 0,
+        "registered_support_clear_rows": 0,
+        "off_support_lift_rows": 0,
+        "phase_counts": {
+          "Close": 430
+        },
+        "prelift_stable_s": 0.25,
+        "last_support_load_n": [
+          [
+            "table",
+            0.0
+          ],
+          [
+            "support_0",
+            0.15819760686142267
+          ],
+          [
+            "support_1",
+            0.15829755333538648
+          ]
+        ],
+        "result_sha256": "890282b13e2dfe8c9850ace4b7d3eb9fa85b845fd24a1b171cb51420a4102f4e"
+      },
+      "tripod": {
+        "receipt_sha256": "5306afb0af3892b0da3c2edf8c3f5560e7bf5798578b26fe3060f681417f6b06",
+        "first_physics_step": 3,
+        "last_physics_step": 2192,
+        "row_count": 2190,
+        "bilateral_rows": 69,
+        "longest_bilateral_steps": 1,
+        "registered_support_clear_rows": 0,
+        "off_support_lift_rows": 0,
+        "phase_counts": {
+          "Close": 2121,
+          "PreliftHold": 69
+        },
+        "prelift_stable_s": 0.25,
+        "last_support_load_n": [
+          [
+            "table",
+            0.0
+          ],
+          [
+            "support_0",
+            0.11905374518850392
+          ],
+          [
+            "support_1",
+            0.13316083750851435
+          ]
+        ],
+        "result_sha256": "d4ea2c7961408c65289ee9e06984bc23c628013f00c45d2cfc1c3bd15893950d"
+      },
+      "power": {
+        "receipt_sha256": "522f0180c88583ebf4cd4be1664e41667ecd25c67e583adb675fdd92969e7e9a",
+        "first_physics_step": 3,
+        "last_physics_step": 6504,
+        "row_count": 6502,
+        "bilateral_rows": 0,
+        "longest_bilateral_steps": 0,
+        "registered_support_clear_rows": 0,
+        "off_support_lift_rows": 0,
+        "phase_counts": {
+          "Close": 6502
+        },
+        "prelift_stable_s": 0.25,
+        "last_support_load_n": [
+          [
+            "table",
+            0.0
+          ],
+          [
+            "support_0",
+            0.16076496483156982
+          ],
+          [
+            "support_1",
+            0.16081256444797784
+          ]
+        ],
+        "result_sha256": "c2261383d3ccd654da82802aac99e132e34be76a092bd0d6b779db251f72fd28"
+      }
+    },
+    "command_sha256": "585a169d9481235fbbe68d28cc34c6e00a24c3888272506997d37be77ed3ee64",
+    "replay_script_sha256": "4ea9fbac50f85a31b392c2409ce1ebcdb4e1cda6e5f315db16b3407de8c3ab47",
+    "log_sha256": "31296e8253f0f71d27d439aaa93f4fe0ec722113cc0933ccee7f3baa01bc7625"
+  },
+  "historical_tripod_reset_revalidation": {
+    "native_project_sha256": "4b05944aaca8934b65ffa11636154204360c5ac0d5dd3921b7893ba9febacf14",
+    "integration_project_sha256": "14a5a7acbffcff4cccc5e4bd5df6c9ecf72f8f8764a9b2144958aeebe51b40cd",
+    "probe_sha256": "2e47260106e6bb0b8b510b3bead5202e23b2e8c00cc102a4b4ab11fc4b00f09d",
+    "origin_log_sha256": "979fadc86755b81bbecb0726d40e6bef817faa7410491b3db334980b41ea7db6",
+    "integration_log_sha256": "4fb94bf04c0d0910c342c7b2414d5b3cda16523af16948d23db38b60d5bbc3a1",
+    "current_recorder_sha256": "b9598e3cfc122fd538caa304d69b689c560f4e9677ae4f700b83a19532b8fbcf",
+    "historical_recorder_sha256": "562e7b948205489e5c92ef394dfa470db21a7e92259c7cf43a5422f9b8fdc37c"
+  },
+  "current_tripod_reset": {
+    "status": "cpu_frozen_verified_not_executed",
+    "native_source_file_count": 2191,
+    "plan_file_sha256": "6b9b4abce8a83ebc477dd09beeea79c276781fd3540eb1209f833168c149b747",
+    "task_config_sha256": "6a635f5fd9d7d0415975cfa6de7192a3d632dc5eb5f374ac2634f3fca68898b9",
+    "freeze_log_sha256": "42ea9becac5a97b094ac64b95405fa378a54ce58270ec10867f5d4656f5ddfdd",
+    "verification_log_sha256": "42ea9becac5a97b094ac64b95405fa378a54ce58270ec10867f5d4656f5ddfdd",
+    "freeze_argv_sha256": "bea41fba68ed06590c9621fd174fc0397a49b7c0a2bc79afada973837354b181",
+    "frozen_sha256": "9bc3bb1f76a6f17c13b0c0935051e2a949aa15cb2e0f245ddfba9913c5232d4f",
+    "budget": {
+      "gpu": 2,
+      "num_envs": 1,
+      "mode": "fresh_tripod_reset17",
+      "sdk_setup_steps": 2,
+      "control_steps": 0,
+      "solver_steps": 0,
+      "teacher_queries": 0,
+      "ppo_updates": 0,
+      "model_loads": 0,
+      "explicit_app_updates_for_stop": 1,
+      "soft_wall_seconds": 180,
+      "auto_retries": 0,
+      "auto_kill": false,
+      "new_power_sdf_bakes": 0,
+      "new_power_mesh_registrations": 6,
+      "episode_resets": 1,
+      "sdk_steps": 2
+    }
+  },
+  "reset_cpu": {
+    "passed": 132,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-ra",
+      "tests/test_tripod_supported_reset_capture.py",
+      "tests/test_dh116_tripod_supported_reset.py",
+      "tests/test_teacher_initialization_worker.py",
+      "tests/test_dh116_work_packages.py"
+    ],
+    "log_sha256": "2edaed36f51223b290363491811044c9a4c09b576f41e01a7982b539221af536"
+  },
+  "oakink_inventory": {
+    "pen": {
+      "source_poses": 20,
+      "transferred_poses": 633,
+      "virtual_targets": 65
+    },
+    "screwdriver": {
+      "source_poses": 12,
+      "transferred_poses": 38,
+      "virtual_targets": 7
+    },
+    "toothbrush": {
+      "source_poses": 14,
+      "transferred_poses": 29,
+      "virtual_targets": 5
+    },
+    "cylinder_bottle": {
+      "source_poses": 38,
+      "transferred_poses": 8516,
+      "virtual_targets": 531
+    }
+  }
+}
