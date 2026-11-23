@@ -48,7 +48,12 @@ def load_finger_goal(spec):
     grasp = spec["grasp"]
     root = Path(__file__).resolve().parents[4]
     configs = root / "configs/dh116_training"
-    reference = configs / ("pose_reference.json" if grasp == "pinch" else "gpu_teacher_style_seeds_v1.json")
+    references = {
+        "pinch": configs / "pose_reference.json",
+        "tripod": configs / "gpu_teacher_style_seeds_v1.json",
+        "power": root / "configs/dh116_tasks/flexible_power_near_open_settle_v1.json",
+    }
+    reference = references[grasp]
     raw = reference.read_bytes()
     actual_sha = hashlib.sha256(raw).hexdigest()
     if spec["reference_sha256"] != actual_sha:
@@ -56,6 +61,8 @@ def load_finger_goal(spec):
     data = json.loads(raw)
     if grasp == "pinch":
         targets = tuple(tuple(data["pose_contract"][side]["hand_active_q"]) for side in SIDES)
+    elif grasp == "power":
+        targets = tuple(tuple(data["candidate"][side]["target_active_q_rad"]) for side in SIDES)
     else:
         targets = tuple(tuple(data["styles"][grasp][side]["active_q_rad"]) for side in SIDES)
     lower, upper = active_limits()

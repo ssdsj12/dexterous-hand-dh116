@@ -1,17 +1,28 @@
 {
   "version": "dh116-teacher-power-ppo-readiness-v1",
   "style": "power",
-  "status": "reset_recipe_verified_on_cpu",
+  "status": "native_reset_verified_ppo_prepared",
   "cpu": {
     "passed": 29,
-    "failed": 0
+    "failed": 0,
+    "power_ppo_focused": {
+      "passed": 138,
+      "failed": 0
+    },
+    "additional_existing_fixture_failure": "test_b_post_exit_audits_same_clock_and_new_episode[None]: frozen fixture has no preflight.reward_config"
   },
   "sdk_setup_steps": 2,
   "episode_resets": 1,
   "reset_only_solver_substeps": 0,
-  "native_reset_verified": false,
+  "native_reset_verified": true,
   "ppo_updates": 0,
   "grasp_qualified": false,
   "teacher_admission": false,
-  "report": "docs/superpowers/reports/2026-11-23-teacher-power-supported-reset.md"
+  "report": "docs/superpowers/reports/2026-11-23-teacher-power-supported-reset.md",
+  "reset_seed_sha256": "4190d363d67dc9dcac3cb8e9e0165ef564aa1b4abcf1f25b9bbb0d4d2eb005e1",
+  "mesh_plan_sha256": "d9d743b1bf08c74ce47257f36497ae1af823a0624f5d522b583a36a74818f093",
+  "outer_receipt_sha256": "d1aa0fbe8ba495ede23da425d4c46cc7f8c2dbc5377471dad1ad788cea4af8af",
+  "reset_manifest_sha256": "e068a0c1b45bd01a0ab5de14930d14c5f79f91814c0ad612a3fd82ae58c62876",
+  "native_exit_code": 0,
+  "elapsed_s": 102.56508994312026
 }

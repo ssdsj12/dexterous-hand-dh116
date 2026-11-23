@@ -65,7 +65,7 @@ def _fresh_reset_owners():
 
 def _prepare_source_pack(owner, contract, *, device):
     from .tabletop_native_parameter_endpoints import NativeParameterEndpoints
-    from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources, NativeContactTripodSources
+    from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources, NativePowerSources, NativeContactTripodSources
     from .tabletop_native_teacher_worker_contract import CONTACT_PROFILE
 
     sources = owner.sources
@@ -73,7 +73,7 @@ def _prepare_source_pack(owner, contract, *, device):
     rope = owner.rod.rope
     backend = sys.modules.get("ropesim._ropesim")
     clock = owner.rod.clock()
-    expected_sources={"pinch":NativePinchSources,"tripod":NativeTripodSources}
+    expected_sources={"pinch":NativePinchSources,"tripod":NativeTripodSources,"power":NativePowerSources}
     contact = contract.context_mode == CONTACT_PROFILE
     if contact:
         if contract.config["grasp"] != "tripod":
@@ -217,7 +217,7 @@ def _acquire(sim, owners, trace, *, attempt, config, lease, resume=None):
         rollout_steps=config["rollout_steps"], project=attempt.project)
     with closing(NativeJournal(session.journal_path)) as journal:
         def build(static):
-            builders={"pinch":build_fresh_pinch_owner,"tripod":build_fresh_tripod_owner}
+            builders={"pinch":build_fresh_pinch_owner,"tripod":build_fresh_tripod_owner,"power":build_fresh_tripod_owner}
             style=config["preflight"]["style"]
             if style not in builders:
                 raise ValueError("independent native scene factory unavailable for "+style)

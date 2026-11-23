@@ -154,6 +154,9 @@ def relocate_pinch_task_source(archived, current, current_task, relative_task):
 
 def load_reset_manifest(config, *, project=ROOT):
     try:
+        if config["style"] == "power":
+            from .tabletop_tripod_reset_manifest import load_power_reset_manifest
+            return load_power_reset_manifest(config,project=project)
         if config["style"] == "tripod":
             from .tabletop_tripod_reset_manifest import load_tripod_reset_manifest
             return load_tripod_reset_manifest(config,project=project)
@@ -467,6 +470,10 @@ def _static_preflight_with_manifest(config, *, project=ROOT, backend_profile=Non
                 return MeasuredTripodResetApproach(project)
             check(capability,tripod_distance,str(path),
                   "current independent six-pad reader; actual same-owner live verification still required")
+        elif capability == "same_clock_distance" and config["style"] == "power":
+            from .tabletop_native_teacher_power_distance import NativePowerPoseApproach
+            check(capability,lambda: NativePowerPoseApproach(project,manifest),
+                  "NativePowerPoseApproach","same-clock Power palm pose; no contact qualification")
         elif capability == "same_clock_distance" and config["style"] != "pinch":
             components.append(_component(capability, False, reader="BilateralMeasuredPinchApproach",
                 reason=config["style"] + "_distance_reader_implementation_pending",
@@ -606,8 +613,8 @@ def live_preflight(owner, reset_contract, *, backend_profile, manifest):
     if (type(reset_contract) is not LiveResetContract or reset_contract.owner is not owner
             or isinstance(owner, (bool, dict))):
         raise ValueError("real same-instance owner and LiveResetContract required")
-    from .tabletop_tripod_reset_manifest import TripodResetManifest
-    manifest_types = {"pinch":ResolvedResetManifest,"tripod":TripodResetManifest}
+    from .tabletop_tripod_reset_manifest import PowerResetManifest, TripodResetManifest
+    manifest_types = {"pinch":ResolvedResetManifest,"tripod":TripodResetManifest,"power":PowerResetManifest}
     if (type(manifest) not in manifest_types.values() or type(backend_profile) is not BackendProfile
             or type(manifest) is not manifest_types.get(manifest.data()["style"])):
         raise ValueError("immutable style-specific source-loaded profile and resolved Reset manifest required")
@@ -677,15 +684,17 @@ def live_preflight(owner, reset_contract, *, backend_profile, manifest):
             if packet["reset_seed"]["root_seed_w"] != receipt["seed"]["authored_root_seed_w"]:
                 raise ValueError("mounted authored reference differs from resolved raw Reset")
         from .tabletop_tripod_reset_distance import MeasuredTripodResetApproach
-        readers = {"pinch":BilateralMeasuredPinchApproach,"tripod":MeasuredTripodResetApproach}
+        from .tabletop_native_teacher_power_distance import NativePowerPoseApproach
+        readers = {"pinch":BilateralMeasuredPinchApproach,"tripod":MeasuredTripodResetApproach,
+                   "power":NativePowerPoseApproach}
         if type(c.distance_reader) is not readers.get(data["style"]):
             raise ValueError("independent style-specific real distance reader required")
-        if data["style"] == "tripod":
+        if data["style"] in ("tripod","power"):
             from .tabletop_power_shared_rod import PowerSharedRodRuntime, PROXIMAL_POWER_MESH_NAMES
             if (type(c.rod) is not PowerSharedRodRuntime
                     or tuple(c.rod.mesh_names) != PROXIMAL_POWER_MESH_NAMES
                     or c.distance_reader.scope != "owner_source_unqualified"):
-                raise ValueError("actual seventeen-slot Tripod owner and native Reset distance required")
+                raise ValueError("actual seventeen-slot owner and native Reset distance required")
         distance = c.distance_reader.capture_reset(receipt, c.parameter_packet, grasp=data["style"])
         if distance["missing_reason"] is not None:
             raise ValueError("actual bilateral Reset distance unavailable")

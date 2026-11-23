@@ -16,6 +16,8 @@ from .tabletop_native_teacher_profile import (
 )
 
 SCHEMA = "dh116-native-teacher-resolved-tripod17-reset-v1"
+POWER_SCHEMA = "dh116-native-teacher-resolved-power17-reset-v1"
+SUPPORTED_SCHEMAS = {"tripod": SCHEMA, "power": POWER_SCHEMA}
 SCOPE = "native_reset_only_no_contact_or_grasp_admission"
 FILES = {
     "reset_readback": "mesh_reset_state.json",
@@ -49,7 +51,7 @@ RESET_IMPLEMENTATIONS = (
 
 def _require(value, message):
     if not value:
-        raise ValueError("Tripod Reset manifest: "+message)
+        raise ValueError("supported Reset manifest: "+message)
 
 
 def _binding(value):
@@ -59,7 +61,7 @@ def _binding(value):
     return path, checked_file(path,value["sha256"])
 
 
-def _derive(run_dir, outer_binding, project):
+def _derive(run_dir, outer_binding, project, *, style="tripod"):
     """Read raw source evidence; never accept caller-provided state/qualification."""
     from scripts.run_dh116_work_packages import debugger_status
     from .tabletop_deformable_r0_replay import encode_owned
@@ -67,7 +69,7 @@ def _derive(run_dir, outer_binding, project):
     from .tabletop_supported_mesh_reset import validate_supported_readback
     from .tabletop_mesh_reset_numeric_state import validate_numeric_reset_audit
     from .tabletop_teacher_mounted_wrist_source import validate_mounted_observation
-    from .tabletop_power_supported_task import guard_hand_supports, prepare_initial_state, TRIPOD_SCOPE
+    from .tabletop_power_supported_task import guard_hand_supports, prepare_initial_state, POWER_SCOPE, TRIPOD_SCOPE
 
     project = Path(project).resolve(strict=True)
     _require(project==ROOT, "current source-controlled project required")
@@ -79,6 +81,7 @@ def _derive(run_dir, outer_binding, project):
                  ("exit_code","debugger_inferior_exit_code")) and outer.get("forced_exit") is False
              and outer.get("debugger_inferior_signal") is None
              and outer.get("debugger_status_verified") is True, "natural debugger/outer exit0 required")
+    _require(style in SUPPORTED_SCHEMAS, "explicit supported style required")
     run = out/"native"
     inventory = outer["artifact_sha256"]
     required = {*FILES.values(),"frozen_plan.json","result.json","episode_reset.json",
@@ -98,8 +101,8 @@ def _derive(run_dir, outer_binding, project):
     _require(all(outer[k]==v for k,v in debugger_status(out/"native.log").items()), "debugger log status differs")
     plan = json.loads(documents.pop("frozen_plan.json"))
     _require(plan==json.loads((out/"plan.json").read_bytes()) and digest(plan)==outer["frozen_sha256"]
-             and plan["output"]==str(run) and plan["version"]=="dh116-fresh-supported-tripod-reset-capture-v1"
-             and plan["style"]=="tripod", "native recipe identity differs")
+             and plan["output"]==str(run) and plan["version"]==f"dh116-fresh-supported-{style}-reset-capture-v1"
+             and plan["style"]==style, "native recipe identity differs")
     budget = plan["budget"]
     _require(budget["sdk_steps"]==budget["sdk_setup_steps"]==2 and budget["episode_resets"]==1
              and budget["num_envs"]==1
@@ -150,7 +153,7 @@ def _derive(run_dir, outer_binding, project):
     task_path,task_raw = _binding(plan["task_config"])
     task = json.loads(task_raw)
     seed,_,_,_ = prepare_initial_state(task,saved["mesh_plan"]["original_plan"]["prepared_scene"]["table"],
-                                      expected_scope=TRIPOD_SCOPE)
+                                      expected_scope={"tripod": TRIPOD_SCOPE, "power": POWER_SCOPE}[style])
     _require(seed==receipt["seed"], "task and native Reset seed differ")
     geometry = decode_owned_json(documents.pop(FILES["geometry"]))
     _require([row["side"] for row in geometry]==["left","right"]
@@ -162,12 +165,12 @@ def _derive(run_dir, outer_binding, project):
     guard_hand_supports(hulls,task["support_scene"])
     capture = json.loads(documents.pop(FILES["acquisition"]))
     _require(capture==lifecycle["acquisition"] and capture["mesh_count"]==17 and capture["pair_capacity"]==8364
-             and capture["reset_seed_sha256"]==seed["sha256"]
+             and capture["style"]==style and capture["reset_seed_sha256"]==seed["sha256"]
              and capture["mesh_plan_sha256"]==saved["mesh_plan"]["sha256"],
              "native acquisition identity differs")
     refs = dict(original_receipt=outer_binding)
     refs.update({key:dict(path=str(run/name),sha256=inventory[name]) for key,name in FILES.items()})
-    return dict(schema=SCHEMA,style="tripod",scope=SCOPE,pose_preview_only=False,
+    return dict(schema=SUPPORTED_SCHEMAS[style],style=style,scope=SCOPE,pose_preview_only=False,
         target_schema=TARGET_SCHEMA_VERSION,target_material_ids=list(range(41)),
         source_refs=refs,native_run_path=str(out),native_fingerprint=outer["frozen_sha256"],
         reset_seed=seed,rod_state={name:audit["samples"][1]["state"][name].tolist()
@@ -190,34 +193,51 @@ class TripodResetManifest:
     def data(self):
         return json.loads(self.raw)
 
+    STYLE = "tripod"
+
     def verify(self,*,project=ROOT):
-        config=dict(style="tripod",resolved_reset_manifest=dict(path=self.path,sha256=self.sha256))
-        _require(load_tripod_reset_manifest(config,project=project)==self, "current manifest/provenance differs")
+        config=dict(style=self.STYLE,resolved_reset_manifest=dict(path=self.path,sha256=self.sha256))
+        _require(_load_supported_manifest(config,project=project,manifest_type=type(self))==self,
+                 "current manifest/provenance differs")
         return self
 
 
+class PowerResetManifest(TripodResetManifest):
+    __slots__ = ()
+    STYLE = "power"
+
+
 def load_tripod_reset_manifest(config,*,project=ROOT):
-    """Derive every exposed field from the pinned native evidence on each load."""
+    return _load_supported_manifest(config,project=project,manifest_type=TripodResetManifest)
+
+
+def load_power_reset_manifest(config,*,project=ROOT):
+    return _load_supported_manifest(config,project=project,manifest_type=PowerResetManifest)
+
+
+def _load_supported_manifest(config,*,project,manifest_type):
+    """Derive each named style from its own immutable Reset evidence."""
+    style = manifest_type.STYLE
     try:
-        _require(config["style"]=="tripod", "independent Tripod style required")
+        _require(config["style"]==style, f"independent {style.title()} style required")
         path,raw = _binding(config["resolved_reset_manifest"])
         data = json.loads(raw)
-        _require(data.get("schema")==SCHEMA and data.get("style")=="tripod" and data.get("scope")==SCOPE,
-                 "independent Tripod17 schema/style/scope required")
-        actual = _derive(data["native_run_path"],data["source_refs"]["original_receipt"],project)
-        _require(data==actual, "candidate fields differ from actual native Tripod Reset")
-        result = object.__new__(TripodResetManifest)
+        _require(data.get("schema")==SUPPORTED_SCHEMAS[style] and data.get("style")==style and data.get("scope")==SCOPE,
+                 f"independent {style.title()}17 schema/style/scope required")
+        actual = _derive(data["native_run_path"],data["source_refs"]["original_receipt"],project,style=style)
+        _require(data==actual, f"candidate fields differ from actual native {style.title()} Reset")
+        result = object.__new__(manifest_type)
         for key,value in dict(path=str(path),sha256=hashlib.sha256(raw).hexdigest(),raw=raw).items():
             object.__setattr__(result,key,value)
         return result
     except (KeyError,TypeError,OSError,ValueError) as error:
-        raise ValueError("Tripod resolved Reset source missing: "+str(error)) from error
+        raise ValueError(f"{style.title()} resolved Reset source missing: "+str(error)) from error
 
 
-def seal_manifest(run_dir,*,receipt,expected_sha256,destination,project=ROOT):
+def seal_manifest(run_dir,*,receipt,expected_sha256,destination,project=ROOT,style="tripod"):
     """Save a new manifest; original evidence and checkpoints remain read-only."""
     from scripts.diagnose_dh116_teacher_initialization import write_new
-    data = _derive(run_dir,dict(path=str(Path(receipt).resolve(strict=True)),sha256=expected_sha256),project)
+    data = _derive(run_dir,dict(path=str(Path(receipt).resolve(strict=True)),sha256=expected_sha256),project,style=style)
     path = Path(destination).resolve()
     _require(not path.is_relative_to(Path(project).resolve()), "raw manifest must remain outside Git project")
     write_new(path,data)

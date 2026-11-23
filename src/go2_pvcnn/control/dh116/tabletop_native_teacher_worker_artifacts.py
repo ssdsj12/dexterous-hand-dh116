@@ -17,7 +17,7 @@ from .tabletop_native_teacher_worker_contract import (
 
 SDK_OPERATIONS = ("delivered_exchange", "physical", "budget_consumed", "policy_pinch_distance")
 CONTROL_OPERATIONS = ("decision", "settlement", "transition_recorded")
-PRIMARY_OPERATIONS = frozenset((*SDK_OPERATIONS,"policy_tripod_distance",*CONTROL_OPERATIONS,
+PRIMARY_OPERATIONS = frozenset((*SDK_OPERATIONS,"policy_tripod_distance","policy_power_distance",*CONTROL_OPERATIONS,
     "collector_origin","policy_epoch","optimizer_update_accepted"))
 
 
@@ -60,7 +60,7 @@ def _jsonl(raw, *, name, maximum):
 
 def _journal(rows, result, *, controls=32, initial_version=0, prior_accepted=0,
              prior_weights=None, grasp="pinch", profile=SMOKE_PROFILE):
-    if grasp not in ("pinch","tripod"):
+    if grasp not in ("pinch","tripod","power"):
         raise ValueError("independent journal grasp required")
     if profile == CONTACT_PROFILE:
         if grasp != "tripod":
@@ -491,7 +491,7 @@ def _cpu_reference(spec,repository,context):
     from .tabletop_privileged_ppo import PPOConfig
     from .tabletop_native_teacher_checkpoint import build_training_contract
     from .tabletop_native_teacher_worker_contract import (
-        SOURCE_FILES, TRIPOD_SOURCE_FILES, CONTACT_SOURCE_FILES, training_semantic_digest, validate_profile_rollout, worker_training_target_contract)
+        SOURCE_FILES, TRIPOD_SOURCE_FILES, POWER_SOURCE_FILES, CONTACT_SOURCE_FILES, training_semantic_digest, validate_profile_rollout, worker_training_target_contract)
     from scripts.run_dh116_work_packages import native_recipe_sources
     # Tie reference code to the same actual scheduler inventory. A temporary
     # source project may contain identical copies, never caller-equal hashes.
@@ -506,7 +506,7 @@ def _cpu_reference(spec,repository,context):
     if not isinstance(config,dict) or not isinstance(config.get("preflight"),dict):
         raise ValueError("complete frozen training configuration required")
     pre=validate_config(config["preflight"])
-    extra_sources = (TRIPOD_SOURCE_FILES if pre["style"]=="tripod" else frozenset())
+    extra_sources = {"tripod": TRIPOD_SOURCE_FILES, "power": POWER_SOURCE_FILES}.get(pre["style"], frozenset())
     if pre["profile"]==CONTACT_PROFILE:
         extra_sources = extra_sources | CONTACT_SOURCE_FILES
     for name in extra_sources:

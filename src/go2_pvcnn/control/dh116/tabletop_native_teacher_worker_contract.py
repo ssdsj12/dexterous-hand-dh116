@@ -56,6 +56,14 @@ TRIPOD_SOURCE_FILES = frozenset("src/go2_pvcnn/control/dh116/"+name for name in 
     "tabletop_deformable_live_geometry.py"))
 SMOKE_PROFILE = "approach_wiring_smoke_v1"
 CONTACT_PROFILE = "approach_contact_prelift_v1"
+POWER_SOURCE_FILES = frozenset({
+    "src/go2_pvcnn/control/dh116/tabletop_native_teacher_power_distance.py",
+    "src/go2_pvcnn/control/dh116/tabletop_tripod_reset_manifest.py",
+    "src/go2_pvcnn/control/dh116/tabletop_fresh_supported_builder.py",
+    "src/go2_pvcnn/control/dh116/tabletop_supported_mesh_reset.py",
+    "configs/dh116_tasks/flexible_power_near_open_settle_v1.json",
+    "configs/dh116_tasks/flexible_power_supported_training_reset_v1.json",
+})
 CONTACT_SOURCE_FILES = frozenset({
     "src/go2_pvcnn/control/dh116/tabletop_native_teacher_source_priming.py",
     "src/go2_pvcnn/control/dh116/tabletop_native_teacher_contact_context.py",
@@ -139,7 +147,7 @@ def contact_limits(controls):
 def teacher_profile_limits(profile, controls, grasp):
     if profile == CONTACT_PROFILE and grasp == "tripod":
         return contact_limits(controls)
-    if profile == SMOKE_PROFILE and grasp in ("pinch", "tripod"):
+    if profile == SMOKE_PROFILE and grasp in ("pinch", "tripod", "power"):
         return fresh_smoke_limits(controls)
     raise ValueError("independent grasp/profile worker source required")
 
@@ -184,7 +192,7 @@ def validate_teacher_recipe_v2(spec):
     if (not isinstance(contract, dict) or set(contract) != keys
             or contract["schema"] != RECIPE_SCHEMA
             or contract["profile"] not in (SMOKE_PROFILE, CONTACT_PROFILE)
-            or contract["style"] not in ("pinch","tripod")
+            or contract["style"] not in ("pinch","tripod","power")
             or contract["profile"] == CONTACT_PROFILE and contract["style"] != "tripod"
             or any(not _sha(contract[k]) for k in keys if k.endswith("_sha256"))):
         raise ValueError("independent pinned grasp smoke Teacher contract required")
@@ -207,6 +215,8 @@ def validate_teacher_recipe_v2(spec):
         raise ValueError("C06 source closure must include recipe and lease implementation")
     if contract["style"] == "tripod" and not TRIPOD_SOURCE_FILES <= set(sources):
         raise ValueError("complete independent Tripod source closure required")
+    if contract["style"] == "power" and not POWER_SOURCE_FILES <= set(sources):
+        raise ValueError("complete independent Power source closure required")
     if contract["profile"] == CONTACT_PROFILE and not CONTACT_SOURCE_FILES <= set(sources):
         raise ValueError("complete independent contact source closure required")
     limits = contract["limits"]
@@ -341,10 +351,10 @@ def training_semantic_config(training_config, *, backend_identity, source_identi
             reward = load_config(path,ppo_gamma=ppo["gamma"])
             if reward.config_sha256 != pre[key]["sha256"] or reward.profile != pre["profile"]:
                 raise ValueError("reward bytes or profile changed during semantic validation")
-        if key == "resolved_reset_manifest" and pre["style"] == "tripod":
-            from .tabletop_tripod_reset_manifest import SCHEMA as TRIPOD_RESET_SCHEMA
-            if content.get("schema") != TRIPOD_RESET_SCHEMA or content.get("style") != "tripod":
-                raise ValueError("independent Tripod manifest style/schema required")
+        if key == "resolved_reset_manifest" and pre["style"] in ("tripod","power"):
+            from .tabletop_tripod_reset_manifest import SUPPORTED_SCHEMAS
+            if content.get("schema") != SUPPORTED_SCHEMAS[pre["style"]] or content.get("style") != pre["style"]:
+                raise ValueError("independent supported manifest style/schema required")
         pre[key] = {"sha256":pre[key]["sha256"]}
     for key in ("authorization", "resource_lock", "budget"):
         pre.pop(key)
@@ -452,8 +462,8 @@ def worker_training_target_contract(backend_profile,manifest):
     """One fixed material-node target map for both provider and CPU auditor."""
     from .tabletop_native_teacher_profile import BackendProfile,TARGET_SCHEMA_VERSION
     from .tabletop_native_teacher_preflight import ResolvedResetManifest
-    from .tabletop_tripod_reset_manifest import TripodResetManifest
-    expected = {"pinch":ResolvedResetManifest,"tripod":TripodResetManifest}
+    from .tabletop_tripod_reset_manifest import PowerResetManifest, TripodResetManifest
+    expected = {"pinch":ResolvedResetManifest,"tripod":TripodResetManifest,"power":PowerResetManifest}
     if (type(backend_profile) is not BackendProfile or type(manifest) not in expected.values()
             or type(manifest) is not expected.get(manifest.data().get("style"))):
         raise ValueError("actual source-loaded backend profile and independent grasp Reset manifest required")

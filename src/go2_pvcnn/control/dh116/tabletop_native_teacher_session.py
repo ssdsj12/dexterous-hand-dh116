@@ -117,7 +117,7 @@ def verify_static_contract(config):
         raise ValueError("native static contract denied: "+", ".join(gate["blocked_reasons"]))
     # Pinch and Tripod have independent smoke readers. Full contact/slip/hold
     # still requires its own real evaluator; JSON declarations cannot supply it.
-    if config.preflight["style"] not in ("pinch","tripod"):
+    if config.preflight["style"] not in ("pinch","tripod","power"):
         raise ValueError(config.preflight["style"]+"_distance_reader_implementation_pending")
     if config.preflight["profile"] != "approach_wiring_smoke_v1":
         if config.preflight["profile"] != CONTACT or config.preflight["style"] != "tripod":
@@ -236,25 +236,28 @@ def build_fresh_tripod_owner(contract, *, sim, owners, prepared, ownership, ledg
     from .tabletop_fresh_supported_builder import build_fresh_supported_owned
     from .tabletop_native_teacher_collector import NativeJournal
     from .tabletop_native_teacher_profile import profile_reader_scope
-    from .tabletop_tripod_reset_manifest import TripodResetManifest
+    from .tabletop_tripod_reset_manifest import PowerResetManifest, TripodResetManifest
     from .tabletop_deformable_r0_replay import encode_owned
     from .tabletop_native_teacher_profile import digest
 
     fresh = None
     try:
+        style = contract.config.preflight["style"] if type(contract) is StaticContract else None
+        manifest_types = {"tripod": TripodResetManifest, "power": PowerResetManifest}
         if (type(contract) is not StaticContract or type(ledger) is not NativeJournal
-                or contract.config.preflight["style"] != "tripod"
+                or style not in manifest_types
                 or contract.config.preflight["profile"] not in ("approach_wiring_smoke_v1",CONTACT)
-                or type(contract.reset_manifest) is not TripodResetManifest
+                or style == "power" and contract.config.preflight["profile"] != "approach_wiring_smoke_v1"
+                or type(contract.reset_manifest) is not manifest_types[style]
                 or Path(contract.config.journal_path) != ledger.path or mesh_plan is not None):
-            raise ValueError("independent Tripod smoke contract, own journal and fresh17 plan required")
+            raise ValueError("independent supported smoke contract, own journal and fresh17 plan required")
         data = contract.reset_manifest.data()
         if digest(encode_owned(contract.reset_seed)) != digest(encode_owned(data["reset_seed"])):
-            raise ValueError("Tripod static seed differs from source-derived manifest")
+            raise ValueError("supported static seed differs from source-derived manifest")
         contract.reset_manifest.verify(project=contract.config.project)
         def record_setup(row):
             if row["kind"] == "setup":
-                ownership.event("tripod_scene_setup",source_row=row)
+                ownership.event(style+"_scene_setup",source_row=row)
         with profile_reader_scope(contract.backend_profile):
             task=data["task_config"]
             fresh=build_fresh_supported_owned(sim,owners,project=contract.config.project,
@@ -262,11 +265,11 @@ def build_fresh_tripod_owner(contract, *, sim, owners, prepared, ownership, ledg
                 backend_profile=contract.backend_profile,task_config=Path(task["path"]),
                 task_config_sha256=task["sha256"],extra_sources=data["extra_sources"],
                 run_uuid=run_uuid,episode_uid=episode_uid,
-                physics_budget_end=contract.budget["max_sdk_steps"])
+                physics_budget_end=contract.budget["max_sdk_steps"],style=style)
             if (fresh.reset_seed_sha256 != contract.reset_seed["sha256"]
                     or digest(encode_owned(fresh.reset_seed)) != digest(encode_owned(contract.reset_seed))
                     or fresh.task_config_sha256 != task["sha256"]):
-                raise ValueError("fresh Tripod scene seed/task differs from immutable Reset sources")
+                raise ValueError("fresh supported scene seed/task differs from immutable Reset sources")
             return NativeEpisodeOwner(fresh.episode,contract,episode_uid=episode_uid,
                 owner_resets=owner_resets,mesh_plan=fresh.mesh_plan,ledger=ledger,
                 setup_events=fresh.setup_events,initial_geometry=fresh.initial_geometry)
@@ -377,7 +380,7 @@ class NativeEpisodeOwner:
     def __init__(self,episode,contract,*,episode_uid,owner_resets,mesh_plan,ledger,setup_events,initial_geometry,previous_reset=None):
         from .tabletop_deformable_dual_hand_episode import DualHandPhysicalEpisode
         from .tabletop_native_teacher_action_history import NativeAction24HistoryOwner
-        from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources, NativeContactTripodSources
+        from .tabletop_native_teacher_sources import NativePinchSources, NativeTripodSources, NativePowerSources, NativeContactTripodSources
         if type(episode) is not DualHandPhysicalEpisode or episode._state != "new":
             raise ValueError("one fresh original physical episode over existing scene required")
         self.episode,self.contract=episode,contract
@@ -413,7 +416,7 @@ class NativeEpisodeOwner:
             for event in setup_events:
                 if event.get("kind")!="setup": raise ValueError("original scene setup evidence required")
                 ledger.emit("setup",event)
-            source_types={"tripod":NativeContactTripodSources} if contact else {"pinch":NativePinchSources,"tripod":NativeTripodSources}
+            source_types={"tripod":NativeContactTripodSources} if contact else {"pinch":NativePinchSources,"tripod":NativeTripodSources,"power":NativePowerSources}
             style=contract.config.preflight["style"]
             if style not in source_types:
                 raise ValueError("independent source adapter unavailable for "+style)
@@ -437,7 +440,7 @@ class NativeEpisodeOwner:
         # successors add numeric/mesh readback and unchanged clearance guards.
         self.ledger.emit("reset_clock_preflight",reset_clock_preflight(self))
         style=self.contract.config.preflight["style"]
-        if style not in ("pinch","tripod"):
+        if style not in ("pinch","tripod","power"):
             raise ValueError("independent style-specific Reset implementation required")
         self.contract.runtime.reserve_reset(self)
         old_reset,old_exchange=module.DualHandResetTransaction,module.FlexiblePhysicalExchange
@@ -451,7 +454,7 @@ class NativeEpisodeOwner:
                 with numeric_reset_state_scope(sim=self.sim,rod=self.rod,
                         record=lambda row:self.ledger.emit("numeric_reset",row)) as audit:
                     options={}
-                    if style == "tripod":
+                    if style in ("tripod","power"):
                         options=dict(supported_mesh_plan=self.mesh_plan,
                             record_reset_readback=lambda row:self.ledger.emit("supported_reset_readback",row))
                     result=self.episode.reset(seed,episode_uid=episode_uid,owner_resets=owner_resets,**options)

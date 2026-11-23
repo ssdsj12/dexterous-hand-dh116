@@ -23,15 +23,15 @@ def capture_teacher_solver_health(runtime, *, backend, sim, expected_clock, gras
 
         expected = _clock(lambda: expected_clock)
         health._require(
-            grasp == "tripod" and expected == expected_clock
+            grasp in ("tripod", "power") and expected == expected_clock
             and type(runtime) is PowerSharedRodRuntime
             and type(runtime._base) is FreeRodRuntime,
-            "actual runtime and exact completed Tripod clock required")
+            "actual runtime and exact completed supported rod clock required")
         base, rope = runtime._base, runtime.rope
         health._require(
             tuple(runtime.mesh_names) == PROXIMAL_POWER_MESH_NAMES
             and len(runtime.bindings) == 14 and rope is base.rope,
-            "complete supported17 Tripod runtime and same base rod required")
+            "complete supported17 runtime and same base rod required")
         health._require(
             Path(backend.__file__).resolve() == health.BACKEND.resolve()
             and hashlib.sha256(health.BACKEND.read_bytes()).hexdigest() == health.BACKEND_SHA

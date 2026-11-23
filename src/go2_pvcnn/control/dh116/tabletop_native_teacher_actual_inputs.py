@@ -79,13 +79,13 @@ def _check_pack(row, reference, anchor, *, purpose, profile, scope, grasp, conte
             or metadata.identities != (ContextIdentity(**witness["clock"]),)
             or metadata.owner_uid != witness["context_owner_uid"]):
         raise ValueError("Teacher context clock, owner, grasp or scope differs")
-    if grasp == "tripod":
+    if grasp in ("tripod","power"):
         from pathlib import PurePosixPath
         packets={p["side"]:p for p in pre["common"]["source_packets"]}
         for side in ("left","right"):
             root=str(PurePosixPath(buffers["raw_rod"]["mesh_bindings"][side+".base_link"]["prim_path"]).parent)
             if packets[side]["hand_container_path"] != root:
-                raise ValueError("Tripod source pack and mounted hand side/root differ")
+                raise ValueError("supported source pack and mounted hand side/root differ")
     if contact_expected is not None:
         measured, duration, event_sha, fixed = contact_expected
         expected = torch.tensor([measured["coverage_left"],measured["coverage_right"],duration/.25])
@@ -141,7 +141,7 @@ class _ContactTimeline:
 def audit_teacher_input_sources(raw, *, backend_profile, scope, controls=32, grasp="pinch", profile=CONTEXT_MODE):
     """Independently join immutable source and policy rows, without native admission."""
     if (scope not in ("cpu_fixture", SCOPE) or type(controls) is not int or not 1 <= controls <= 32
-            or grasp not in ("pinch","tripod") or profile not in (CONTEXT_MODE,CONTACT_MODE)
+            or grasp not in ("pinch","tripod","power") or profile not in (CONTEXT_MODE,CONTACT_MODE)
             or profile == CONTACT_MODE and grasp != "tripod"):
         raise ValueError("bounded Teacher source audit and explicit scope required")
     name = "training_events.jsonl"
@@ -182,7 +182,7 @@ def audit_teacher_input_sources(raw, *, backend_profile, scope, controls=32, gra
     try:
         reset = resets[0]["payload"]
         start = reset["reset"]["rod_reset"], reset["rod_boundary"], reset_sources[0]["payload"]["parameters"]
-        if grasp == "tripod":
+        if grasp in ("tripod","power"):
             from .tabletop_power_shared_rod import PROXIMAL_POWER_MESH_NAMES, _bindings
             baseline=None
             priming_rows = ([item["payload"]["exchange"]["rod"] for item in by_operation["owner_event"]
@@ -199,7 +199,7 @@ def audit_teacher_input_sources(raw, *, backend_profile, scope, controls=32, gra
                     if baseline is None:baseline=current
                     if current!=baseline:raise ValueError("mid-step contact source bindings changed")
                 except (KeyError,ValueError,TypeError) as error:
-                    raise ValueError("Tripod physical source layout differs: "+str(error)) from error
+                    raise ValueError("supported physical source layout differs: "+str(error)) from error
         lower = reset_sources[0]["sequence"]
         if resets[0]["sequence"] >= lower:
             raise ValueError("Reset source order differs")

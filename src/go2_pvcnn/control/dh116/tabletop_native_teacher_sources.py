@@ -43,7 +43,7 @@ class _NativeGeometrySources:
 
     def __init__(self,owner,contract,*,scope="owner_source_unqualified"):
         from .tabletop_native_parameter_endpoints import NativeParameterEndpoints
-        if self.STYLE not in ("pinch","tripod") or contract.config.preflight["style"]!=self.STYLE:
+        if self.STYLE not in ("pinch","tripod","power") or contract.config.preflight["style"]!=self.STYLE:
             raise ValueError("independent style-specific distance source missing")
         if contract.config.preflight["profile"]!=self.PROFILE:
             raise ValueError("full_shared_contact_slip_hold_source_adapter_missing")
@@ -85,7 +85,9 @@ class _NativeGeometrySources:
         stamp=self._stamp(clock,"policy_owned_"+self.STYLE+"_endpoint_v1")
         def measurement(value,source,unit="dimensionless"):
             return Measurement(value,unit,self._stamp(clock,source))
-        fields=dict(distance=measurement(float(np.mean(values)),"PolicyOwned"+self.STYLE.title()+"Approach.fixed_material41","m"),
+        distance_source = ("NativePowerPoseApproach.fixed_material_station" if self.STYLE == "power"
+                           else "PolicyOwned"+self.STYLE.title()+"Approach.fixed_material41")
+        fields=dict(distance=measurement(float(np.mean(values)),distance_source,"m"),
             numerical_health=measurement(code==0,"RopeBatch.last_error.same_owner"),
             constraint_failure=measurement(guard is not None,"original_joint_force_clearance_and_policy_source_geometry_guards"),
             original_guard_joint_force_clearance_geometry=measurement(guard is not None,"original_joint_force_clearance_and_policy_source_geometry_guards"))
@@ -138,8 +140,7 @@ class _NativeGeometrySources:
                         backend=sys.modules["ropesim._ropesim"],sim=owner.sim,read_clock=owner.rod.clock)
                     row["material_director"]=deepcopy(self.parameters)
                     row["original_guard_failure"]=row["guard_failure"]
-                    row["closure_geometry"]=self.distance.geometry.capture(row,sim=owner.sim,
-                        bindings=owner.bindings,read_clock=owner.rod.clock)
+                    row["closure_geometry"]=self._capture_geometry(row,owner)
                     row["native_teacher_health"]=self._health(clock)
                     geometry=row["closure_geometry"]
                     if geometry["source_complete"] and geometry["failure_reasons"] and row["guard_failure"] is None:
@@ -152,6 +153,10 @@ class _NativeGeometrySources:
             return row
         exchange._step=enriched
         owner._restores.append(lambda:setattr(exchange,"_step",step))
+
+    def _capture_geometry(self,row,owner):
+        return self.distance.geometry.capture(row,sim=owner.sim,
+            bindings=owner.bindings,read_clock=owner.rod.clock)
 
     def initialize_context(self,result):
         from .tabletop_native_teacher_context import TaskContextOwner
@@ -301,6 +306,28 @@ class NativeTripodSources(_NativeGeometrySources):
         self.distance=PolicyOwnedTripodApproach(contract.config.project,scope=scope,
             task_config=Path(task["path"]),task_config_sha256=task["sha256"],
             mesh_bindings=owner.rod.bindings)
+
+
+class NativePowerSources(_NativeGeometrySources):
+    """Power-only pose diagnostic over the actual supported scene."""
+    STYLE = "power"
+
+    def _configure_distances(self,owner,contract,scope):
+        from .tabletop_native_teacher_power_distance import NativePowerPoseApproach
+        from .tabletop_power_shared_rod import PowerSharedRodRuntime, PROXIMAL_POWER_MESH_NAMES
+
+        goal = contract.reward_config.finger_goal
+        if goal is None or goal.grasp != self.STYLE:
+            raise ValueError("Power finger goal required for the pose diagnostic")
+        if (tuple(owner.rod.mesh_names) != PROXIMAL_POWER_MESH_NAMES
+                or scope == "owner_source_unqualified" and type(owner.rod) is not PowerSharedRodRuntime):
+            raise ValueError("actual supported17 Power runtime required")
+        self.reset_distance = self.distance = NativePowerPoseApproach(
+            contract.config.project,contract.reset_manifest,scope=scope)
+
+    def _capture_geometry(self,row,owner):
+        return self.distance.capture_geometry(row,sim=owner.sim,
+            bindings=owner.bindings,read_clock=owner.rod.clock)
 
 
 class NativeContactTripodSources(NativeTripodSources):
