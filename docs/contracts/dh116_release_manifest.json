@@ -34739,6 +34739,45 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-bilateral-detour",
+      "branch": "11-17",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-bilateral-detour.md",
+      "readiness": "docs/contracts/dh116_teacher_power_bilateral_detour_v1.json",
+      "status": "passed_cpu_sequential_bilateral_partial_power_geometry",
+      "cpu_tests": {
+        "passed": 210,
+        "failed": 0
+      },
+      "shared_pinch_cpu_tests": {
+        "passed": 37,
+        "failed": 0
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "stage_control_windows": [
+        574,
+        82,
+        307
+      ],
+      "left_sdf_target_ticks": 2457,
+      "new_isaac_runs": 0,
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "99070f4c3c1a28fe0b810edea6b8d48bc4072408",
+        "source_tree": "92fa9fdec29422ebdf4d34bf6b381ba4f68856cd",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
