@@ -35994,6 +35994,31 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.ppo64-rollout-write-v1",
+      "branch": "11-17",
+      "status": "cpu_rollout_verified_native_multi_lane_provider_pending",
+      "report": "docs/superpowers/reports/2026-11-23-dh116-teacher64-rollout.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "requested_envs_per_grasp": 64,
+      "requested_concurrent_grasps": 3,
+      "cpu_tests": {
+        "current_passed": 602,
+        "historical_failed": 2
+      },
+      "native_dynamic_envs_started": 0,
+      "native_ppo_updates": 0,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "remote_branch": "11-17",
+        "source_commit": "5ac7d189b80d8704f06b819fec4315e141ea9bac",
+        "source_tree": "dc243d60259bda1991d146da7f16da27054b302c",
+        "files_verified": 13,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
