@@ -1,0 +1,195 @@
+{
+  "version": 1,
+  "branch": "11-17",
+  "base_commit": "97d8f2333256158d2b0b65b30994c09e0e8eafcf",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-three-grasp-sync-round2.md",
+  "native_isaac_runs": 0,
+  "ppo_updates": 0,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "generalization_qualified": false,
+  "targeted_cpu": {
+    "passed": 171,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-m",
+      "pytest",
+      "-q",
+      "-ra",
+      "tests/test_dh116_902_pinch_alignment.py",
+      "tests/test_dh116_902_pinch_right_alignment.py",
+      "tests/test_dh116_power_remaining_digits.py",
+      "tests/test_tripod_wrist_relief.py",
+      "tests/test_dh116_supported_force_seating.py",
+      "tests/test_dh116_power_bilateral_handoff.py",
+      "tests/test_dh116_power_bilateral_receipt.py",
+      "tests/test_supported_wire_factorial_holdouts.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_tripod_index_contact_loss.py"
+    ],
+    "log_sha256": "9a1cc43d0884b3a5766c904a2626e4bef5b50613222662f9d68089ed14beb698"
+  },
+  "lift_tail": {
+    "report_sha256": "3eb8d7c54f95e35c32619e9cc688f96002d1740feaac3a00b3a1e486ae494d38",
+    "sdk_rows_per_grasp": 64,
+    "off_support_rows": 0
+  },
+  "frozen_power": {
+    "sha256": "6e3c66dcb2fecb69e5c5397865cb6f9c2874846e76e26fc1276a4e96edb7c333",
+    "verified_inputs": 2207,
+    "attempt_started": false
+  },
+  "oakink_inventory": {
+    "release": "3eadff1d4a144aab44683ee24b4c81cee7ecc5b1",
+    "archive_sha256": {
+      "metaV2.zip": "8c6ec8ebb98821c589170d98b73ccc84bf1543781b9ac3e4d1e6f01084e73bef",
+      "oakink_shape_v2.zip": "d867060a5874acb73e1fcd132b014a2cfd024ef9ed171de53115c98db55c7d42"
+    },
+    "records": 52533,
+    "member_path_depths": {
+      "5": 1356,
+      "6": 51177
+    },
+    "metadata_objects": {
+      "physical": 101,
+      "virtual": 1700
+    },
+    "candidate_categories": {
+      "pen": {
+        "pose_records": 653,
+        "objects": 1,
+        "original_metadata_object_ids": [
+          "Y29040"
+        ]
+      },
+      "screwdriver": {
+        "pose_records": 50,
+        "objects": 1,
+        "original_metadata_object_ids": [
+          "O21001"
+        ]
+      },
+      "toothbrush": {
+        "pose_records": 43,
+        "objects": 1,
+        "original_metadata_object_ids": [
+          "C25001"
+        ]
+      },
+      "cylinder_bottle": {
+        "pose_records": 8554,
+        "objects": 4,
+        "original_metadata_object_ids": [
+          "A15015",
+          "A15027",
+          "C15001",
+          "S15004"
+        ]
+      }
+    },
+    "use": "pose-prior inventory only",
+    "raw_payload_loaded": false,
+    "sha256": "7e84e65e0643ca2b1db9974e41d5c1c0fcc9e9bee3b8c6647bca7026e0d1267b"
+  },
+  "packages": {
+    "power": {
+      "id": "teacher.power-remaining-digits",
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-remaining-digits.md",
+      "files": [
+        "docs/superpowers/reports/2026-11-23-sync-power-remaining-digits.md",
+        "tests/test_dh116_power_remaining_digits.py",
+        "tools/audit_dh116_power_remaining_digits.py"
+      ],
+      "evidence_sha256": {
+        "sync-power-round2-qualified-screen.DImGBP/result.json": "eff0f021b3dc16cdb77bed0775a5b11ff16a340eb5f8cb4768620eab0bd0b5bf",
+        "sync-power-round2-cpu.uCXXGz/pytest.log": "e81109ed0693c9c711d7a628dbcac34455fbb95d9fdf122fac0d2a0569bf895a"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "defb370d4b775c1ad29e404a7edc78d6fc2cf397",
+        "source_tree": "b6a99719704aa0773db256d8457fae841529dcda",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "fixed_wrist_flexion_0_of_18_passed",
+      "cpu_passed": 91,
+      "native_qualification": false,
+      "teacher_admission": false
+    },
+    "pinch": {
+      "id": "teacher.902-pinch-alignment-round2",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-right-alternate-alignment.md",
+      "files": [
+        "docs/superpowers/reports/2026-11-23-teacher-902-pinch-right-alternate-alignment.md",
+        "scripts/fit_dh116_902_pinch_alignment.py",
+        "scripts/search_dh116_902_pinch_right_alignment.py",
+        "tests/test_dh116_902_pinch_right_alignment.py"
+      ],
+      "evidence_sha256": {
+        "sync-pinch-round2-alternate-v2-cold.json": "8c7a411113059569bf408258eee09c35d581ac8c9efbb84256bd6f89622e6bf4",
+        "sync-pinch-round2-alternate-v2-warm.json": "14d431563ee931463952fb27773b84a85f749c387711d025fa1279d8afc405d3",
+        "sync-pinch-round2-alternate-v2-cpu.log": "0a083e933776a2947990e584bd277011a60c1597254a36f8fdb6f0ecadbce279"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a3501217483ac8ac661fb747a19ce9c09d4473d8",
+        "source_tree": "795b70b96c5034861cc43e685f16a1d0408bc21c",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "right_thumb_and_index_gaps_positive",
+      "cpu_passed": 168,
+      "native_qualification": false,
+      "teacher_admission": false
+    },
+    "tripod": {
+      "id": "teacher.tripod-relief-round2",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-wrist-relief.md",
+      "files": [
+        "docs/contracts/dh116_teacher_tripod_wrist_relief_v1.json",
+        "docs/superpowers/reports/2026-11-23-teacher-tripod-wrist-relief.md",
+        "scripts/audit_dh116_tripod_wrist_relief.py",
+        "tests/test_tripod_wrist_relief.py"
+      ],
+      "evidence_sha256": {
+        "signed_source_replay_json": "3e9f6f977d8f3b77ece47a65d64b9bf1aa9f2bf084ece5ab2def5a143cd49aab"
+      },
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "593ba8447694fc03fe9d75c3629a2f30b7f06ffb",
+        "source_tree": "9ba7570f225b0e183a12c80df1e4dc79eaaf42c8",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "scope": "cpu_replay_endpoint_without_native_force_or_path_proof",
+      "cpu_passed": 84,
+      "native_qualification": false,
+      "teacher_admission": false
+    }
+  },
+  "registry_cpu": {
+    "passed": 60,
+    "failed": 0,
+    "log_sha256": "f4d0a2ca148c856b57eb64382015a279db450cf6574b292bebe65ef604bbac36"
+  },
+  "expanded_cpu": {
+    "passed": 863,
+    "failed": 22,
+    "errors": 1,
+    "tests_collected": 886,
+    "log_sha256": "22c0ac186eda9f5071e306140473e1d4c259b3acf9cc5c18d9dd6595d42dbffb",
+    "baseline_affected_cases_same": 23,
+    "baseline_log_sha256": "bddc1a8c2ba0bf03c936d76e1741aad95f331088337c3995fff2b1c1bd6a6e9f",
+    "legacy_fixture_diagnostics": [
+      "backend profile includes absolute paths of the originating worktree",
+      "parent receipt SHA matches but its stored path resolves through a symlink"
+    ]
+  }
+}

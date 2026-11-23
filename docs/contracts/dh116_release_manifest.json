@@ -34961,6 +34961,126 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.power-remaining-digits",
+      "branch": "11-17",
+      "status": "fixed_wrist_flexion_0_of_18_passed",
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-remaining-digits.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round2_v1.json",
+      "cpu_tests": {
+        "passed": 91,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 171,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "defb370d4b775c1ad29e404a7edc78d6fc2cf397",
+        "source_tree": "b6a99719704aa0773db256d8457fae841529dcda",
+        "remote_branch": "11-17",
+        "files_verified": 3,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "expanded_cpu_tests": {
+        "passed": 863,
+        "failed": 22,
+        "errors": 1,
+        "same_cases_at_baseline": 23
+      }
+    },
+    {
+      "package": "teacher.902-pinch-alignment-round2",
+      "branch": "11-17",
+      "status": "right_thumb_and_index_gaps_positive",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-right-alternate-alignment.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round2_v1.json",
+      "cpu_tests": {
+        "passed": 168,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 171,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "a3501217483ac8ac661fb747a19ce9c09d4473d8",
+        "source_tree": "795b70b96c5034861cc43e685f16a1d0408bc21c",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "expanded_cpu_tests": {
+        "passed": 863,
+        "failed": 22,
+        "errors": 1,
+        "same_cases_at_baseline": 23
+      }
+    },
+    {
+      "package": "teacher.tripod-relief-round2",
+      "branch": "11-17",
+      "status": "cpu_replay_endpoint_without_native_force_or_path_proof",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-wrist-relief.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round2_v1.json",
+      "cpu_tests": {
+        "passed": 84,
+        "failed": 0
+      },
+      "integrated_cpu_tests": {
+        "passed": 171,
+        "failed": 0
+      },
+      "new_isaac_runs": 0,
+      "new_ppo_updates": 0,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "generalization_qualified": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "593ba8447694fc03fe9d75c3629a2f30b7f06ffb",
+        "source_tree": "9ba7570f225b0e183a12c80df1e4dc79eaaf42c8",
+        "remote_branch": "11-17",
+        "files_verified": 4,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 60,
+        "failed": 0
+      },
+      "expanded_cpu_tests": {
+        "passed": 863,
+        "failed": 22,
+        "errors": 1,
+        "same_cases_at_baseline": 23
+      }
     }
   ]
 }

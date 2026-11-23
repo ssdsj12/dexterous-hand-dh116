@@ -51530,6 +51530,72 @@
         "native_qualification": false,
         "teacher_admission": false
       }
+    },
+    "teacher.power-remaining-digits": {
+      "title": "Power parallel contact round 2",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-bilateral-receipt"
+      ],
+      "tests": [
+        "tests/test_dh116_power_remaining_digits.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-sync-power-remaining-digits.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round2_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "fixed_wrist_flexion_0_of_18_passed",
+        "cpu_passed": 91,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.902-pinch-alignment-round2": {
+      "title": "Pinch parallel contact round 2",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.902-pinch-measured-alignment"
+      ],
+      "tests": [
+        "tests/test_dh116_902_pinch_right_alignment.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-902-pinch-right-alternate-alignment.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round2_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "right_thumb_and_index_gaps_positive",
+        "cpu_passed": 168,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
+    },
+    "teacher.tripod-relief-round2": {
+      "title": "Tripod parallel contact round 2",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.tripod-tracking-feedback"
+      ],
+      "tests": [
+        "tests/test_tripod_wrist_relief.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-tripod-wrist-relief.md",
+      "readiness": "docs/contracts/dh116_teacher_three_grasp_sync_round2_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "cpu_replay_endpoint_without_native_force_or_path_proof",
+        "cpu_passed": 84,
+        "native_qualification": false,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {
