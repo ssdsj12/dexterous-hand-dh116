@@ -1,0 +1,268 @@
+{
+  "version": "dh116-teacher-power-free-wrist-refit-v1",
+  "status": "passed_cpu_unilateral_static_power_candidate",
+  "source_commit_base": "757e666adc782451efe1f915d5ad148d92bc41ad",
+  "source_sha256": {
+    "scripts/search_dh116_power_surface_pairs.py": "cda738eae6ef76136961cd1f0e00874bfbc53f1913872265fd2f0f6bc8031ae8",
+    "tests/test_dh116_power_surface_pairs.py": "d2945eb250ccae87f93e34de54cf7e2df0db5ec9f6ec6ffa66bd93262565585a"
+  },
+  "cpu": {
+    "passed": 196,
+    "failed": 0,
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/test_dh116_power_partial_opposition.py",
+      "tests/test_dh116_power_partial_stage_evidence.py",
+      "tests/test_dh116_power_measured_reseat.py",
+      "tests/test_dh116_power_fixed_wrist_digits.py",
+      "tests/test_dh116_power_material_reach.py",
+      "tests/test_dh116_power_staged_palm_witness.py",
+      "tests/test_dh116_power_supported_task.py",
+      "tests/test_dh116_power_palm_contact_evidence.py",
+      "tests/test_supported_lift_observation.py",
+      "tests/test_supported_wire_grasp_feedback.py",
+      "tests/test_wire_fixed_pregrasp_native_reset.py",
+      "tests/test_dh116_work_packages.py",
+      "tests/test_dh116_power_thumb_clearance.py",
+      "tests/test_supported_wire_material_variants.py",
+      "tests/test_wire_variant_isaac_reset.py",
+      "tests/test_supported_wire_factorial_holdouts.py",
+      "tests/test_supported_wire_holdout_resets.py",
+      "tests/test_dh116_power_thumb_route.py",
+      "tests/test_dh116_owned_approach.py",
+      "tests/test_dh116_swept_wrist_projection.py",
+      "tests/test_dh116_power_preload.py",
+      "tests/test_dh116_power_surface_pairs.py",
+      "tests/test_dh116_wire_common_pregrasp.py"
+    ],
+    "log_sha256": "742e6566da9cf5e0ae645527dd44ba1c8f4df01ebb89c7050caeb8f36c1b337e",
+    "failing_cases_log_sha256": {
+      "power-free-wrist-red.log": "952a87644fe61e4483877f1f2b105ecc5b538e7f0167f3f3d873b4f9ce98d6b2",
+      "power-free-wrist-refine-red.log": "db5453321ab15a28931f05046117167c8fc53984a9c87a4051ae33e03b73130d",
+      "power-free-wrist-palm-node-red.log": "9bff51a2601ada6d758c94b3821f90afdbe4491a6601cb934df2a2e54af8ccf2",
+      "power-free-wrist-direct-call-red.log": "d6bcbf8bb5357ea5802f84b069e0295e725569a30d07d573969598de82860a15",
+      "power-free-wrist-opposition-red.log": "ca24f9408be148ddb256920a3f91bcb90e91b0667439f17b88cfa0673744daca",
+      "power-free-wrist-archive.log": "d17a0b8d710d70b735f5e6cd88312003d9f48a99a732484a2c0e2ea277a935b9"
+    }
+  },
+  "archived_replay": {
+    "artifact_sha256": "4ab38ac96906cfd7085f1f6316004f775b2237f8c02da77f503a4c2602320e68",
+    "argv": [
+      "/mnt/mydisk/xk/envs/dh116/bin/python",
+      "-B",
+      "-m",
+      "scripts.search_dh116_power_surface_pairs",
+      "--palm-receipt",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag2404-power-palm-witness-native/outer.json",
+      "--continuous-audit",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_thumb_route_continuous_6504_v4.json",
+      "--partial-audit",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_partial_opposition_6504_v1.json",
+      "--preload-audit",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/ag_power_static_preload_6504_v2.json",
+      "--output",
+      "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/power-free-wrist-archive-v5.json",
+      "--align-wire-normals",
+      "--clearance-rounds",
+      "3",
+      "--slide-selected-pad",
+      "--free-wrist-refit"
+    ],
+    "exit_code": 1,
+    "log_sha256": "dce3c88e9f6f5e6893a89f3a1eb8e1c3e52b79c1aad991cbbb917df8be14c201",
+    "archive": {
+      "outer_sha256": "522f0180c88583ebf4cd4be1664e41667ecd25c67e583adb675fdd92969e7e9a",
+      "support_sha256": "d88c3a281e3a9d20cdbead2a1073ebf35a3928172b91812308cc6b06052abbaf",
+      "motion_row_sha256": "618f7f52161c7d72713608cfa1138f4600569da8c3cdb91722688441e5bde093",
+      "contract_sha256": "1a52b1d13548cbda5918d75988873421e1c718d918b9023f136471031dcb22a8",
+      "config_sha256": "5c54a8f741f02d3b2cda7110acb8b92a109fe212e549d08cd9b33678c8e07df0"
+    },
+    "clock": {
+      "run_uuid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0",
+      "env_id": 0,
+      "episode_uid": "power-supported-3bcd1a6756a94fcab74e7b47e34f59f0:0",
+      "reset_id": 1,
+      "rod_uid": "rod0",
+      "physics_step": 6504,
+      "rod_tick": 78024,
+      "timestamp_s": 13.549999999999999,
+      "solver_time_s": 13.546916961669922,
+      "clock_valid": true
+    },
+    "hand_results": {
+      "left": {
+        "seeds": 10,
+        "fit_attempts": 30,
+        "outcome_counts": {
+          "rod_envelope": 10,
+          "locked_sdf_or_station": 20
+        },
+        "failed_stations": {
+          "finger14_link": 20,
+          "finger23_link": 7,
+          "base_link": 5
+        },
+        "accepted_static": 0
+      },
+      "right": {
+        "seeds": 4,
+        "fit_attempts": 12,
+        "outcome_counts": {
+          "locked_sdf_or_station": 6,
+          "not_opposed": 2,
+          "rod_envelope": 3,
+          "accepted_static": 1
+        },
+        "failed_stations": {
+          "finger43_link": 6
+        },
+        "accepted_static": 1
+      }
+    },
+    "earlier_palm_fit_sha256": "b939a580742f8d326051667fda0f6c82aa58fd5c2279b7e348f7d57cc1229260",
+    "right_static_candidate": {
+      "ray_indices": [
+        6,
+        1
+      ],
+      "state": [
+        0.5271050181633757,
+        -0.12712940182769078,
+        0.35946262446415383,
+        0.34248883752839504,
+        -0.07163207418654786,
+        0.30848102920581055,
+        1.2966620920526557,
+        0.011044486194849771,
+        0.49369433522224426,
+        0.4417164921760559,
+        0.7916710009428799,
+        0.9394811987876892
+      ],
+      "partner_fit_m": 0.0008273146704848119,
+      "result": "accepted_static",
+      "planes": [
+        {
+          "shape": "source:finger43_link",
+          "required_m": -0.00015,
+          "segment": 3,
+          "normals": [
+            [
+              -0.9160911665376146,
+              -0.10214898943191654,
+              -0.3877403236030404
+            ],
+            [
+              -0.9072468985098578,
+              -0.06491070776162937,
+              -0.41555946044113573
+            ]
+          ],
+          "reference_lower_m": -0.00016556091216318101,
+          "reference_upper_m": -0.00016156090996634776
+        }
+      ],
+      "sdf": {
+        "base_link": {
+          "node": 9,
+          "gap_m": -5.010252218726977e-05,
+          "most_negative_node": 9,
+          "minimum_gap_m": -5.010252218726977e-05,
+          "negative_nodes": [
+            9
+          ],
+          "normal_world": [
+            -0.30548387484059636,
+            0.2498076068292514,
+            -0.9188447974400339
+          ]
+        },
+        "finger14_link": {
+          "node": 4,
+          "gap_m": -4.9552129395344716e-05,
+          "most_negative_node": 4,
+          "minimum_gap_m": -4.9552129395344716e-05,
+          "negative_nodes": [
+            4
+          ],
+          "normal_world": [
+            -0.5795725752310271,
+            0.20225849345597205,
+            0.7894220239295302
+          ]
+        },
+        "finger43_link": {
+          "node": 3,
+          "gap_m": -4.3799447388579923e-05,
+          "most_negative_node": 3,
+          "minimum_gap_m": -4.3799447388579923e-05,
+          "negative_nodes": [
+            3
+          ],
+          "normal_world": [
+            0.9373123380569234,
+            0.10223066021800235,
+            0.3331583302840483
+          ]
+        }
+      },
+      "thumb_partner_cos": -0.2595609828609473,
+      "geometry": {
+        "open_hull_guards": {
+          "table_m": 0.03369761518303155,
+          "support_m": 0.014690193059824552,
+          "thumb_clearance_m": 0.0011148538514998418,
+          "hand_y_bounds_m": [
+            -0.24820433064408767,
+            -0.10710128690312376
+          ],
+          "passed": true
+        },
+        "palm_gap_m": -5.010252218726977e-05,
+        "palm_sdf_passed": true,
+        "limiting_rod": null,
+        "passed": true
+      },
+      "refined_sliding_opposition": true
+    }
+  },
+  "power_open_holdout": {
+    "record_sha256": "72f687c6df8a27d3115f5417fb600b522f81b4caa5e583bd7df76eeffecdc54f",
+    "matrix_sha256": "c2dbd1c60270ceb4358616ed0fbb5900ef6c668664e2a7e7718145b40a346def",
+    "clear": 104,
+    "total": 104,
+    "specifications": 8,
+    "minimum_m": {
+      "table_margin_m": 0.007772448103265486,
+      "support_gap_m": 0.0053156619287703655,
+      "wire_gap_lower_m": 0.0036555313162820236
+    },
+    "native_reset_verified": false
+  },
+  "new_native_runs": 0,
+  "new_ppo_updates": 0,
+  "bilateral_static_candidates": false,
+  "continuous_route_verified": false,
+  "teachable_approach": false,
+  "teacher_admission": false,
+  "grasp_qualified": false,
+  "generalization_qualified": false,
+  "antigravity": {
+    "rounds": [
+      "DH116 Power 持出起始净空 R1",
+      "DH116 Power 托盘后包覆 R2",
+      "DH116 Power 托盘后包覆 R3",
+      "DH116 Power 托盘后包覆 R4"
+    ],
+    "reviewed_source_sha256": "cda738eae6ef76136961cd1f0e00874bfbc53f1913872265fd2f0f6bc8031ae8",
+    "reviewed_test_sha256": "d2945eb250ccae87f93e34de54cf7e2df0db5ec9f6ec6ffa66bd93262565585a",
+    "reviewed_direct_call_guard": true,
+    "same_station_sliding_opposition_hard_gate_unchanged": true
+  }
+}

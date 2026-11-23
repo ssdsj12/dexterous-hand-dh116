@@ -51209,6 +51209,53 @@
         "new_native_runs": 0,
         "teacher_admission": false
       }
+    },
+    "teacher.power-free-wrist-refit": {
+      "title": "Fit bounded wrist and contact surfaces on archived Power wire",
+      "branch": "11-17",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "teacher.power-clearance-refit"
+      ],
+      "tests": [
+        "tests/test_dh116_power_partial_opposition.py",
+        "tests/test_dh116_power_partial_stage_evidence.py",
+        "tests/test_dh116_power_measured_reseat.py",
+        "tests/test_dh116_power_fixed_wrist_digits.py",
+        "tests/test_dh116_power_material_reach.py",
+        "tests/test_dh116_power_staged_palm_witness.py",
+        "tests/test_dh116_power_supported_task.py",
+        "tests/test_dh116_power_palm_contact_evidence.py",
+        "tests/test_supported_lift_observation.py",
+        "tests/test_supported_wire_grasp_feedback.py",
+        "tests/test_wire_fixed_pregrasp_native_reset.py",
+        "tests/test_dh116_work_packages.py",
+        "tests/test_dh116_power_thumb_clearance.py",
+        "tests/test_supported_wire_material_variants.py",
+        "tests/test_wire_variant_isaac_reset.py",
+        "tests/test_supported_wire_factorial_holdouts.py",
+        "tests/test_supported_wire_holdout_resets.py",
+        "tests/test_dh116_power_thumb_route.py",
+        "tests/test_dh116_owned_approach.py",
+        "tests/test_dh116_swept_wrist_projection.py",
+        "tests/test_dh116_power_preload.py",
+        "tests/test_dh116_power_surface_pairs.py",
+        "tests/test_dh116_wire_common_pregrasp.py"
+      ],
+      "timeout_seconds": 600,
+      "report": "docs/superpowers/reports/2026-11-23-teacher-power-free-wrist-refit.md",
+      "readiness": "docs/contracts/dh116_teacher_power_free_wrist_refit_v1.json",
+      "native_runs": 0,
+      "last_result": {
+        "scope": "archived_unilateral_static_power_candidate",
+        "cpu_passed": 196,
+        "power_open_start_clear": 104,
+        "left_static_candidates": 0,
+        "right_static_candidates": 1,
+        "new_native_runs": 0,
+        "teacher_admission": false
+      }
     }
   },
   "execution_target": {

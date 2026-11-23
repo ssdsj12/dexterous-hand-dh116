@@ -1,3 +1,5 @@
+Bounded Power refitting found one right-hand palm and two-pad endpoint on the archived wire. [Report](docs/superpowers/reports/2026-11-23-teacher-power-free-wrist-refit.md)
+
 The archived Tripod audit separates left index pad motion from wire motion at first loss of contact. [Report](docs/superpowers/reports/2026-11-23-teacher-tripod-index-contact-loss.md)
 
 The independent CPU Teacher candidate updates wire feedback branches using the original PPO. [Report](docs/superpowers/reports/2026-11-23-teacher-wire-feedback-policy.md)
