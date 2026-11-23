@@ -1,0 +1,59 @@
+{
+  "schema": "dh116-teacher-work-package-evidence-v1",
+  "branch": "11-17",
+  "package": "teacher.pinch-finger-goal-smoke8-v1",
+  "report": "docs/superpowers/reports/2026-11-23-teacher-pinch-finger-goal-ppo.md",
+  "tested_head": "7a3e3b31f27c04a90ba1d8f04a2b86dfdcead9cf",
+  "cpu_tests": {
+    "passed": 277,
+    "failed": 0
+  },
+  "native_runs": 1,
+  "ppo_updates": 1,
+  "diagnostic_verified": true,
+  "native_qualification": false,
+  "grasp_qualified": false,
+  "teacher_admission": false,
+  "actual_receipt_sha256": "eaa2ffdc77b04bf7d75e17548d4b16d84ed98fe0ca89f9236a54ede203a0c01d",
+  "independent_audit_sha256": "60002f4bff77a42e5f8741f878cea56c8414d827f3b7c1c49ff213f7f98ba08b",
+  "fingerprint": "1b2d5a0b22ff95515dff673985e5e5b4b82fa2a9cf708fa8a0ef9d8a4be8ac09",
+  "outer_exit_code": 0,
+  "inferior_exit_code": 0,
+  "inferior_signal": null,
+  "duration_seconds": 164.78179204603657,
+  "actual_physics": {
+    "initialization_steps": 2,
+    "controlled_sdk_steps": 64,
+    "material_nodes": 41,
+    "solver_substeps": 768,
+    "control_windows": 8
+  },
+  "reward_sha256": "db495eaa5485845d51c54320281f7b4f6f77dec782a8b6a5fe7638e6263862c8",
+  "checkpoint_sha256": "79a07e58a5c59073b8a916f7744a42e90f18619b1fd58204e0e6b5ad3f5aeacc",
+  "raw_journal_sha256": "0a6bf3b32a32e663513d534f0a651bc714d99f48d73bad9fe43a40692574cc29",
+  "training": {
+    "accepted_minibatch_updates": 1,
+    "loaded_updates": 0,
+    "parameter_delta_l2": 0.004318242860902067,
+    "target_updates": 1,
+    "updates": 1
+  },
+  "position_error": {
+    "unit": "rad",
+    "maximum_active_angle_at_reset": [
+      0.04507375813649589,
+      0.33463081287485363
+    ],
+    "at_rollout_end": [
+      0.047744016420111,
+      0.3384464936171174
+    ],
+    "tolerance": 0.05,
+    "arrival_bonus_count": 0
+  },
+  "solver_contact_pairs_by_mesh": {
+    "table": 31488
+  },
+  "accepted_exact_kl": 0.0016971826553344727,
+  "accepted_lr": 1e-05
+}

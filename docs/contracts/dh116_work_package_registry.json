@@ -52065,14 +52065,25 @@
       "tests": [],
       "title": "Pinch native finger-goal PPO diagnostic",
       "command_spec": "configs/dh116_execution/pinch-finger-goal-smoke8-core-v1.json",
-      "status": "blocked",
-      "blocker_kind": "approval",
-      "reason": "Verified native Reset, exact standing authorization and resource reservation required.",
+      "status": "passed",
+      "reason": "Independently verified one bounded native PPO update. No hand-wire contact or grasp qualification.",
       "dependencies": [],
       "report": "docs/superpowers/reports/2026-11-23-teacher-pinch-finger-goal-ppo.md",
       "actual_launch": {
         "path": "configs/dh116_execution/pinch-finger-goal-smoke8-launch-v1.json",
         "sha256": "d48eec74f148a3c28fcdea1ae486fb91c7854979dae8af17f9409c7bfb8885ac"
+      },
+      "readiness": "docs/contracts/dh116_teacher_pinch_finger_goal_smoke8_native_v1.json",
+      "native_runs": 1,
+      "last_result": {
+        "passed": 1,
+        "failed": 0,
+        "inferior_exit": 0,
+        "ppo_updates": 1,
+        "result_sha256": "eaa2ffdc77b04bf7d75e17548d4b16d84ed98fe0ca89f9236a54ede203a0c01d",
+        "diagnostic_verified": true,
+        "native_qualification": false,
+        "teacher_admission": false
       }
     }
   },

@@ -35774,6 +35774,36 @@
         "passed": 60,
         "failed": 0
       }
+    },
+    {
+      "package": "teacher.pinch-finger-goal-smoke8-v1",
+      "branch": "11-17",
+      "status": "native_finger_goal_smoke8_diagnostic_verified",
+      "report": "docs/superpowers/reports/2026-11-23-teacher-pinch-finger-goal-ppo.md",
+      "readiness": "docs/contracts/dh116_teacher_pinch_finger_goal_smoke8_native_v1.json",
+      "cpu_tests": {
+        "passed": 277,
+        "failed": 0
+      },
+      "new_isaac_runs": 1,
+      "new_ppo_updates": 1,
+      "native_qualification": false,
+      "grasp_qualified": false,
+      "teacher_admission": false,
+      "remote_verified": true,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7a3e3b31f27c04a90ba1d8f04a2b86dfdcead9cf",
+        "source_tree": "fd414973af2356892dfe518be60c08cb9989990c",
+        "remote_branch": "11-17",
+        "files_verified": 11,
+        "pr2_draft": true,
+        "pr2_merged": false
+      },
+      "post_registry_cpu_tests": {
+        "passed": 64,
+        "failed": 0
+      }
     }
   ]
 }
