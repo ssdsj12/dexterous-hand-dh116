@@ -2174,5 +2174,67 @@
         0.002
       ]
     }
+  },
+  "shared_128_native_throughput": {
+    "status": "actual_128_lane_two_window_probe_passed",
+    "source_family": "shared_batched_solver_v1",
+    "environments": 128,
+    "articulations": 256,
+    "sdk_step": 26,
+    "physical_measurement_steps": 16,
+    "solver_substeps_per_env": 192,
+    "controls": 2,
+    "on_policy_transitions_collected": 256,
+    "ppo_updates": 0,
+    "native_local_reset_128_verified": false,
+    "natural_exit_code": 0,
+    "forced_exit": false,
+    "elapsed_s": 457.9634273489937,
+    "receipt_sha256": "dfd66746cd5572deb3bc6b34c3d5558a801f715e83fde800549a1aaa716efba8",
+    "probe_sha256": "f1f2a30398bc2e482bb202bf89a18b86eaffc1ee8c3ff74d07aa9beeec2526ea",
+    "window_seconds": [
+      41.46975296596065,
+      44.65229217102751
+    ],
+    "sampled_peak_gpu_used_mib": 2860,
+    "peak_rss_kib": 4830344,
+    "first_window_phase_seconds": {
+      "source_and_sample_s": 1.26469841087237,
+      "action_projection_reaction_submission_s": 17.99840053007938,
+      "physx_step_dispatch_s": 0.0720890499651432,
+      "sdk_readback_guard_and_mesh_targets_s": 0.9695133934728801,
+      "shared_solver_and_compact_s": 0.17155458801425993,
+      "action_post_readback_s": 2.21521200472489,
+      "guard_and_r0_s": 18.656181170837954,
+      "control_windows_s": 41.46975296596065
+    },
+    "cpu": {
+      "passed": 12,
+      "failed": 0,
+      "log_sha256": "c95a82e56faf69df79d99dd822c3d3c2fdef0c7476200baa6c3d658291ce813a"
+    },
+    "teacher_admission": false,
+    "grasp_qualified": false,
+    "report": "docs/superpowers/reports/2026-11-24-dh116-shared-128-throughput.md",
+    "release_cpu": {
+      "passed": 73,
+      "failed": 0,
+      "seconds": 16.0,
+      "log_sha256": "862928e60e87422edadb69c4daf878f420d146575afc162d6a4ccc1af1713a59"
+    },
+    "first_sdk_inner_profile": {
+      "environments": 2,
+      "sdk_step": 26,
+      "ppo_updates": 0,
+      "receipt_sha256": "115e2836e6906aed1536d905c01b7faf8c117dd3a56b5e4939489918f432c1b9",
+      "exit_code": 0,
+      "forced_exit": false,
+      "stats_sha256": {
+        "cpu_profile_begin.stats": "557496c9acf505b4dd6ea016e65f35869720ea319fedade31898857c77fc745a",
+        "cpu_profile_geometry.stats": "db63af6aa1a43525e4c489b6b6f29314ac6dcb8100d058a35575155383d9914c",
+        "cpu_profile_submit.stats": "177e2845bedc8d924572e2589315288c98647b36a5c3d0897c35f5592fd9594b"
+      },
+      "scope": "first SDK actual calls only; not a 128-lane call-tree profile"
+    }
   }
 }

@@ -52531,6 +52531,21 @@
       "scope": "22 real windows; unchanged left finger33 contact penetration guard at SDK190",
       "teacher_admission": false,
       "native_ppo_updates": 0
+    },
+    "teacher.shared-128-pinch-throughput-v1": {
+      "title": "Actual 128-lane Pinch shared native throughput probe",
+      "executor": "gated",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.shared-native-ppo-pinch-two-v1"
+      ],
+      "scope": "26 SDK steps/two on-policy windows only; zero PPO updates; not 128-lane Reset qualification",
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-128-throughput.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "native_ppo_updates": 0,
+      "teacher_admission": false,
+      "receipt_sha256": "dfd66746cd5572deb3bc6b34c3d5558a801f715e83fde800549a1aaa716efba8"
     }
   },
   "execution_target": {

@@ -143,6 +143,7 @@ def reset_live_lane(sim, scenes, seed, archive, runtime, bindings, lane, *, star
 
 def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, end, *, reset, backend, commands=None, reset_last_window=False, teacher_source_audit=False, policy_factory=None, training_height=None):
     import torch
+    from time import perf_counter
     from scripts.audit_dh116_batch_rod_exchange import _live_contact_geometry
     from scripts.verify_dh116_deformx_thumb_contact import step_thumb_physics
     from scripts.diagnose_dh116_teacher_initialization import write_new
@@ -266,7 +267,11 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
         if teacher_source_audit:
             from scripts.audit_dh116_shared_teacher_native_inputs import NativeInputAudit
             input_audit = NativeInputAudit(runtime,sim,scenes,seed,bindings,hand_bindings,archive,output)
+        def timing(name,started):
+            if policy is not None:
+                policy.timings[name]=policy.timings.get(name,0.)+perf_counter()-started
         for sdk in range(start_step + 1, end + 1):
+            phase_started=perf_counter()
             control_index, substep_index = divmod(sdk - start_step - 1, 8)
             transactions = []
             for lane in range(len(scenes)):
@@ -279,7 +284,9 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                 action = (policy.action(sdk,lane)[None] if policy is not None else
                     torch.as_tensor(command_for_tick(commands, physics_step=sdk,
                         start_step=start_step, env_id=lane))[None])
-                request = connection.begin(hand_bindings[lane], action, read_clock=read_clock,
+                begin = (partial(policy.profile_call,"begin",connection.begin)
+                         if policy is not None else connection.begin)
+                request = begin(hand_bindings[lane], action, read_clock=read_clock,
                     palms=palms[lane], angles=angles[lane])
                 projection = project_policy_wrist_targets(root_seed_w=roots[lane],
                     measured_base_w=geometry["root_poses_w"], common_lift_offset_m=torch.zeros(1, dtype=torch.float64),
@@ -307,14 +314,20 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                 transaction = transactions[lane]
                 if transaction is not None:
                     connection, projection, read_clock = transaction
-                    connection.submit(hand_bindings[lane], read_clock=read_clock,
+                    submit = (partial(policy.profile_call,"submit",connection.submit)
+                              if policy is not None else connection.submit)
+                    submit(hand_bindings[lane], read_clock=read_clock,
                         projected_root_poses=projection["projected_root_poses"],
                         projected_angles=projection["projected_angles"],
                         projection_source=projection["projection_source"])
                 else:
                     for hand in scene["hands"]:
                         hand.write_data_to_sim()
+            timing("action_projection_reaction_submission_s",phase_started)
+            phase_started=perf_counter()
             step_thumb_physics(sim, sdk - 1, budget_end=end)
+            timing("physx_step_dispatch_s",phase_started)
+            phase_started=perf_counter()
             all_links = []
             for lane, scene in enumerate(scenes):
                 links = []
@@ -348,13 +361,18 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                     solver.set_mesh_poses(slot,
                         np.asarray([row[0][name][0] for row in measured], dtype=np.float32),
                         np.asarray([row[0][name][1] for row in measured], dtype=np.float32), teleport=False)
+            timing("sdk_readback_guard_and_mesh_targets_s",phase_started)
+            phase_started=perf_counter()
             capture = runtime.advance(physics_step=sdk)
+            timing("shared_solver_and_compact_s",phase_started)
+            phase_started=perf_counter()
             action_readbacks = []
             for lane, transaction in enumerate(transactions):
                 if transaction is not None:
                     connection, projection, read_clock = transaction
                     action_readbacks.append(connection.finish(hand_bindings[lane], read_clock=read_clock))
                     palms[lane], angles[lane] = projection["palm_offsets_m"], projection["projected_angles"]
+            timing("action_post_readback_s",phase_started)
             if policy is None:
                 journal.emit("shared_step", dict(sdk_step=sdk, rod_ticks=list(runtime.ticks),
                     action_readbacks=action_readbacks, counts=capture["counts"].cpu().numpy(), mesh_wrenches=capture["mesh_wrenches"].cpu().numpy(),

@@ -14,7 +14,7 @@ from time import perf_counter
 
 
 class NativeSharedPPO:
-    def __init__(self,runtime,sim,scenes,seed,bindings,hand_bindings,archive,output,*,updates=2,policy_seed=20261123):
+    def __init__(self,runtime,sim,scenes,seed,bindings,hand_bindings,archive,output,*,updates=2,policy_seed=20261123,probe_windows=0,profile_first_sdk=False):
         import torch
         torch.manual_seed(policy_seed)
         torch.cuda.manual_seed_all(policy_seed)
@@ -29,7 +29,14 @@ class NativeSharedPPO:
         self.audit=NativeInputAudit(runtime,sim,scenes,seed,bindings,hand_bindings,archive,output,
                                     action_owner="policy")
         self.runtime,self.sim,self.scenes,self.bindings,self.hands=runtime,sim,scenes,bindings,hand_bindings
-        self.archive,self.output,self.updates=archive,output,updates
+        if probe_windows not in (0,2):
+            raise ValueError("explicit two-window throughput probe or actual PPO required")
+        self.probe_windows=probe_windows
+        self.profile_first_sdk=bool(profile_first_sdk)
+        self._cpu_profiles={};self.active_sdk=None
+        self.archive,self.output,self.updates=archive,output,(0 if probe_windows else updates)
+        self.window_metrics=[]
+        self.sampled_peak_gpu_used_mib=0
         self.source,self.refs,self.model=self.audit.source,self.audit.refs,self.audit.model
         self.config=self.audit.reward_config
         pp=self.config.ppo
@@ -87,7 +94,7 @@ class NativeSharedPPO:
                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_shared_teacher_checkpoint.py")}))
         from scripts.diagnose_dh116_teacher_initialization import write_new
         write_new(output/"ppo_plan.json",dict(grasp=archive.style,environments=len(scenes),
-            planned_updates=updates,rollout_steps=32,policy_seed=policy_seed,
+            planned_updates=self.updates,probe_control_windows=probe_windows,rollout_steps=32,policy_seed=policy_seed,
             recipe_sha256=self.recipe_sha256,ppo=asdict(self.trainer.config),source_family="shared_batched_solver_v1",
             source_profile_sha256=self.source.profile.digest,teacher_admission=False))
         self.radius.capture()
@@ -115,7 +122,15 @@ class NativeSharedPPO:
         self.rewards[lane]=reward;self.last[lane]=pre
         self.reset_controls[lane]=self.control
 
+    def profile_call(self,label,operation,*args,**kwargs):
+        if not self.profile_first_sdk or self.active_sdk!=self.audit.start+1:
+            return operation(*args,**kwargs)
+        import cProfile
+        profile=self._cpu_profiles.setdefault(label,cProfile.Profile())
+        return profile.runcall(operation,*args,**kwargs)
+
     def action(self,sdk,lane):
+        self.active_sdk=sdk
         import torch
         from go2_pvcnn.control.dh116.tabletop_training_reward import SubmittedRequest
         if self.sample is None:
@@ -172,8 +187,8 @@ class NativeSharedPPO:
             current.append(row)
             self.rows[i].append(row)
             if self.archive.style in ("pinch","tripod"):
-                geometry=self.guard[i].capture(row,sim=self.sim,bindings=self.hands[i],
-                                               read_clock=lambda i=i:self.clock(i))
+                geometry=self.profile_call("geometry",self.guard[i].capture,
+                    row,sim=self.sim,bindings=self.hands[i],read_clock=lambda i=i:self.clock(i))
                 row["closure_geometry"]=geometry
                 if not geometry["source_complete"] or geometry["failure_reasons"]:
                     row["guard_failure"]=geometry.get("terminal_reason") or "source_geometry_unavailable"
@@ -231,10 +246,18 @@ class NativeSharedPPO:
         self.timings["control_windows_s"]=self.timings.get("control_windows_s",0.)+duration
         self.control+=1;self.sample=None
         self.rows={i:[] for i in range(len(self.scenes))}
-        print("DH116_SHARED_PPO_WINDOW",json.dumps(dict(grasp=self.archive.style,
-            environments=len(self.scenes),sdk_step=self.runtime.physics_step,control=self.control,
-            window_seconds=duration,reward_mean=sum(x.reward for x in settlements.values())/len(settlements),
-            done_envs=list(done))),flush=True)
+        from scripts.audit_dh116_isaac_batch_scene import _gpu_memory
+        import resource
+        self.sampled_peak_gpu_used_mib=max(self.sampled_peak_gpu_used_mib,
+                                          _gpu_memory(int(os.environ["CUDA_VISIBLE_DEVICES"])))
+        window=dict(grasp=self.archive.style,environments=len(self.scenes),
+            sdk_step=self.runtime.physics_step,control=self.control,window_seconds=duration,
+            reward_mean=sum(x.reward for x in settlements.values())/len(settlements),
+            done_envs=list(done),sampled_peak_gpu_used_mib=self.sampled_peak_gpu_used_mib,
+            peak_rss_kib=resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+            phase_seconds=dict(self.timings))
+        self.window_metrics.append(window)
+        print("DH116_SHARED_PPO_WINDOW",json.dumps(window),flush=True)
         if self.trainer.rollout.full:
             started=perf_counter()
             metrics=self.trainer.update()
@@ -287,16 +310,22 @@ class NativeSharedPPO:
 
     def finish(self):
         from scripts.diagnose_dh116_teacher_initialization import write_new
-        if self.sample is not None or self.trainer.counters["updates"]!=self.updates:
+        if (self.sample is not None or self.trainer.counters["updates"]!=self.updates
+                or (self.probe_windows and self.control!=self.probe_windows)):
             raise RuntimeError("actual bounded PPO updates incomplete")
         result=dict(grasp=self.archive.style,environments=len(self.scenes),
             updates=self.trainer.counters["updates"],controls=self.control,
+            throughput_probe_only=bool(self.probe_windows),windows=self.window_metrics,
+            sampled_peak_gpu_used_mib=self.sampled_peak_gpu_used_mib,
             sdk_step=self.runtime.physics_step,metrics=self.metrics,teacher_admission=False,
             grasp_qualified=False,source_family="shared_batched_solver_v1")
-        write_new(self.output/"shared_ppo_result.json",result)
+        write_new(self.output/("shared_ppo_probe.json" if self.probe_windows else "shared_ppo_result.json"),result)
         return result
 
     def close(self):
+        for label,profile in self._cpu_profiles.items():
+            profile.dump_stats(str(self.output/("cpu_profile_"+label+".stats")))
+        self._cpu_profiles.clear()
         self.log.close()
         self.audit.close()
         self.runtime=self.sim=self.scenes=self.bindings=self.hands=self.source=self.refs=self.model=self.trainer=self.guard=self.audit=self.radius=None
@@ -322,6 +351,8 @@ def main():
     parser.add_argument("--updates",type=int,choices=(1,2),default=2)
     parser.add_argument("--height-candidate",type=Path)
     parser.add_argument("--height-candidate-sha256")
+    parser.add_argument("--profile-first-sdk",action="store_true")
+    parser.add_argument("--probe-control-windows",type=int,choices=(2,),default=0)
     args=parser.parse_args()
     height=None
     if args.height_candidate is not None:
@@ -342,14 +373,16 @@ def main():
     archive=load_grasp_archive(args.grasp,args.receipt,args.receipt_sha256)
     _,reset=load_inputs(args.grasp,args.receipt,args.receipt_sha256,
         args.smoke,args.smoke_sha256,args.smoke_ledger_sha256)
-    end=10+8*32*args.updates
+    end=10+8*(args.probe_control_windows or 32*args.updates)
     with native_file_lock(NATIVE_LOCK):
         if _gpu_memory(args.gpu)>512:
             raise RuntimeError("physical GPU already occupied; no unsafe sharing")
         args.output.mkdir(exist_ok=False)
         _run(Path(__file__).resolve().parents[1],archive,args.gpu,args.num_envs,args.output,
              coupled=True,max_sdk_step=end,extra_exercise=partial(coupled,reset=reset,backend=_ropesim,
-                 training_height=height,policy_factory=partial(NativeSharedPPO,updates=args.updates)))
+                 training_height=height,policy_factory=partial(NativeSharedPPO,updates=args.updates,
+                                                                probe_windows=args.probe_control_windows,
+                                                                profile_first_sdk=args.profile_first_sdk)))
 
 
 if __name__=="__main__":

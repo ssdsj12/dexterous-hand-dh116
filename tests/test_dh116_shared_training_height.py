@@ -53,7 +53,8 @@ def test_initial_mesh_world_mapping_preserves_static_supports_and_lane_offsets()
         initial_mesh_world_poses(Solver(),plan,measured)
 
 
-def test_training_cli_forwards_verified_height_to_actual_coupling(monkeypatch,tmp_path):
+@pytest.mark.parametrize("probe",[False,True])
+def test_training_cli_forwards_verified_height_to_actual_coupling(monkeypatch,tmp_path,probe):
     import contextlib,hashlib,json,sys,types
     from scripts import train_dh116_shared_native_teacher as train
     from scripts import audit_dh116_isaac_batch_scene as scene
@@ -86,7 +87,49 @@ def test_training_cli_forwards_verified_height_to_actual_coupling(monkeypatch,tm
         "--gpu","3","--num-envs","2","--updates","2","--output",str(tmp_path/"output"),
         "--height-candidate",str(candidate),"--height-candidate-sha256",
         hashlib.sha256(candidate.read_bytes()).hexdigest()])
+    if probe:
+        sys.argv += ["--probe-control-windows","2"]
     train.main()
-    assert len(calls)==1 and calls[0]["max_sdk_step"]==522
+    assert len(calls)==1 and calls[0]["max_sdk_step"]==(26 if probe else 522)
+    assert calls[0]["extra_exercise"].keywords["policy_factory"].keywords["probe_windows"]==(2 if probe else 0)
     assert calls[0]["extra_exercise"].keywords["training_height"]=={
         key:height[key] for key in ("delta_z_m","evidence_sha256")}
+
+
+def test_throughput_probe_cannot_emit_a_completed_training_result(tmp_path):
+    import json
+    from types import SimpleNamespace
+    from scripts.train_dh116_shared_native_teacher import NativeSharedPPO
+    policy=NativeSharedPPO.__new__(NativeSharedPPO)
+    policy.sample=None;policy.probe_windows=2;policy.updates=0;policy.control=2
+    policy.trainer=SimpleNamespace(counters={"updates":0})
+    policy.archive=SimpleNamespace(style="pinch");policy.scenes=[None]*128
+    policy.runtime=SimpleNamespace(physics_step=26);policy.output=tmp_path
+    policy.metrics=[];policy.window_metrics=[];policy.sampled_peak_gpu_used_mib=1024
+    result=policy.finish()
+    assert result["updates"]==0 and result["throughput_probe_only"]
+    assert not result["teacher_admission"] and not result["grasp_qualified"]
+    assert (tmp_path/"shared_ppo_probe.json").is_file()
+    assert not (tmp_path/"shared_ppo_result.json").exists()
+    policy.trainer.counters["updates"]=1
+    with pytest.raises(RuntimeError,match="incomplete"):
+        policy.finish()
+
+
+def test_first_sdk_profiler_preserves_call_result_and_excludes_later_sdk():
+    from types import SimpleNamespace
+    from scripts.train_dh116_shared_native_teacher import NativeSharedPPO
+    owner=NativeSharedPPO.__new__(NativeSharedPPO)
+    owner.profile_first_sdk=True;owner._cpu_profiles={}
+    owner.audit=SimpleNamespace(start=10);owner.active_sdk=11
+    value=object()
+    def operation():
+        return value
+    assert owner.profile_call("begin",operation) is value
+    assert "begin" in owner._cpu_profiles
+    assert sum(s.callcount for s in owner._cpu_profiles["begin"].getstats()
+               if getattr(s.code,"co_name",None)=="operation")==1
+    owner.active_sdk=12
+    assert owner.profile_call("begin",operation) is value
+    assert sum(s.callcount for s in owner._cpu_profiles["begin"].getstats()
+               if getattr(s.code,"co_name",None)=="operation")==1

@@ -1,3 +1,5 @@
+The actual 128-lane native probe completed two on-policy windows in 41.47/44.65 s with natural exit 0 and 2860 MiB sampled GPU use. CPU control/geometry remain the bottleneck; no optimizer update was performed. [Report](docs/superpowers/reports/2026-11-24-dh116-shared-128-throughput.md)
+
 Actual shared native Teacher PPO now completes two updates and local Reset continuation for two-lane Pinch/Power, with exclusive checkpoint roundtrips and natural exit 0. Three-grasp 128-lane training and grasp qualification remain pending. [Report](docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md)
 
 Add a bounded per-environment DeformX raw-pair option in an isolated build and a three-grasp native CUDA scale audit. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-pair-scale-probe.md)
