@@ -36304,6 +36304,30 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.shared-128-pinch-throughput-v1",
+      "branch": "11-17",
+      "status": "actual_128_lane_two_window_probe_verified",
+      "native_ppo_updates": 0,
+      "environments": 128,
+      "windows_s": [
+        41.46975296596065,
+        44.65229217102751
+      ],
+      "sampled_peak_gpu_used_mib": 2860,
+      "cpu_passed": 73,
+      "natural_exit_code": 0,
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-128-throughput.md",
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "02cac80a2253d16b28acd8b5b3209d714240979a",
+        "source_tree": "95f25338be51177abe316f731552bc0e0fb36e17",
+        "files_verified": 8,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }
