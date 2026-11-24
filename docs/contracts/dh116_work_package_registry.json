@@ -52555,7 +52555,7 @@
       "dependencies": [
         "teacher.shared-native-ppo-software-v1"
       ],
-      "scope": "software parity, N2 two PPO updates, N128 two-window 2.64x timing; full N128 PPO active",
+      "scope": "software parity, N2 and N128 two PPO updates; N128 timing remains insufficient; no grasp admission",
       "report": "docs/superpowers/reports/2026-11-24-dh116-batched-control-geometry.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "teacher_admission": false
@@ -52563,15 +52563,72 @@
     "teacher.batched-native128-ppo-v1": {
       "title": "Actual 128-lane batched native PPO updates",
       "executor": "gated",
-      "status": "running",
+      "status": "passed",
       "branch": "11-17",
       "dependencies": [
         "teacher.batched-control-geometry-v1"
       ],
-      "scope": "two updates each 32 actual control windows, local Reset; not grasp qualification",
+      "scope": "N128 two actual updates, 32 windows each, local Reset and natural exit0; performance insufficient; no grasp admission",
       "report": "docs/superpowers/reports/2026-11-24-dh116-batched-control-geometry.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
-      "teacher_admission": false
+      "teacher_admission": false,
+      "native_ppo_updates": 2,
+      "receipt_sha256": "ca20e5ad88634f750f0d9e0b86594dca889dd5f7a4346c0867ae192e1482d653"
+    },
+    "teacher.full-tensor-software-v1": {
+      "branch": "11-17",
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "title": "Device observations, reward, geometry, rollout and original PPO",
+      "executor": "prepared",
+      "status": "passed",
+      "dependencies": [
+        "teacher.batched-control-geometry-v1"
+      ],
+      "scope": "CPU214 regression, CUDA34 PPO/input and CUDA3 geometry tests; no coupled native admission"
+    },
+    "teacher.flat-cuda-pair-native-v1": {
+      "branch": "11-17",
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "title": "Native owned flat GPU contact export and mesh submission",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.full-tensor-software-v1"
+      ],
+      "scope": "7 pure solver advances, N2, no Isaac/PPO",
+      "binary_sha256": "24ddf340cf697bf4cf8e3e50bd0ac8da66a446d404f703be33724c696ded4a6f"
+    },
+    "teacher.regex-articulation-native-v1": {
+      "branch": "11-17",
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "title": "Two actual regex Articulations and selected Reset isolation",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.full-tensor-software-v1"
+      ],
+      "scope": "26 SDK steps, N2, no rod/PPO",
+      "receipt_sha256": "ce9a46c4f5682ec302a844b42625b2ff1f4b27f3932beab73edc8f3091b43b5e"
+    },
+    "teacher.full-tensor-native-collector-v1": {
+      "branch": "11-17",
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "title": "Full coupled flat-CUDA regex Tensor Teacher collector",
+      "executor": "gated",
+      "status": "pending",
+      "dependencies": [
+        "teacher.flat-cuda-pair-native-v1",
+        "teacher.regex-articulation-native-v1"
+      ],
+      "scope": "integration then N2 coupled parity, N128 throughput and two actual PPO updates"
     }
   },
   "execution_target": {

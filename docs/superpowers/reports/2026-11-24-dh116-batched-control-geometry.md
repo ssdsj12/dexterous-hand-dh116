@@ -44,7 +44,7 @@ not demonstrated contact/Lift/Hold success.
 
 ## Current limits
 The actual 128-lane two-window timing probe has passed with natural exit 0.
-A separate full 128-lane two-update run is active; it has not yet completed. Full three-grasp 128-lane training remains unverified.
+A separate full 128-lane two-update run has completed with natural exit 0. Full three-grasp 128-lane training remains unverified.
 Tripod finger33 remains blocked by its unchanged source penetration guard.
 Original full24D, unknown371D mask, 480/60Hz, physical thresholds and success standards remain.
 
@@ -90,3 +90,15 @@ Full 32-window rollout + PPO timing must come from the separate active run:
 shared-128-pinch-batch-ppo2-gpu3-tv8ry9vr.
 Native probe outer SHA: 90973ff12531854aa357b11632948f60bf06ec10c7a447b0ba638c603fb84171.
 Registry regression: 60 passed, 14.11s.
+
+## Full N128 update baseline (completed)
+The separate N128 run completed 64 windows, 522 SDK steps, two actual PPO updates,
+including local Reset and continued sampling. Inferior exit0, no forced exit.
+Iteration totals: 537.8467 / 542.5839s; optimizer: 0.2050 / 0.1009s.
+Both checkpoint policy/Adam/RNG roundtrips passed. Sampled peak GPU use 3440MiB.
+This confirms optimization is no longer the timing bottleneck. The rollout still
+takes about nine minutes/update and does not meet the newly requested 6–8s target.
+No contact/Lift/Hold success or three-grasp qualification is granted.
+Outer receipt SHA ca20e5ad88634f750f0d9e0b86594dca889dd5f7a4346c0867ae192e1482d653.
+The next independent implementation replaces per-environment Articulations and
+keeps flat contact outputs, observations, geometry, reward and rollout on device.

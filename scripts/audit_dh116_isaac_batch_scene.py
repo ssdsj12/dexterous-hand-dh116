@@ -307,7 +307,8 @@ def _exercise(sim, scenes, seed, prepared, output, gpu, write_new, *, rod_spec=N
     return result
 
 
-def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, extra_exercise=None):
+def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, extra_exercise=None,
+         author_and_exercise=None, owned_names=None):
     from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
     assert_clean_import_boundary()
     from isaaclab.app import AppLauncher
@@ -362,13 +363,18 @@ def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, e
             from go2_pvcnn.control.dh116.tabletop_dual_hand_scene_preparation import prepare_scene
             prepared = prepare_scene(project)
             lanes = scene_lanes(num_envs, prepared["table"]["size_m"])
-            scenes, seed, rod_nodes = _author(sim, owners, trace, project, prepared, archive, lanes)
-            if extra_exercise is None:
-                result = _exercise(sim, scenes, seed, prepared, output, gpu, write_new,
-                    rod_spec=(archive, rod_nodes, owners) if coupled else None)
+            if author_and_exercise is not None:
+                if extra_exercise is not None:
+                    raise ValueError("explicit author owner and legacy exercise are exclusive")
+                result=author_and_exercise(sim,owners,trace,project,prepared,archive,lanes,output,gpu,max_sdk_step)
             else:
-                result = extra_exercise(sim, scenes, seed, prepared, archive, rod_nodes, owners,
-                                        output, gpu, max_sdk_step)
+                scenes, seed, rod_nodes = _author(sim, owners, trace, project, prepared, archive, lanes)
+                if extra_exercise is None:
+                    result = _exercise(sim, scenes, seed, prepared, output, gpu, write_new,
+                        rod_spec=(archive, rod_nodes, owners) if coupled else None)
+                else:
+                    result = extra_exercise(sim, scenes, seed, prepared, archive, rod_nodes, owners,
+                                            output, gpu, max_sdk_step)
             result["style"] = archive.style
             completed_step = result["sdk_step"]
             return result
@@ -384,9 +390,10 @@ def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, e
                                          freeze=freeze, read_clock=read_clock)
             write_new(output / "stop_commit.json", result)
 
-        names = tuple(f"{i}_{side}_{suffix}" for i in range(num_envs)
-                      for side in ("left", "right")
-                      for suffix in ("hand", "view", "permanent", "instantaneous"))
+        names = (tuple(owned_names) if owned_names is not None else
+                 tuple(f"{i}_{side}_{suffix}" for i in range(num_envs)
+                       for side in ("left", "right")
+                       for suffix in ("hand", "view", "permanent", "instantaneous")))
         with bindings((lifecycle_bindings, "OWNED_NAMES", names),
                       (lifecycle_bindings, "LifetimeTrace", StartupTrace),
                       (lifecycle_bindings, "snapshot_weakrefs", batch_snapshot),

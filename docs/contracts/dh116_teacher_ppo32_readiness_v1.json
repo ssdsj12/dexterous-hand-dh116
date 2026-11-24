@@ -867,7 +867,7 @@
     "pending": [
       "bind actual per-lane Reset, reward and rollout sources to the grouped collector",
       "measure and seal the installed SDK clock with the current source closure",
-      "verify two live lanes with nonzero hand–rod reaction, timeout/terminal endpoint and isolated Reset"
+      "verify two live lanes with nonzero hand\u2013rod reaction, timeout/terminal endpoint and isolated Reset"
     ]
   },
   "ppo64_followup": {
@@ -2238,7 +2238,7 @@
     }
   },
   "batched_control_geometry": {
-    "status": "native_128_probe_passed_full_ppo_running",
+    "status": "native_128_two_updates_passed_performance_insufficient",
     "basis_head": "07547ba91b81afd5b34003d5d519c88f5b458f32",
     "cpu_tests": {
       "passed": 91,
@@ -2276,6 +2276,96 @@
       "exit_code": 0,
       "captures": 2176
     },
-    "native_128_ppo_run": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-128-pinch-batch-ppo2-gpu3-tv8ry9vr"
+    "native_128_ppo_run": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-128-pinch-batch-ppo2-gpu3-tv8ry9vr",
+    "native_128_ppo": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-128-pinch-batch-ppo2-gpu3-tv8ry9vr",
+      "receipt_sha256": "ca20e5ad88634f750f0d9e0b86594dca889dd5f7a4346c0867ae192e1482d653",
+      "result_sha256": "4fb8fb9cea78e75c0b223bc5df17775a02dacf8aa9bd5fa626bcc054f6b42490",
+      "exit_code": 0,
+      "signal": null,
+      "forced_exit": false,
+      "updates": 2,
+      "controls": 64,
+      "sdk_step": 522,
+      "sampled_peak_gpu_used_mib": 3440,
+      "iteration_seconds": [
+        537.8466997148935,
+        542.5839023287408
+      ],
+      "performance_target_met": false,
+      "grasp_qualified": false
+    }
+  },
+  "full_tensor_native_ppo": {
+    "status": "foundations_verified_full_coupled_collector_pending",
+    "scope": "new flat CUDA candidate and two regex Articulations; no full-chain throughput claim",
+    "cpu": {
+      "passed": 214,
+      "skipped": 4,
+      "failed": 0,
+      "log_sha256": "e7fb7fdc0eb57122291c2a7826e4c03c4172aa6a43f1a2cb363b71266ba0d428"
+    },
+    "gpu_pack_rollout_ppo": {
+      "passed": 34,
+      "physical_gpu": 3,
+      "isaac_steps": 0
+    },
+    "flat_cuda": {
+      "binary_sha256": "24ddf340cf697bf4cf8e3e50bd0ac8da66a446d404f703be33724c696ded4a6f",
+      "steps": 7,
+      "environments": 2,
+      "tensor_owner_reset_continuation": true,
+      "gpu_all_mesh_submission": true,
+      "nondefault_stream_rejected": true,
+      "all_empty_batch": true,
+      "overflow_rejected": true,
+      "owned_outputs_stable": true,
+      "raw_indices_vectors_exact": true,
+      "reductions_max_abs_error": 2.7755575615628914e-16,
+      "reductions_atol": 1e-12,
+      "empty_lane": true,
+      "contacting_lane": true,
+      "read_once": true,
+      "reset_rejected": true,
+      "isaac_steps": 0,
+      "ppo_updates": 0,
+      "device": "2"
+    },
+    "regex_articulation": {
+      "physical_gpu": 3,
+      "environments": 2,
+      "articulations": 2,
+      "sdk_steps": 26,
+      "exit_code": 0,
+      "forced_exit": false,
+      "scope": "articulation_api_only",
+      "receipt_sha256": "ce9a46c4f5682ec302a844b42625b2ff1f4b27f3932beab73edc8f3091b43b5e"
+    },
+    "candidate_manifest": "docs/contracts/dh116_flat_backend_candidate_v1.json",
+    "target_iteration_seconds": [
+      6,
+      8
+    ],
+    "target_upper_seconds": 10,
+    "performance_target_verified": false,
+    "full_coupled_n2_parity": false,
+    "native128_tensor_updates": 0,
+    "three_grasp_tensor_training": false,
+    "teacher_admission": false,
+    "report": "docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md",
+    "cpu_regression": {
+      "passed": 214,
+      "skipped": 4,
+      "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/full-tensor-final-cpu-v4.log",
+      "sha256": "e7fb7fdc0eb57122291c2a7826e4c03c4172aa6a43f1a2cb363b71266ba0d428"
+    },
+    "review_corrections": [
+      "FP64 original 30N guard before SDK cast",
+      "finite complete reaction before native writes",
+      "one-shot transaction",
+      "FP64 raw quaternion COM",
+      "exclusive reaction source/Reset identity"
+    ],
+    "flat_cli_evidence": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/flat-cli-final-iqprjabr/flat-cuda-native-parity.json"
   }
 }

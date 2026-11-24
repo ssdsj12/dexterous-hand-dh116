@@ -36328,6 +36328,21 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.batched-control-geometry-v1",
+      "branch": "11-17",
+      "status": "native128_two_window_2.64x_speedup_verified",
+      "native_ppo_updates": 0,
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "c79558170a9b9aaaeb4fbebc5ba525549bd7202a",
+        "source_tree": "1a5880169d939ed1a4208066d81025bc06c5f072",
+        "files_verified": 22,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

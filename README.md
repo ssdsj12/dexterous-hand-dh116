@@ -1,3 +1,5 @@
+Full tensor native foundations now include owned flat CUDA contacts, two regex Articulations, device observations/reward/rollout and original PPO. Native component proofs pass; integrated coupled throughput and the 6–8s target remain unverified. [Report](docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md)
+
 Batched native 128-lane control windows take 16.35/16.31s versus 41.47/44.65s (2.64x), with natural exit 0 and unchanged guards. Actual full 128-lane PPO updates are running separately. [Report](docs/superpowers/reports/2026-11-24-dh116-batched-control-geometry.md)
 
 The actual 128-lane native probe completed two on-policy windows in 41.47/44.65 s with natural exit 0 and 2860 MiB sampled GPU use. CPU control/geometry remain the bottleneck; no optimizer update was performed. [Report](docs/superpowers/reports/2026-11-24-dh116-shared-128-throughput.md)
