@@ -12,7 +12,7 @@
   "entry_scripts": 6,
   "test_files": 15,
   "cpu": {
-    "passed": 166,
+    "passed": 169,
     "failed": 0
   },
   "cuda_geometry": {
@@ -44,16 +44,20 @@
     "source_audit_passed": true,
     "source_drift": [],
     "window_seconds": [
-      0.44649948296137154,
-      0.28644887497648597
+      1.6796649601310492,
+      1.6170774300117046
     ],
-    "torch_peak_allocated_bytes": 146683392,
+    "torch_peak_allocated_bytes": 143801344,
     "whole_process_peak_vram_bytes": null,
     "scene_sha256": "d1b8b5404af1ee809e88ffdf384c629fe7833e86ea471f88a3ccfaee5fac9a93",
     "geometry_manifest_sha256": "c4505753bb67a6a4b40d49b8b479c2096ec3c1a353dd677eefa98f10b8354f1f",
-    "native_result_sha256": "512fd268512205100bdc446a627bf5df681e49484e8b01e0dbbbe83e65e2c3c5",
+    "native_result_sha256": "87d65b23d3b6608c87c3b414aa7016a4d4990cc91c14be206f140002c7127742",
     "outer_timeout_s": 900,
-    "initialization_and_sdk_wait_budget_is_separate": true
+    "initialization_and_sdk_wait_budget_is_separate": true,
+    "window_seconds_include_full_sdk_diagnostic_trace": true,
+    "scope": "fixed_recorded_action_physics_parity_not_training",
+    "scene_build_mode": "clone",
+    "physics_replication": false
   },
   "binary": {
     "ropesim": "dee9304dd3c1fc3713696ddc2fa3fe7762c431df2ed82476cfed6463a1858389",
@@ -99,5 +103,188 @@
   },
   "asset_metadata_migration": [
     "assets/dh116_hollow_straw_v1/manifest.json: generator paths replaced by byte-verified historical Git blobs; USD/geometry/physics unchanged"
-  ]
+  ],
+  "scene_initialization_r1": {
+    "schema": "dh116-scene-init-r1-evaluation-v1",
+    "baseline_commit": "21c497be4e506d5b32b05446391a307b9b9a1b86",
+    "default_build_mode": "clone",
+    "replicate_physics": false,
+    "benchmark": {
+      "environments": 128,
+      "reference_prepare_s": 205.71602827869356,
+      "clone_prepare_s": 6.658209427958354,
+      "speedup": 30.8965992290473,
+      "reference_before_reset_s": 201.8776550819166,
+      "clone_before_reset_s": 2.7661571139469743,
+      "reference_sdk_reset_s": 2.2101401027757674,
+      "clone_sdk_reset_s": 2.0491203679703176,
+      "reference_manifest_overhead_s": 6.398657953133807,
+      "clone_manifest_overhead_s": 6.443702707998455,
+      "reference_process_s": 241.2462227079086,
+      "clone_process_s": 40.97579468600452,
+      "total_process_includes_app_startup_manifest_and_all_sdk_trace_io": true,
+      "prepare_excludes_manifest_and_trace_io": true,
+      "filtered_group_targets_before": 16256,
+      "filtered_group_targets_after": 128,
+      "source_author_count_before": 128,
+      "source_author_count_after": 1,
+      "source_inspection_count_after": 1
+    },
+    "parity": {
+      "2": {
+        "usd_properties_and_world_transforms_exact": true,
+        "reset_readback_exact": true,
+        "physical_state_action_rod_reward_guard_exact": true,
+        "trace_files": 21,
+        "exact_tensor_comparisons": 2107,
+        "contact_pair_keys_and_vectors_exact_after_identity_sort": true,
+        "max_float64_force_reduction_roundoff": 2.7755575615628914e-16,
+        "force_roundoff_in_reference_self_repeat_also_observed": true,
+        "force_or_geometry_runtime_thresholds_changed": false,
+        "selected_reset_exercised": true
+      },
+      "128": {
+        "usd_properties_and_world_transforms_exact": true,
+        "reset_readback_exact": true,
+        "physical_state_action_rod_reward_guard_exact": true,
+        "trace_files": 20,
+        "exact_tensor_comparisons": 2084,
+        "contact_pair_keys_and_vectors_exact_after_identity_sort": true,
+        "max_float64_force_reduction_roundoff": 9.992007221626409e-16,
+        "force_roundoff_in_reference_self_repeat_also_observed": true,
+        "force_or_geometry_runtime_thresholds_changed": false,
+        "selected_reset_exercised": false
+      }
+    },
+    "source_sha256": {
+      "src/dh116/__init__.py": "791627362417382856d431b69a1b208406c4d3c4191173ddcaaaaed378514f27",
+      "src/dh116/cuda_measurements/__init__.py": "791627362417382856d431b69a1b208406c4d3c4191173ddcaaaaed378514f27",
+      "src/dh116/cuda_measurements/hull_support.cu": "aa976f334fc9c6b8db06eb6e52298c9af447a0d95d1fe07266ec3a27650cc45b",
+      "src/dh116/cuda_measurements/hull_support.py": "58911f6b83d2bc2f458b2cd3563f5af5c8e27066f7ce4174d8f843b5ccc529cd",
+      "src/dh116/cuda_measurements/pad_support.cu": "0a9d1b3eb777fa636c305103d1ac1ec2c1efc88840e9c968f629a42d4812e910",
+      "src/dh116/cuda_measurements/pad_support.py": "d073ed2bd0bbf5cf56e46bd029352021fd677c2af10f83c942cccf648ce21321",
+      "src/dh116/env/__init__.py": "791627362417382856d431b69a1b208406c4d3c4191173ddcaaaaed378514f27",
+      "src/dh116/env/cameras.py": "c302667a4224295e063c3baf466947239f3bc8ee014cff3d89035ae08023fe96",
+      "src/dh116/env/contracts.py": "c7b0e49407a2fec49830909abb734d5eab3b502596d431021e8fb714ebc71f89",
+      "src/dh116/env/lifecycle.py": "2f3941c15b3bec0f3ea8117f68a897ce13d386680f0044319b270a211a402a50",
+      "src/dh116/env/scene.py": "09ebd77b4040e7db4fd5fa3a5ddaa7458a2191fe3d4e028e8b578ea133d077b5",
+      "src/dh116/hand/__init__.py": "791627362417382856d431b69a1b208406c4d3c4191173ddcaaaaed378514f27",
+      "src/dh116/hand/articulation.py": "e78201e17a92f7920311c237f070a0504f4f295a0cd2f06b4fb0abd92b203717",
+      "src/dh116/hand/kinematics.py": "43ded703740ab4089947bbfd3700f23064ff4be5b11014e6a4dec5ba79846f43",
+      "src/dh116/hand/safety.py": "c606226eead4fb5dc37b442ecf4be2d78c1b6d458e2412331354bd901a4f565d",
+      "src/dh116/physics/__init__.py": "791627362417382856d431b69a1b208406c4d3c4191173ddcaaaaed378514f27",
+      "src/dh116/physics/diagnostics.py": "0e22154a7706e38d9d3ee52a2bd54416c1019970893389e78d4e16760bf3f358",
+      "src/dh116/physics/geometry.py": "8710e3e8e7a95621e33262c835b0ffe5016ddc71fe9638c5f76ed514329aa4ec",
+      "src/dh116/physics/runtime.py": "a90072479764c267951e2d59fbaf57fe2f89ce971ce8bd68f69448d3ef6cbcee",
+      "src/dh116/physics/solver.py": "d264a0120df24454bd33abc2cc214794c767ed9687e3a4753156389f615f96d5",
+      "src/dh116/physics/stereo_match.py": "fceb16388543a7763ce3dea0d5929355f1b2ccf63c4b9b4fcc504fb8544dede6",
+      "src/dh116/physics/vision.py": "f173d10771d25dc3a469456f2e1ccfe6698d721b6cdda84738faf8b44ae10af0",
+      "src/dh116/physics/wire.py": "291185578ab107692f65a76cdf3bff7175cda4eb27b1bc9bd54e424acf9c6984",
+      "src/dh116/rl/__init__.py": "791627362417382856d431b69a1b208406c4d3c4191173ddcaaaaed378514f27",
+      "src/dh116/rl/device.py": "4bb1a0d36e2ed38274d3edf46a0d3536be53606dc2a83742fc78023501df1d1d",
+      "src/dh116/rl/ppo.py": "2175a41dde5560137bb1f1856049ec46c112c454f7acbe9e84e5e6a7654687e0",
+      "src/dh116/rl/qualification.py": "47d17191d7550136164e20ff0dac9a3f51b3ce27a06ce761b07fe33c01af7c96",
+      "src/dh116/rl/reward.py": "f0eec567ec8c6cd14d63f25557a34b60415167c29790968d986c253bcaa107d0",
+      "src/dh116/rl/student_data.py": "13ccdbc50fc233f7b3cb264047cd164d6b61691ac80e8cbcfc12c909ed852e69",
+      "src/dh116/rl/student_model.py": "7b522e04341d35f71d85d32696d1e29ed04dd2417e7d4907a105263454386e80",
+      "src/dh116/rl/teacher.py": "c5e0a5b44b1c5cec69e9cb109ba95cc86e09a2caad7310d246e64a79426d9ff1",
+      "src/dh116/rl/training.py": "3147f38618fd62560432b0c9aac88e7ff987fb9541e619d8633ba0bb1c6ebb3e"
+    },
+    "sdk_source_sha256": {
+      "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.core.cloner/isaacsim/core/cloner/cloner.py": "de166a9c88ad4c84ea0069e64ce595d7110a4eaa4e8b630bfb6bfeddbd955be5",
+      "/mnt/mydisk/xk/envs/dh116/lib/python3.10/site-packages/isaacsim/exts/isaacsim.core.utils/isaacsim/core/utils/prims.py": "86c3168d6165a7054445630dcff683eb720b50cb0bcdb516a601498bc8219b2d"
+    },
+    "artifacts": {
+      "root": "/mnt/mydisk/xk/dh116/build/scene_init/r1",
+      "driver_sha256": "376c75db41f0f482ad55d3cf73ce92accf9839e9abcf8b6c116e59886f2b6794",
+      "comparison_driver_sha256": "383250d80ed1c5bc2d6b8f857bbaa3afeb63af52627e07e7ea27fd6ee34d53e2",
+      "pytest_junit_sha256": "4581d05af8cb48c2a62ecd86fdb85f032f9eab238073832621975ee980702cc7",
+      "source_audit_sha256": "ebbc7f56c13c2b8604e6ce01a2f25447576b5d80f8a4e70235329449fff08af5",
+      "comparisons": {
+        "2": "915ac01b259fcad54292c5770ddc9daf93d0363695bef2c08d01dc03373092b1",
+        "128": "9fe0eaba8cc8e6d34441edbb2c758f2a64f6f8ffd8acecb2217c78cb522d43ae"
+      }
+    },
+    "natural_exit_receipts": {
+      "reference-2": {
+        "sha256": "7e25d330bbb2c81cffecd90d50b20a9efcd218415e929c7b2ec1feefc4e32ccf",
+        "natural_exit_verified": true,
+        "returncode": 0,
+        "wall_seconds": 28.034743999131024
+      },
+      "reference-128": {
+        "sha256": "ac35fd783ac9421e0b38cefbac0db72c28bc6491f960e4881baaee1822189156",
+        "natural_exit_verified": true,
+        "returncode": 0,
+        "wall_seconds": 241.2462227079086
+      },
+      "reference-fixed-2": {
+        "sha256": "a09a654dc09b2a8cc45b315c0c5aff73e3afc93ceb48a97dfb325b8985a9d8a2",
+        "natural_exit_verified": true,
+        "returncode": 0,
+        "wall_seconds": 29.645069863880053
+      },
+      "clone-2": {
+        "sha256": "a016804d12f8ccbd8540806c2ca2ed98e9979164cfb614503feefda6aacdfe47",
+        "natural_exit_verified": true,
+        "returncode": 0,
+        "wall_seconds": 26.73100898391567
+      },
+      "clone-fixed-2": {
+        "sha256": "74d626a0ee55f613b1cefaca4c028d8f7e87c8579be73a4f67fcb668ade5433c",
+        "natural_exit_verified": true,
+        "returncode": 0,
+        "wall_seconds": 26.0864057301078
+      },
+      "clone-fixed-128": {
+        "sha256": "d38fb204d1f90ff7c33acb68fb3b4a28c2f5d25c7e675691933603ced9fa1196",
+        "natural_exit_verified": true,
+        "returncode": 0,
+        "wall_seconds": 40.97579468600452
+      },
+      "replicated-fixed-2": {
+        "sha256": "ab164f80dfc781f867d04f5066fb679dceca62be87871636c36d6f75465d49a0",
+        "natural_exit_verified": false,
+        "returncode": -6,
+        "wall_seconds": 25.23222108790651
+      }
+    },
+    "replicated_candidate": {
+      "status": "blocked",
+      "training_allowed": false,
+      "default": false,
+      "trial_count": 1,
+      "environments": 2,
+      "sdk_steps": 18,
+      "ppo_updates": 0,
+      "outer_exit_code": -6,
+      "app_close_returned": true,
+      "source_audit_passed": true,
+      "usd_representation_differences": 117,
+      "observed_error": "Fatal Python error: PyThreadState_Get called without GIL during interpreter finalization",
+      "root_cause_isolated": false,
+      "cpp_stack_available": false,
+      "core_limit_bytes": 0,
+      "no_automatic_retry": true,
+      "forced_exit_used": false,
+      "physics_replication_not_enabled_for_production": true
+    },
+    "qualification": {
+      "teacher_grasp": false,
+      "student_training": false,
+      "new_training_executed": false
+    },
+    "release": {
+      "local_commit_only": true,
+      "push": false
+    },
+    "reference_self_repeat_environments": 2,
+    "actual_native_batch": {
+      "serial_instances": 7,
+      "total_global_sdk_steps": 126,
+      "ppo_updates": 0,
+      "automatic_retries": 0,
+      "forced_terminations": 0
+    }
+  }
 }

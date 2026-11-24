@@ -10,6 +10,7 @@ import importlib.metadata
 import importlib as regex_cache_readb__importlib
 import importlib as regex_task_setup__importlib
 import os
+import time as scene_build__time
 from pathlib import Path as regex_cache_readb__Path
 import math as regex_task_setup__math
 from pathlib import Path as regex_artic__Path
@@ -114,7 +115,7 @@ class CachedSideReadback:
         for name in ('permanent_wrench_composer', 'instantaneous_wrench_composer'):
             getattr(self._hand, name)._link_poses_updated = False
 
-def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, seed_height=None):
+def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, seed_height=None, *, scene_build_mode=None):
     """Return batch, effective seed, original rod nodes, bindings and GPU state.
 
     bindings is ONE static mapping, keyed by the archived native mesh names.
@@ -133,10 +134,7 @@ def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, se
     change. Original physical authoring remains unchanged even for a candidate;
     only the later zero-step explicit seed restore uses the derived pose.
     """
-    from types import SimpleNamespace
     import dh116.env.scene as assets
-    import dh116.env.scene as supports
-    import dh116.env.scene as support_material
     from dh116.env.scene import _seed
     from dh116.env.scene import derive_height_seed
     from dh116.env.scene import isolate_scenes
@@ -145,7 +143,7 @@ def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, se
     lanes = tuple(lanes)
     origins = regex_task_setup__np.asarray([origin for (_, origin) in lanes], dtype=regex_task_setup__np.float64)
     if sim.current_time_step_index != 0 or not 2 <= len(lanes) <= 128 or origins.shape != (len(lanes), 3) or (not regex_task_setup__np.isfinite(origins).all()) or regex_task_setup__np.any(origins[:, 2] != 0) or (archive.style not in ('pinch', 'tripod', 'power')):
-        raise ValueError('fresh 480Hz Sim and 2..128 independently authored lanes required')
+        raise ValueError('fresh 480Hz Sim and 2..128 original physical lanes required')
     (args, layout, sources) = spawn_parameters(archive.scene_inputs, project)
     if archive.style == 'pinch':
         seed = _seed(archive.pair['reset_seed'])
@@ -165,26 +163,32 @@ def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, se
     effort = float(prepared['candidate_physics']['hand']['active_effort_limit_nm'])
     if not regex_task_setup__math.isfinite(effort) or effort <= 0:
         raise ValueError('original explicit positive candidate effort limit required')
-    batch = owners.keep('regex_batch', _regex_task_setup_import__spawn_regex_articulations(sim, args, layout, sources, origins))
-    for (env_id, scene) in enumerate(batch.scenes):
-        scoped = dict(prepared, prefix=scene['prefix'], env_id=env_id, table=dict(prepared['table'], center_m=(regex_task_setup__np.asarray(prepared['table']['center_m']) + scene['origin']).tolist()))
-        assets._bind_materials(sim.stage, scoped)
-        if assets.inspect_source_stage(sim.stage, scoped)['original_colliders'] != 34:
-            raise ValueError('all 34 original material-bound colliders per lane required')
-        if archive.task is not None:
-            support = regex_task_setup__deepcopy(archive.task['support_scene'])
-            for box in support['supports']:
-                box['center_m'] = (regex_task_setup__np.asarray(box['center_m']) + scene['origin']).tolist()
-            paths = supports.scene_suppo__author_end_supports(sim.stage, scene['prefix'], support)
-            material = prepared['candidate_physics']['table']
-            support_material._bind_support_material(sim.stage, scene['prefix'], paths, material['mu_s'], material['mu_k'])
-    isolate_scenes(sim.stage, batch.scenes)
-    for (side, hand) in zip(regex_task_setup__SIDES, batch.hands, strict=True):
-        trace.watch(f'regex_{side}_hand', hand, owner='regex_task_setup', release='owned scope then SDK STOP', callbacks=True)
-    if sim.current_time_step_index != 0:
-        raise ValueError('original USD authoring advanced physics')
-    sim.reset()
+    batch = owners.keep('regex_batch', _regex_task_setup_import__spawn_regex_articulations(
+        sim, args, layout, sources, origins, build_mode=scene_build_mode, prepared=prepared,
+        support_scene=None if archive.task is None else archive.task['support_scene']))
+    try:
+        metadata = batch.construction_metadata
+        mode = metadata['mode']
+        started = scene_build__time.perf_counter()
+        isolate_scenes(sim.stage, batch.scenes, build_mode=mode,
+                       physics_scene_path=sim.cfg.physics_prim_path)
+        metadata['seconds']['filter_collisions'] = scene_build__time.perf_counter() - started
+        metadata['counts']['filter_collisions'] = 1
+        metadata['collision_filter'] = 'pairwise_exclusion' if mode == 'reference' else 'inverted_self_groups'
+        for (side, hand) in zip(regex_task_setup__SIDES, batch.hands, strict=True):
+            trace.watch(f'regex_{side}_hand', hand, owner='regex_task_setup', release='owned scope then SDK STOP', callbacks=True)
+        if sim.current_time_step_index != 0:
+            raise ValueError('original USD authoring advanced physics')
+        started = scene_build__time.perf_counter()
+        sim.reset()
+        metadata['seconds']['sdk_reset'] = scene_build__time.perf_counter() - started
+        metadata['counts']['sdk_reset'] = 1
+    finally:
+        batch.release_replication()
+    started = scene_build__time.perf_counter()
     batch.bind()
+    metadata['seconds']['bind'] = scene_build__time.perf_counter() - started
+    metadata['counts']['bind'] = 1
     members = []
     for side in regex_task_setup__SIDES:
         hand = batch.sides[side].hand
@@ -197,7 +201,10 @@ def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, se
     if sim.current_time_step_index != 2:
         raise ValueError('one SDK reset with exactly two initialization ticks required')
     initial = _seed_tensors(batch, effective_seed, origins)
+    started = scene_build__time.perf_counter()
     initial.update(restore_regex_seed(sim, batch, initial, active_effort_limit_nm=effort))
+    metadata['seconds']['restore'] = scene_build__time.perf_counter() - started
+    metadata['counts']['restore'] = 1
     bindings = _actual_bindings(batch, archive.mesh_plan['bindings'])
     (positions, rotations) = _mesh_poses(archive, bindings, initial)
     (initial['mesh_positions_world_m'], initial['mesh_quaternions_xyzw']) = (positions, rotations)
@@ -312,37 +319,75 @@ def _actual_bindings(batch, archived):
         (row['prim_path'], row['prim_paths']) = (paths[0], paths)
     return result
 
-def spawn_regex_articulations(sim, args, original_layout, sources, env_origins, *, env_ids=None, env_root='/World/envs'):
-    """Author original physical scenes, then construct exactly two SDK assets.
+def _finish_original_scene(stage, scene, prepared, support_scene, measure):
+    """Finish and validate one original template before any inherited copies."""
+    if prepared is None:
+        return
+    import dh116.env.scene as assets
+    origin = scene['origin']
+    scoped = dict(prepared, prefix=scene['prefix'],
+                  table=dict(prepared['table'], center_m=(regex_artic__np.asarray(prepared['table']['center_m']) + origin).tolist()))
+    measure('bind_materials', assets._bind_materials, stage, scoped)
+    if measure('inspect_source', assets.inspect_source_stage, stage, scoped)['original_colliders'] != 34:
+        raise ValueError('all 34 original material-bound colliders per lane required')
+    if support_scene is not None:
+        support = regex_task_setup__deepcopy(support_scene)
+        for box in support['supports']:
+            box['center_m'] = (regex_artic__np.asarray(box['center_m']) + origin).tolist()
+        paths = measure('supports', assets.scene_suppo__author_end_supports, stage, scene['prefix'], support)
+        material = prepared['candidate_physics']['table']
+        measure('support_material', assets._bind_support_material, stage, scene['prefix'], paths, material['mu_s'], material['mu_k'])
 
-    ``author_original_scene`` executes the unchanged protected spawn_scene code
-    with a private constructor override. It authors the original physical USDs,
-    mount/material/mimic and returns two configs in ``hands``; no protected
-    signature or process-global SDK constructor is changed.
 
-    Call ``sim.reset()`` once outside this function, then ``batch.bind()``.
-    Reset seeds must be supplied explicitly: the single regex config's default
-    root state is not a substitute for each authored environment's world pose.
+def spawn_regex_articulations(sim, args, original_layout, sources, env_origins, *, env_ids=None, env_root='/World/envs', build_mode=None, prepared=None, support_scene=None):
+    """Build original scenes or clone one complete template, then two SDK assets.
+
+    reference retains independent authoring and validation for exact comparisons.
+    clone inherits the complete validated source USD; replicated additionally
+    registers PhysX replication until the caller's single reset has returned.
+    Origins stay float64. USD clones preserve the original identity parents
+    and SDK-normalized hand translations; the diagnostic replicated mode uses
+    environment parent offsets. No physics step occurs in this function.
     """
     import isaaclab.sim as sim_utils
     from isaaclab.assets import Articulation
-    from pxr import UsdPhysics
-    origins = regex_artic__np.asarray(env_origins, dtype=float)
-    if origins.ndim != 2 or origins.shape[1] != 3 or (not len(origins)) or (not regex_artic__np.isfinite(origins).all()):
+    from pxr import Gf, Sdf, UsdPhysics, UsdUtils
+    mode = os.environ.get('DH116_SCENE_BUILD_MODE', 'clone') if build_mode is None else build_mode
+    if mode not in ('reference', 'clone', 'replicated'):
+        raise ValueError('explicit reference, clone or replicated scene build mode required')
+    origins = regex_artic__np.asarray(env_origins, dtype=regex_artic__np.float64)
+    if origins.ndim != 2 or origins.shape[1] != 3 or not len(origins) or not regex_artic__np.isfinite(origins).all():
         raise ValueError('finite nonempty environment origins [N,3] required')
     ids = tuple(range(len(origins))) if env_ids is None else tuple(env_ids)
-    if len(ids) != len(origins) or len(set(ids)) != len(ids) or any((type(value) is not int or value < 0 for value in ids)):
+    if len(ids) != len(origins) or len(set(ids)) != len(ids) or any(type(value) is not int or value < 0 for value in ids):
         raise ValueError('unique nonnegative integer environment identities required')
+    if mode == 'replicated' and ids != tuple(range(len(origins))):
+        raise ValueError('PhysX replication requires contiguous env_0..N-1 identities')
     if not isinstance(env_root, str) or re.fullmatch('/(?:[A-Za-z_][A-Za-z_0-9]*/)*[A-Za-z_][A-Za-z_0-9]*', env_root) is None:
         raise ValueError('literal absolute USD environment root required')
-    prefixes = tuple((f'{env_root}/env_{value}' for value in ids))
+    prefixes = tuple(f'{env_root}/env_{value}' for value in ids)
+    if any(sim.stage.GetPrimAtPath(prefix) for prefix in prefixes):
+        raise ValueError('fresh environment paths required')
+    root = sim.stage.GetPrimAtPath(env_root)
+    if mode == 'replicated' and root and (root.GetAllChildren() or any(root.HasAPI(api) for api in (
+            UsdPhysics.CollisionAPI, UsdPhysics.RigidBodyAPI, UsdPhysics.ArticulationRootAPI))):
+        raise ValueError('replication exclusion root must contain only the new environments')
+    seconds, counts = {}, {}
+    def measure(name, operation, *values, **kwargs):
+        started = scene_build__time.perf_counter()
+        try:
+            return operation(*values, **kwargs)
+        finally:
+            seconds[name] = seconds.get(name, 0.0) + scene_build__time.perf_counter() - started
+            counts[name] = counts.get(name, 0) + 1
     scenes = []
     suffixes = {side: [] for side in regex_artic__SIDES}
-    for (prefix, origin) in zip(prefixes, origins, strict=True):
-        scene = author_original_scene(sim, args, original_layout, sources, prefix, origin)
-        if len(scene['hands']) != 2 or scene['wire'] is not None or scene['sensors'] or (scene['prefix'] != prefix):
+    authored = zip(prefixes, origins, strict=True) if mode == 'reference' else [(prefixes[0], regex_artic__np.zeros(3, dtype=regex_artic__np.float64))]
+    for prefix, origin in authored:
+        scene = measure('author_scene', author_original_scene, sim, args, original_layout, sources, prefix, origin)
+        if len(scene['hands']) != 2 or scene['wire'] is not None or scene['sensors'] or scene['prefix'] != prefix:
             raise ValueError('original bilateral author-only scene without duplicate wire/sensors required')
-        for (side, cfg) in zip(regex_artic__SIDES, scene['hands'], strict=True):
+        for side, cfg in zip(regex_artic__SIDES, scene['hands'], strict=True):
             path = f'{prefix}/{side}Hand'
             if cfg.prim_path != path or cfg.spawn is None:
                 raise ValueError('unchanged original authored hand configuration required')
@@ -350,20 +395,102 @@ def spawn_regex_articulations(sim, args, original_layout, sources, env_origins, 
             if len(roots) != 1:
                 raise ValueError('exactly one actual USD ArticulationRootAPI per hand required')
             root_path = roots[0].GetPath().pathString
-            if root_path != path and (not root_path.startswith(path + '/')):
+            if root_path != path and not root_path.startswith(path + '/'):
                 raise ValueError('actual articulation root must belong to its authored hand')
             suffixes[side].append(root_path[len(path):])
         scenes.append(scene)
-    if any((len(set(suffixes[side])) != 1 for side in regex_artic__SIDES)):
+    if any(len(set(suffixes[side])) != 1 for side in regex_artic__SIDES):
         raise ValueError('one identical physical root layout per side required')
+    # Preserve the reference order: all independent authors, then their material
+    # checks/supports. Clone mode finishes the single source before copying it.
+    for scene in scenes:
+        _finish_original_scene(sim.stage, scene, prepared, support_scene, measure)
+    cloner = None
+    if mode != 'reference':
+        from isaacsim.core.cloner import Cloner
+        cloner = Cloner(stage=sim.stage)
+        # Never feed positions to Cloner: its internal Vec3fArray loses precision.
+        measure('clone', cloner.clone, source_prim_path=prefixes[0], prim_paths=list(prefixes), positions=None, replicate_physics=False)
+        layer = sim.stage.GetRootLayer()
+        started = scene_build__time.perf_counter()
+        if mode == 'clone':
+            from isaaclab.sim.utils.prims import _to_tuple
+        with Sdf.ChangeBlock():
+            for prefix, origin in zip(prefixes, origins, strict=True):
+                # USD-only clones keep the same identity environment parent as
+                # independent authors. Adding an origin above a pre-rounded hand
+                # changes its world pose: float32(local) + origin is not the
+                # SDK's float32(local + origin). Reuse its actual conversion.
+                translations = {prefix: regex_artic__np.zeros(3) if mode == 'clone' else origin}
+                if mode == 'clone':
+                    for side in regex_artic__SIDES:
+                        pose = original_layout['hand_roots'][side].copy()
+                        pose[:3] += origin
+                        pose[2] += 0.04
+                        translations[f'{prefix}/{side}Hand'] = _to_tuple(tuple(pose[:3]))
+                    translations[prefix + '/Table'] = regex_artic__np.asarray(original_layout['table_center']) + origin
+                    if support_scene is not None:
+                        for support in support_scene['supports']:
+                            translations[prefix + '/EndSupports/' + support['name']] = regex_artic__np.asarray(support['center_m']) + origin
+                for path, translation in translations.items():
+                    spec = Sdf.CreatePrimInLayer(layer, path)
+                    attr = spec.attributes.get('xformOp:translate')
+                    if attr is None:
+                        attr = Sdf.AttributeSpec(spec, 'xformOp:translate', Sdf.ValueTypeNames.Double3)
+                    if attr.typeName != Sdf.ValueTypeNames.Double3:
+                        raise ValueError('double-precision USD translations required')
+                    attr.default = Gf.Vec3d(*translation)
+        seconds['place_origins'] = scene_build__time.perf_counter() - started
+        counts['place_origins'] = 1
+        template = scenes[0]
+        scenes = []
+        for prefix, origin in zip(prefixes, origins, strict=True):
+            def remap(value):
+                if isinstance(value, str) and value.startswith(prefixes[0] + '/'):
+                    return prefix + value[len(prefixes[0]):]
+                if isinstance(value, dict):
+                    return {key: remap(item) for key, item in value.items()}
+                if isinstance(value, (tuple, list)):
+                    return type(value)(remap(item) for item in value)
+                return value
+            record = {key: remap(value) for key, value in template.items() if key not in ('hands', 'layout')}
+            record.update(prefix=prefix, origin=origin.copy())
+            record['hands'] = []
+            for cfg in template['hands']:
+                cfg = cfg.copy()
+                cfg.prim_path = remap(cfg.prim_path)
+                if hasattr(cfg, 'init_state'):
+                    cfg.init_state.pos = tuple(regex_artic__np.asarray(cfg.init_state.pos) + origin)
+                record['hands'].append(cfg)
+            layout = regex_task_setup__deepcopy(template['layout'])
+            for pose in layout.get('hand_roots', {}).values():
+                pose[:3] += origin
+            for key in ('wire_center', 'table_center'):
+                if key in layout:
+                    layout[key] = regex_artic__np.asarray(layout[key]) + origin
+            record['layout'] = layout
+            scenes.append(record)
     hands = []
-    for (index, side) in enumerate(regex_artic__SIDES):
+    for index, side in enumerate(regex_artic__SIDES):
         cfg = scenes[0]['hands'][index].copy()
         cfg.prim_path = f'{env_root}/env_.*/{side}Hand'
         cfg.spawn = None
         cfg.articulation_root_prim_path = suffixes[side][0] or None
         hands.append(Articulation(cfg))
-    return RegexArticulationBatch(hands, ids, prefixes, tuple((suffixes[side][0] for side in regex_artic__SIDES)), scenes)
+    batch = RegexArticulationBatch(hands, ids, prefixes, tuple(suffixes[side][0] for side in regex_artic__SIDES), scenes)
+    batch.construction_metadata = dict(mode=mode, physics_replication=mode == 'replicated' and len(ids) > 1,
+                                       template_count=len(ids) if mode == 'reference' else 1,
+                                       origin_precision='float64',
+                                       pose_strategy='identity_parent_sdk_author_poses' if mode == 'clone' else 'independent_author' if mode == 'reference' else 'env_parent_float64',
+                                       seconds=seconds, counts=counts)
+    if mode == 'replicated' and len(ids) > 1:
+        batch._replication_stage_id = UsdUtils.StageCache.Get().Insert(sim.stage).ToLongInt()
+        try:
+            measure('register_replication', cloner.replicate_physics, prefixes[0], list(prefixes), env_root, env_root + '/env_')
+        except BaseException:
+            batch.release_replication()
+            raise
+    return batch
 
 def _mesh_poses(archive, bindings, initial):
     entries = archive.mesh_plan['entries']
@@ -552,6 +679,7 @@ class RegexArticulationBatch:
         self.root_suffixes = tuple(root_suffixes)
         self.scenes = tuple(scenes)
         self.sides = {}
+        self._replication_stage_id = None
         self.readback_mode = os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'raw')
         if self.readback_mode not in ('raw', 'official_cache'):
             raise ValueError('explicit raw or official_cache readback backend required')
@@ -560,6 +688,13 @@ class RegexArticulationBatch:
         if self._readback_audit_enabled and (self.readback_mode != 'official_cache' or len(self.env_ids) != 2):
             raise ValueError('native cache oracle audit requires explicit official_cache N2 diagnostic')
         self._readback_audits = []
+
+    def release_replication(self):
+        """Remove the three SDK PhysX replication closures after reset or failure."""
+        if self._replication_stage_id is not None:
+            from omni.physx import get_physx_replicator_interface
+            get_physx_replicator_interface().unregister_replicator(self._replication_stage_id)
+            self._replication_stage_id = None
 
     def bind(self):
         """Resolve row identity once after the caller's single SDK reset."""

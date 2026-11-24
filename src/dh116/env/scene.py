@@ -925,14 +925,48 @@ def validate_simulation_settings(sim, prepared):
         raise ValueError('actual physics dt/gravity differs from explicit candidate')
     return dict(dt_s=dt, gravity_world_m_s2=gravity.tolist(), source='SimulationContext.get_physics_dt/SimulationView.get_gravity')
 
-def isolate_scenes(stage, scenes):
+def isolate_scenes(stage, scenes, *, physics_scene_path=None, build_mode='clone'):
+    """Exclude cross-environment contacts without changing within-env contacts.
+
+    reference preserves the original pairwise exclusion graph. The Cloner
+    graph uses PhysX's inverted filter with one self target per environment.
+    Inversion is global to the physics scene, so pre-existing groups must never
+    be silently reinterpreted or deleted by this fresh-scene owner.
+    """
     from pxr import UsdPhysics
-    from pxr import UsdPhysics
-    'Exclude cross-environment contacts even if an object escapes its table.'
-    groups = []
-    for (i, scene) in enumerate(scenes):
-        group = UsdPhysics.CollisionGroup.Define(stage, f'/World/collisionGroups/env_{i}')
-        group.GetCollidersCollectionAPI().CreateIncludesRel().AddTarget(scene['prefix'])
-        groups.append(group)
-    for (i, group) in enumerate(groups):
-        group.CreateFilteredGroupsRel().SetTargets([g.GetPath() for (j, g) in enumerate(groups) if j != i])
+    if build_mode == 'reference':
+        groups = []
+        for i, scene in enumerate(scenes):
+            group = UsdPhysics.CollisionGroup.Define(stage, f'/World/collisionGroups/env_{i}')
+            group.GetCollidersCollectionAPI().CreateIncludesRel().AddTarget(scene['prefix'])
+            groups.append(group)
+        for i, group in enumerate(groups):
+            group.CreateFilteredGroupsRel().SetTargets([g.GetPath() for j, g in enumerate(groups) if j != i])
+        return
+    if build_mode not in ('clone', 'replicated'):
+        raise ValueError('explicit reference, clone or replicated scene build mode required')
+    from pxr import PhysxSchema
+    from isaacsim.core.cloner import Cloner
+    if not physics_scene_path or not UsdPhysics.Scene(stage.GetPrimAtPath(physics_scene_path)):
+        raise ValueError('actual SimulationContext physics scene path required')
+    physics = PhysxSchema.PhysxSceneAPI(stage.GetPrimAtPath(physics_scene_path))
+    if not physics or physics.GetInvertCollisionGroupFilterAttr().Get():
+        raise ValueError('fresh non-inverted physics scene required')
+    prefixes = [scene['prefix'] for scene in scenes]
+    if not prefixes or len(set(prefixes)) != len(prefixes) or any(not stage.GetPrimAtPath(prefix) for prefix in prefixes):
+        raise ValueError('distinct existing environment roots required')
+    if stage.GetPrimAtPath('/World/collisionGroups'):
+        raise ValueError('existing collision groups cannot be reinterpreted by inverted filtering')
+    from pxr import Usd
+    prefix_set = set(prefixes)
+    global_paths = []
+    # One hierarchy walk also preserves collisions with ungrouped external
+    # objects. Ancestor membership is O(depth), independent of the env count.
+    for prim in Usd.PrimRange(stage.GetPseudoRoot(), Usd.TraverseInstanceProxies()):
+        if prim.IsA(UsdPhysics.CollisionGroup):
+            raise ValueError('existing collision groups cannot be reinterpreted by inverted filtering')
+        if prim.HasAPI(UsdPhysics.CollisionAPI) and UsdPhysics.CollisionAPI(prim).GetCollisionEnabledAttr().Get():
+            if not any(str(path) in prefix_set for path in prim.GetPath().GetPrefixes()):
+                global_paths.append(str(prim.GetPath()))
+    Cloner(stage=stage).filter_collisions(physicsscene_path=physics_scene_path,
+        collision_root_path='/World/collisionGroups', prim_paths=prefixes, global_paths=global_paths)

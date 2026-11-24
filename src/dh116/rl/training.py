@@ -68,7 +68,7 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
     _teach_train_import__NativeTensorCollector = NativeTensorCollector
     from dh116.physics.geometry import geometry_measurement_identity
     from dh116.physics.solver import TensorRodOwner
-    (batch, seed, _, bindings, initial) = prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, seed_height=height)
+    (batch, seed, _, bindings, initial) = prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, seed_height=height, scene_build_mode=getattr(args, 'scene_build_mode', None))
     names = tuple((row['name'] for row in archive.mesh_plan['entries']))
     backend = load_candidate(profile)
     solver = make_solver(backend, archive.mesh_plan, reset, initial['env_origins'].float().cpu().numpy(), style=archive.style, capacity=41 * len(names) * 12, empty_lane=False)
@@ -118,7 +118,7 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
     updates = collector.trainer.counters['updates']
     if runtime.physics_step != end or collector.controls != total or updates != (0 if probe else args.updates) or (probe and runtime.resets != ([1, 2] if len(lanes) == 2 else [1] * len(lanes))):
         raise ValueError('incomplete actual bounded run')
-    return dict(throughput_probe_only=probe, updates=updates, controls=total, environments=len(lanes), sdk_step=end, iterations=iterations, window_seconds=window_seconds, window_phases=window_phases, sdk_initialization_steps=2, physics_hz=480, control_hz=60, rod_substeps=12, articulations=2, action_size=24, run_uuid=run_uuid, geometry_backend=getattr(collector.geometry, 'backend', None), geometry_measurement=geometry_measurement_identity(collector.geometry), actual_measurement_backend=geometry_measurement_identity(collector.geometry)['actual_measurement_backend'], measurement_scope='bounded_diagnostic', measurement_native_evidence=args.measurement_native_evidence, native_readback_mode=getattr(batch, 'readback_mode', 'raw'), source_cache_metadata=batch.readback_metadata() if hasattr(batch, 'readback_metadata') else None, readback_audit=batch.readback_audit() if hasattr(batch, 'readback_audit') else None, reset_ids=runtime.resets, reset_checks=collector.reset_proofs, peak_cuda_allocated_bytes=torch.cuda.max_memory_allocated(), teacher_admission=False, grasp_qualified=False)
+    return dict(throughput_probe_only=probe, updates=updates, controls=total, environments=len(lanes), sdk_step=end, iterations=iterations, window_seconds=window_seconds, window_phases=window_phases, sdk_initialization_steps=2, physics_hz=480, control_hz=60, rod_substeps=12, articulations=2, action_size=24, run_uuid=run_uuid, geometry_backend=getattr(collector.geometry, 'backend', None), geometry_measurement=geometry_measurement_identity(collector.geometry), actual_measurement_backend=geometry_measurement_identity(collector.geometry)['actual_measurement_backend'], measurement_scope='bounded_diagnostic', measurement_native_evidence=args.measurement_native_evidence, scene_construction=getattr(batch, 'construction_metadata', None), native_readback_mode=getattr(batch, 'readback_mode', 'raw'), source_cache_metadata=batch.readback_metadata() if hasattr(batch, 'readback_metadata') else None, readback_audit=batch.readback_audit() if hasattr(batch, 'readback_audit') else None, reset_ids=runtime.resets, reset_checks=collector.reset_proofs, peak_cuda_allocated_bytes=torch.cuda.max_memory_allocated(), teacher_admission=False, grasp_qualified=False)
 from dh116.env.contracts import require_aligned
 from dh116.rl.student_data import _validate_state
 from dh116.physics.runtime import collision_clearance
@@ -135,6 +135,7 @@ from dh116.rl.student_data import tensor_state_sha256
 from dh116.physics.runtime import mesh_reset
 
 def worker(args, end):
+    validate_native_options(getattr(args, 'scene_build_mode', None), training=args.updates is not None)
     from dh116.env.scene import load_task_scene
     from dh116.env.lifecycle import run_native_session
     from dh116.hand.articulation import OWNED_NAMES
@@ -159,7 +160,12 @@ from dh116.rl.student_data import StereoDAggerTrainer
 from dh116.physics.vision import StereoDepth as StereoDepth
 from dh116.physics.runtime import probe_copy
 
-def validate_native_options():
+def validate_native_options(scene_build_mode=None, *, training=False):
+    mode = scene_build_mode or os.environ.get('DH116_SCENE_BUILD_MODE', 'clone')
+    if training and mode == 'replicated':
+        raise ValueError('PhysX replicated placement is diagnostic only until native equivalence is qualified')
+    if mode not in ('reference', 'clone', 'replicated'):
+        raise ValueError('scene build mode must be reference, clone or replicated before App startup')
     if os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'raw') not in ('raw', 'official_cache'):
         raise ValueError('readback must be raw or official_cache before App startup')
     if os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager') not in ('eager', 'cuda_cabi'):
@@ -173,6 +179,7 @@ def train_teacher_main(argv=None):
     parser.add_argument('--grasp', choices=('pinch', 'tripod', 'power'), required=True)
     parser.add_argument('--num-envs', type=int, choices=(2, 128), required=True)
     parser.add_argument('--gpu', type=int, required=True)
+    parser.add_argument('--scene-build-mode', choices=('reference', 'clone', 'replicated'), default=None)
     parser.add_argument('--outer-timeout-s',type=int,default=900)
     parser.add_argument('--output', type=teach_train__Path, required=True)
     parser.add_argument('--policy-seed', type=int, default=20261123)
@@ -188,7 +195,8 @@ def train_teacher_main(argv=None):
     from dh116.env.contracts import validate_runtime_execution
     from dh116.env.contracts import ProjectPaths
     validate_runtime_execution()
-    validate_native_options()
+    args.scene_build_mode = args.scene_build_mode or os.environ.get('DH116_SCENE_BUILD_MODE', 'clone')
+    validate_native_options(args.scene_build_mode, training=args.updates is not None)
     task = teach_train__json.loads((teach_train__ROOT / 'configs/tasks' / (args.grasp + '.json')).read_text())
     args.receipt_sha256 = task['scene_input']['sha256']
     args.measurement_native_evidence = None
@@ -209,7 +217,7 @@ def train_teacher_main(argv=None):
     native = output / 'native'
     native.mkdir()
     inventory = {str(p.relative_to(teach_train__ROOT)): teach_train__file_sha256(p) for p in (teach_train__ROOT / 'src/dh116').rglob('*') if p.suffix in ('.py', '.cu') and p.is_file()}
-    write_new(output / 'attempt.json', dict(schema='dh116-production-native-attempt-v1', source_sha256=inventory, grasp=args.grasp, num_envs=args.num_envs, controls=total, sdk_steps=end, ppo_updates=args.updates or 0, scene_sha256=args.receipt_sha256))
+    write_new(output / 'attempt.json', dict(schema='dh116-production-native-attempt-v1', source_sha256=inventory, grasp=args.grasp, num_envs=args.num_envs, controls=total, sdk_steps=end, ppo_updates=args.updates or 0, scene_build_mode=args.scene_build_mode, scene_sha256=args.receipt_sha256))
     command = [sys.executable, str(teach_train__ROOT / 'scripts/train_teacher.py'), *(sys.argv[1:] if argv is None else argv), '--output', str(native), '--worker']
     child_env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(args.gpu), CUDA_DEVICE_ORDER='PCI_BUS_ID')
     with (output / 'native.log').open('wb') as log:

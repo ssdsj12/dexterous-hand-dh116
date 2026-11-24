@@ -28,6 +28,14 @@ bash scripts/python.sh -B -m pytest -q tests
 
 Pinch仅以拇指/食指作为目标SDF；其余三指仍保留完整非目标守卫。Tripod/Power保留独立配置。30mm Lift、5s Hold、0.5mm Slip、0.15mm穿入门槛、2.1mm桌面保护线保持原值。
 
+## 单模板建场（SCENE-INIT-SPEEDUP R1）
+
+共享运行时默认使用 Cloner 的 USD 继承克隆：env0 完成原资产、mount/mimic、材质与34碰撞体校验，再复制其余环境；原配置的支架存在时一并复制。精确复用 SDK 原作者的坐标量化顺序，保留 float64 origins；碰撞隔离使用 inverted groups，并保留全局物体碰撞。
+
+128路建场准备实测由205.716s降至6.658s（30.9倍），不含诊断属性导出；包含SDK启动、全量对照写盘和关闭的整进程为40.976s。2/128路固定同组24D动作的两窗原生对照自然exit0：USD属性/世界变换、Reset、关节/线缆/奖励/守卫精确一致；接触行按真实身份排序后相同，float64力规约差异最大9.99e-16（原路径重复也存在求和顺序差异），未放宽任何门槛。
+
+可显式选择 --scene-build-mode reference 进行旧路径对照。replicated 仅保留诊断入口：本次2路测试在app.close返回后以-6退出（GIL finalization），禁止进入PPO训练，默认不使用。完整CPU/CUDA回归182项通过（169 CPU、13 CUDA），证据及SHA见configs/runtime/readiness.json；本轮仅本地commit，不push。
+
 ## 验证与资格
 
 当前验证摘要见configs/runtime/readiness.json。有界控制窗通过不授予抓取或完整回合成功资格；正式Student训练仍需合格Teacher与双目来源，R2和未验证Force Proxy保持关闭。

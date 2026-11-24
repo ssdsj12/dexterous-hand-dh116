@@ -1,5 +1,13 @@
 # Changelog
 
+## SCENE-INIT-SPEEDUP R1 — 2026-11-24
+
+- Clone one fully authored/validated USD template into the shared Teacher/Student batch; retain the independent reference builder for numerical comparisons.
+- Preserve SDK tuple-to-float32 hand authoring and double-precision table/support authoring with identity environment transforms. Keep float64 origins, unchanged physical assets, material values, 480/60Hz, joint and 1µm guards.
+- Replace quadratic collision exclusions with Cloner inverse groups, preserving external global colliders and rejecting pre-existing group reinterpretation.
+- Reduce measured 128-lane preparation from205.716s to6.658s. Real N2/N128 fixed-action two-window comparisons preserve exact state/rod/reward/guard values and natural exit0; float64 force reductions retain only ~1e-15 roundoff.
+- Pass182 regressions (169 CPU/13 CUDA). PhysX replication trial failed with outer-6 after close (GIL finalization); retain failure evidence, block training for that mode, no retry or forced termination. New changes remain local, not pushed.
+
 ## ini — 2026-11-24
 
 - Consolidated the production runtime into src/dh116:24 implementation modules and6 namespace initializers. Removed retired code,26 historical tools, legacy package hierarchy, reverse script imports and obsolete path rules.

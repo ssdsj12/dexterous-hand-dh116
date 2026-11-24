@@ -45,3 +45,14 @@ def test_native_options_reject_invalid_readback_before_creating_app(monkeypatch)
         teacher_training.validate_native_options()
     monkeypatch.setenv('DH116_NATIVE_READBACK_BACKEND', 'official_cache')
     assert teacher_training.validate_native_options() is None
+
+def test_scene_build_mode_rejected_before_app_launch(monkeypatch):
+    import dh116.rl.training as teacher_training
+    monkeypatch.setenv('DH116_SCENE_BUILD_MODE', 'typo')
+    with pytest.raises(ValueError, match='scene build'):
+        teacher_training.validate_native_options()
+
+def test_unqualified_replication_cannot_enter_training():
+    import dh116.rl.training as teacher_training
+    with pytest.raises(ValueError, match='diagnostic'):
+        teacher_training.validate_native_options('replicated', training=True)
