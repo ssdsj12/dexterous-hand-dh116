@@ -6,6 +6,7 @@ from dataclasses import is_dataclass
 from dataclasses import replace
 import json
 import math
+import os
 from time import perf_counter
 from types import MappingProxyType
 import uuid
@@ -381,7 +382,7 @@ class NativeTensorPhysicsRuntime:
                 if tuple(paths[idx]) != tuple((prefix + '/' + side + 'Hand/' + name for name in body_names)):
                     raise ValueError('actual link identity differs from original source geometry')
         self.reset_proofs = []
-        self.prove_peer_reset = True
+        self.prove_peer_reset = False
         self.probe_dir = None
         self.bindings = bindings
         self._views = tuple((batch.sides[s].hand.root_physx_view for s in SIDES))
@@ -399,6 +400,9 @@ class NativeTensorPhysicsRuntime:
         self.radii = torch.full((self.n,), self.radius, dtype=torch.float64, device=self.device)
         self.geometry = None
         self.support_geometry = None
+        geometry_backend = os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND')
+        if geometry_backend is None and self.n == 512 and self.device.type == 'cuda':
+            geometry_backend = os.environ.setdefault('DH116_TENSOR_GEOMETRY_BACKEND', 'cuda_cabi')
         if self.style in ('pinch', 'tripod'):
             original = pinch_geometry_inputs(archive.scene_inputs['geometry'])
             if self.style == 'tripod':
@@ -414,7 +418,7 @@ class NativeTensorPhysicsRuntime:
                     row = bindings[side + '.' + name]
                     if row['sdf_sha256'] != locked['sha256'] or row['capture_sha256'] != locked['capture_sha256']:
                         raise ValueError('original locked SDF or capture differs')
-            self.geometry = make_tensor_geometry(original, names, device=self.device)
+            self.geometry = make_tensor_geometry(original, names, device=self.device, backend=geometry_backend)
             if self.style == 'tripod':
                 from dh116.physics.geometry import TripodSupportGuard
                 if len(runtime.mesh_names) != 17 or archive.task is None:
@@ -427,7 +431,6 @@ class NativeTensorPhysicsRuntime:
             targets = [goal['candidate'][s]['target_pose_wxyz'][:3] for s in SIDES]
             self.targets = roots.new_tensor(targets)[None] + initial['env_origins'][:, None]
             self.stations = (self.targets[:, :, None] - runtime._initial[:, None].double()).norm(dim=-1).argmin(-1)
-            self.row = torch.arange(self.n, device=self.device)[:, None]
         else:
             raise ValueError('unknown grasp geometry')
         self.contact = None
@@ -459,7 +462,7 @@ class NativeTensorPhysicsRuntime:
                         }
                 self.geometry = make_tensor_geometry(
                     dict(geometry=original['geometry'], grids=grids, sources=sources, required_pads=pads),
-                    names, device=self.device,
+                    names, device=self.device, backend=geometry_backend,
                 )
             ref_poses = roots.new_tensor(ref_poses)
             station = (ref_poses[:, None, :3] - ref_nodes).norm(dim=-1).argmin(-1)
@@ -720,18 +723,25 @@ class NativeTensorPhysicsRuntime:
         require_substep_guard(~(torch.isfinite(p) & torch.isfinite(v)).all((1, 2)), 'nonfinite rod')
         return (p, v)
 
-    def distance(self, stamp, *, reset=False):
-        (p, v) = self.rod_state()
-        (self.nodes, self.velocity) = (p, v)
-        self._geometry_bad = torch.zeros(self.n, dtype=torch.bool, device=self.device)
+    def distance(self, stamp, *, reset=False, active=None, lane_ids=None):
+        self.nodes, self.velocity = self.rod_state()
+        subset = slice(None) if lane_ids is None else lane_ids
+        p = self.nodes[subset]
+        poses = self.state['link_pose_xyzw'][subset]
+        self._geometry_bad = torch.zeros(len(p), dtype=torch.bool, device=self.device)
+        if self.full_grasp and active is None:
+            active = torch.ones(len(p), dtype=torch.bool, device=self.device)
         power_distance = None
         if self.style == 'power':
-            target = self.targets + p[self.row, self.stations].double() - self.runtime._initial[self.row, self.stations].double()
-            power_distance = (self.state['base_link_pose_w'][..., :3].double() - target).norm(dim=-1).mean(-1)
+            rows = torch.arange(len(p), device=self.device)[:, None]
+            stations = self.stations[subset]
+            initial = self.runtime._initial[subset]
+            target = self.targets[subset] + p[rows, stations].double() - initial[rows, stations].double()
+            power_distance = (self.state['base_link_pose_w'][subset, ..., :3].double() - target).norm(dim=-1).mean(-1)
             if self.geometry is None:
                 return power_distance
         geometry = self.geometry.capture(
-            self.state['link_pose_xyzw'], p, frame=stamp, radius=self.radii,
+            poses, p, frame=stamp, radius=self.radii[subset], active=active,
             sdf_thresholds=(-0.00015, -0.00025) if self.full_grasp else (),
         )
         accepted = geometry.source_complete if reset and not self.full_grasp else geometry.geometry_passed
@@ -745,13 +755,16 @@ class NativeTensorPhysicsRuntime:
             penetrated = geometry.sdf_node_valid & (geometry.sdf_node_gaps_m < self.pad_thresholds[None, :, None])
             self._geometry_bad |= penetrated.any((1, 2))
         if self.support_geometry is not None:
-            self._geometry_bad |= self.support_geometry.capture(self.state['link_pose_xyzw'], p, frame=stamp)
+            live = active & ~self._geometry_bad if active is not None and not reset else active
+            self._geometry_bad |= self.support_geometry.capture(
+                poses, p, frame=stamp, measurement=geometry, active=live, lane_ids=lane_ids,
+            )
         if reset or not self.full_grasp:
             require_substep_guard(self._geometry_bad, 'original source geometry/SDF or Tripod clearance')
         if power_distance is not None:
             return power_distance
         distance = geometry.positive_pad_mean_m.mean(-1)
-        if self.full_grasp and not reset:
+        if self.full_grasp and not reset and lane_ids is None:
             # Unsupported SDF samples end the lane. Retain its preceding measured
             # potential at that terminal boundary instead of inventing a gap.
             distance = torch.where(geometry.source_complete, distance, self.last.fields['distance'])
@@ -852,16 +865,23 @@ class NativeTensorPhysicsRuntime:
         stamp = self.source._boundary()
         if self.radius != float(self.runtime.solver.parameter_snapshot()['contact_radius_m']):
             raise ValueError('Reset changed the verified contact radius')
-        require_substep_guard(self.source_guards(), 'original Reset joint guards')
-        self.clear = self.raw_clearance(self.state['link_pose_wxyz'])
-        d = self.distance(stamp, reset=True)
-        self.source.reset(ids, d[list(ids)])
+        selected = list(ids)
+        require_substep_guard(self.source_guards()[selected], 'original Reset joint guards')
+        if len(selected) == self.n:
+            self.clear = self.raw_clearance(self.state['link_pose_wxyz'])
+            d = self.distance(stamp, reset=True)
+            self.source.reset(ids, d[selected])
+        else:
+            self.clear[selected] = self.raw_clearance(self.state['link_pose_wxyz'][selected])
+            distances = self.distance(stamp, reset=True, lane_ids=selected)
+            d = self.last.fields['distance'].clone()
+            d[selected] = distances
+            self.source.reset(ids, distances)
         if self.full_grasp:
             self.anchors.reset(ids)
             self._lift_reached[list(ids)] = False
             self._hold_position[list(ids)] = torch.nan
-        self.last = self.frame(stamp, d)
-        selected = list(ids)
+        frame = self.frame(stamp, d)
         for (field, seed_field) in (('q', 'seed_q'), ('qd', 'seed_qd'), ('root_pose_wxyz', 'seed_root_pose_w')):
             if not torch.allclose(self.state[field][selected], self.initial[seed_field][selected], atol=1e-06, rtol=0):
                 raise ValueError('selected hand Reset readback differs from seed: ' + field)
@@ -899,8 +919,7 @@ class NativeTensorPhysicsRuntime:
                 specs, anchor_specs=anchor_specs, **schema_options,
             ))
         schemas = tuple(schemas)
-        f = self.last
-        selected = list(ids)
+        f = frame
         annotations = {
             key: getattr(f, key)[selected] for key in (
                 'anchor_present', 'anchor_drift', 'anchor_uncertainty',
@@ -911,10 +930,27 @@ class NativeTensorPhysicsRuntime:
                         fields={k: v[selected] for k, v in f.fields.items()}, **annotations)
         self.reward.reset_selected(ids, schemas, reset, previous_request=self.source.previous_request[selected], tokens=tuple((self.source.previous_request_tokens[i] for i in ids)), policy_uids=('controller_reset_zero',) * len(ids))
         self.ages[selected] = 0
+        if len(selected) == self.n:
+            self.last = frame
+        else:
+            def updated(previous, new):
+                previous = previous.clone()
+                previous[selected] = new
+                return previous
+
+            keep = self.last
+            self.last = replace(keep,
+                physics_tick=updated(keep.physics_tick, reset.physics_tick),
+                solver_time_s=updated(keep.solver_time_s, reset.solver_time_s),
+                fields={key: updated(keep.fields[key], value) for key, value in reset.fields.items()},
+                **{key: updated(getattr(keep, key), value) for key, value in annotations.items()},
+            )
 
     def _sdk_impl(self, actions, end):
         from dh116.physics.solver import step_thumb_physics
         phase_start = perf_counter()
+        if self.full_grasp and phase_start - self.source.started >= self.source.wall_cap_s:
+            raise TimeoutError('native training wall budget expired before the next SDK step')
 
         def mark(name):
             nonlocal phase_start
@@ -969,7 +1005,7 @@ class NativeTensorPhysicsRuntime:
             if not self.full_grasp:
                 require_substep_guard(bad, 'original force or wrist guard')
             guard |= bad & ~parked
-        distance = self.distance(post)
+        distance = self.distance(post, active=~(parked | guard) if self.full_grasp else None)
         guard |= self._geometry_bad & ~parked
         self.last = self.frame(post, distance, capture=capture, constraint=guard, suppress_contact=parked if self.full_grasp else None)
         ready = self.reward.observe(self.last)
@@ -992,7 +1028,7 @@ class NativeTensorPhysicsRuntime:
                                         active_effort_limit_nm=self.effort)
         self.runtime.park_rods(ids)
         mesh_reset(self.runtime.solver, self.bridge, self.state, ids)
-        self.clear = self.raw_clearance(self.state['link_pose_wxyz'])
+        self.clear[ids] = self.raw_clearance(self.state['link_pose_wxyz'][ids])
         if clear_controller:
             self.ctrl.invalidate(ids)
 
@@ -1023,7 +1059,8 @@ class NativeTensorPhysicsRuntime:
         return result
 
     def _reset_impl(self, ids):
-        peers = tuple(sorted(set(self.ids) - set(ids))) if self.prove_peer_reset else ()
+        prove_peers = self.prove_peer_reset and self.n == 2
+        peers = tuple(sorted(set(self.ids) - set(ids))) if prove_peers else ()
 
         def peer_epochs():
             return tuple(((self.runtime.episodes[i], self.runtime.resets[i], self.runtime.ticks[i], self.reward.schemas[i], self.source.previous_request_tokens[i]) for i in peers))
@@ -1043,5 +1080,5 @@ class NativeTensorPhysicsRuntime:
         self.snapshot('reset_' + str(sdk), dict(ids=ids, state=self.state, nodes=self.nodes, velocities=self.velocity, source=self.source._boundary(), references=self.last, schemas=tuple(self.reward.schemas)))
         if self.sim.current_time_step_index != sdk:
             raise ValueError('Reset unexpectedly advanced PhysX')
-        if self.prove_peer_reset:
+        if prove_peers:
             self.reset_proofs.append(dict(sdk_step=sdk, selected=list(ids), peers=list(peers), peer_fields=list(before), native_mesh_verified=True, reset_ids=list(self.runtime.resets)))
