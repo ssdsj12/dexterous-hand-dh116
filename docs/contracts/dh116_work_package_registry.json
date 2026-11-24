@@ -52701,18 +52701,36 @@
     "teacher.shared-cabi-128-update-v1": {
       "branch": "11-17",
       "teacher_admission": false,
-      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-runtime-lifecycle-native.md",
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-cabi-native-ppo2.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "title": "Real128lane32window two PPO updates",
       "executor": "gated",
-      "status": "pending",
+      "status": "passed",
       "dependencies": [
         "runtime.shared-cabi-eager-lifecycle-v1"
       ],
       "output": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/tensor-common-ppo2-128-gpu3-xc6n1p7x",
       "planned_updates": 2,
-      "native_ppo_updates": 0,
-      "execution_state": "running"
+      "native_ppo_updates": 2,
+      "execution_state": "completed",
+      "native_samples": 8192,
+      "natural_exit_code": 0,
+      "receipt_sha256": "18007ea09f339e879d72a94e4e1bcf57cc302639dd41adc1c59c59f9d11cd395",
+      "scope": "real128x32x2updates,Natural0;10.142763/9.789208s,6–8s target not met; diagnostic only"
+    },
+    "runtime.shared-cabi-next-numerical-fusion-v1": {
+      "branch": "11-17",
+      "teacher_admission": false,
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-cabi-native-ppo2.md",
+      "executor": "prepared",
+      "status": "pending",
+      "dependencies": [
+        "teacher.shared-cabi-128-update-v1"
+      ],
+      "title": "Preserve eager numerical guard predicates while reducing remaining GPU launch and source costs",
+      "measured_warm_window_seconds": 0.2991872941274778,
+      "performance_target_verified": false
     }
   },
   "execution_target": {

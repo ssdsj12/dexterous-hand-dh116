@@ -2297,7 +2297,7 @@
     }
   },
   "full_tensor_native_ppo": {
-    "status": "shared_cabi_runtime_native_verified_128_updates_running",
+    "status": "pinch_shared_cabi_native_ppo2_verified_performance_target_not_met",
     "scope": "new flat CUDA candidate and two regex Articulations; no full-chain throughput claim",
     "cpu": {
       "passed": 214,
@@ -2364,7 +2364,7 @@
       "local_timeline_released": true,
       "grasp_qualified": false
     },
-    "native128_tensor_updates": 0,
+    "native128_tensor_updates": 2,
     "three_grasp_tensor_training": false,
     "teacher_admission": false,
     "report": "docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md",
@@ -2437,7 +2437,7 @@
       "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-control-fusion.md"
     },
     "shared_runtime": {
-      "status": "n2_and_n128_current_source_native_verified",
+      "status": "native_current_source_verified_teacher_two_updates",
       "camera_enabled": false,
       "student_native_training_verified": false,
       "torch_compile": false,
@@ -2505,6 +2505,53 @@
       "seconds": 6.4,
       "physical_resume": false,
       "log_sha256": "72537e5897cc384771c7d982f64cd43391907c4099949bed36101f4382c31779"
+    },
+    "latest_native128_updates": {
+      "grasp": "pinch",
+      "num_envs": 128,
+      "rollout_windows": 32,
+      "updates": 2,
+      "samples": 8192,
+      "sdk_steps": 514,
+      "rod_lane_substeps": 786432,
+      "natural_exit_code": 0,
+      "rollout_seconds": [
+        9.847212576074526,
+        9.583548184018582
+      ],
+      "optimizer_seconds": [
+        0.12436724011786282,
+        0.05558332707732916
+      ],
+      "iteration_seconds": [
+        10.142763411160558,
+        9.789208401925862
+      ],
+      "post_step_exact_kl": [
+        0.0013332939706742764,
+        0.001229075132869184
+      ],
+      "accepted_lr": [
+        1e-05,
+        1e-05
+      ],
+      "checkpoint_sha256": [
+        "3606bfab81930ae877dbc9cbc17f8f2b81e936e1e905a347b138236401f0cbf6",
+        "6d9f61eaab9d4f1baeb77524a62859931d77d6036bd1c07525f220bc019f6757"
+      ],
+      "receipt_sha256": "18007ea09f339e879d72a94e4e1bcf57cc302639dd41adc1c59c59f9d11cd395",
+      "peak_sampled_gpu_mib": 3488,
+      "peak_torch_allocated_bytes": 647681536,
+      "raw_log_sha256": "86222f337043fceaa80b271237e0680f93b6f3b3c669559c26070c09ca7d65ae",
+      "source_freeze_verified": true,
+      "local_timeline_released": true,
+      "all_iterations_le10s": false,
+      "all_iterations_6to8s": false,
+      "performance_target_verified": false,
+      "reward_scope": "finger_goal_R0_diagnostic_only",
+      "teacher_admission": false,
+      "grasp_qualified": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-cabi-native-ppo2.md"
     }
   }
 }

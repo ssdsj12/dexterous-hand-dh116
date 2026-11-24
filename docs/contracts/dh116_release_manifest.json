@@ -36402,6 +36402,25 @@
       "native_n128_probe_exit": 0,
       "native_ppo_updates": 0,
       "report": "docs/superpowers/reports/2026-11-24-dh116-shared-runtime-lifecycle-native.md",
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "eb3914bb58546c5e7ac9e503b1d8280f25227510",
+        "source_tree": "adf5b98a33f62293b8b45fed18460ebf687af30f",
+        "files_verified": 52,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
+    },
+    {
+      "package": "teacher.shared-cabi-128-update-v1",
+      "status": "native_two_updates_verified_target_not_met",
+      "native_updates": 2,
+      "environments": 128,
+      "windows_per_update": 32,
+      "natural_exit_code": 0,
+      "receipt_sha256": "18007ea09f339e879d72a94e4e1bcf57cc302639dd41adc1c59c59f9d11cd395",
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-cabi-native-ppo2.md",
       "teacher_admission": false
     }
   ]
