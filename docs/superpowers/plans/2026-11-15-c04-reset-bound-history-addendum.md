@@ -1,7 +1,0 @@
-# C04 actual-reset-bound action history addendum
-
-Parent approval: 2026-11-15, explicit new owner type permitted. CPU/source work only; no native execution or extra budget.
-
-The old Action24HistoryOwner and _Sequence remain byte-for-byte unchanged. Their initial setup=2 restriction is valid for their original one-episode scope. A new NativeAction24HistoryOwner reuses unchanged policy, physical request/SDK target and issued-for-pending validation. Its _ResetBoundSequence accepts one real completed no-step Reset at its actual absolute SDK step, fresh episode UID/reset ID/rod_tick=0, identical before/after SDK and solver clocks, and original rod boundary. It requires current initial geometry per side; it never manufactures setup=2 records, resets the SDK clock, or replays historical setup. First scene setup is separately preserved by the outer session.
-
-Each terminal/external truncation creates a fresh original DualHandPhysicalEpisode over borrowed existing handles plus fresh history/context/events/anchors. The same trainer and current unfinished rollout survive. Session budgets and monotonic wall clock are shared, and actual Reset deltas are charged without replenishing discarded samples. CPU tests first demonstrate old history rejection at SDK N>2, then cover three actual episodes with normal truncation, trusted partial failure, and a new reset, maintaining SDK/solver absolute clocks and independent zero previous request.

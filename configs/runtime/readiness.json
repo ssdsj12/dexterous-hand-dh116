@@ -1,0 +1,103 @@
+{
+  "schema": "dh116-production-readiness-v2",
+  "release_note": "ini",
+  "branch": "11-17",
+  "baseline_sha": "56c53644cd6f9c5de3efd2659be4424aa2cfad85",
+  "package": "dh116",
+  "root": "/mnt/mydisk/xk/dh116",
+  "implementation_modules": 24,
+  "package_init_files": 6,
+  "python_files": 30,
+  "cuda_sources": 2,
+  "entry_scripts": 6,
+  "test_files": 15,
+  "cpu": {
+    "passed": 166,
+    "failed": 0
+  },
+  "cuda_geometry": {
+    "passed": 13,
+    "failed": 0,
+    "physical_gpu": 3
+  },
+  "shared_contact": {
+    "passed": true,
+    "steps": 7,
+    "environments": 2,
+    "isaac_steps": 0,
+    "ppo_updates": 0,
+    "raw_indices_vectors_exact": true,
+    "max_reduction_error": 3.3306690738754696e-16,
+    "binary_sha256": "dee9304dd3c1fc3713696ddc2fa3fe7762c431df2ed82476cfed6463a1858389"
+  },
+  "native": {
+    "passed": true,
+    "physical_gpu": 3,
+    "environments": 128,
+    "controls": 2,
+    "sdk_steps": 18,
+    "ppo_updates": 0,
+    "solver_substeps_per_sdk": 12,
+    "exit_code": 0,
+    "natural_close": true,
+    "forced_exit": false,
+    "source_audit_passed": true,
+    "source_drift": [],
+    "window_seconds": [
+      0.44649948296137154,
+      0.28644887497648597
+    ],
+    "torch_peak_allocated_bytes": 146683392,
+    "whole_process_peak_vram_bytes": null,
+    "scene_sha256": "d1b8b5404af1ee809e88ffdf384c629fe7833e86ea471f88a3ccfaee5fac9a93",
+    "geometry_manifest_sha256": "c4505753bb67a6a4b40d49b8b479c2096ec3c1a353dd677eefa98f10b8354f1f",
+    "native_result_sha256": "512fd268512205100bdc446a627bf5df681e49484e8b01e0dbbbe83e65e2c3c5",
+    "outer_timeout_s": 900,
+    "initialization_and_sdk_wait_budget_is_separate": true
+  },
+  "binary": {
+    "ropesim": "dee9304dd3c1fc3713696ddc2fa3fe7762c431df2ed82476cfed6463a1858389",
+    "geometry": "28ea506daab85a9f2b19f88dbee2e41caf72091dcb47001ce18b407a5c1f7bbe"
+  },
+  "invariants": {
+    "action_dimensions": 24,
+    "raw_state_dimensions": 371,
+    "table_clearance_m": 0.0021,
+    "penetration_limit_m": 0.00015,
+    "lift_m": 0.03,
+    "hold_s": 5.0,
+    "slip_m": 0.0005,
+    "torch_compile": false,
+    "original_physical_assets_unchanged": true
+  },
+  "qualification": {
+    "teacher_grasp": false,
+    "student_formal_training": false,
+    "R2": false,
+    "force_proxy": false
+  },
+  "failures_preserved": [
+    "invalid_readback_option_before_physics",
+    "wrong_required_pads_at_initial_guard",
+    "initialization_exceeded_old_240s_parent_wait"
+  ],
+  "before_tracked_counts": {
+    "scripts": 605,
+    "tests": 1215,
+    "configs": 378,
+    "docs": 1714,
+    "tools": 26,
+    "previous_src": 670
+  },
+  "archives": [
+    "/mnt/mydisk/xk/archive/dh116-root-cleanup-20261124",
+    "/mnt/mydisk/xk/archive/dh116-worktrees-20261124"
+  ],
+  "publish": {
+    "method": "Ubuntu commit imported unchanged by Windows",
+    "pr_2_draft": true
+  },
+  "asset_metadata_migration": [
+    "assets/dh116_hollow_straw_v1/manifest.json: generator paths replaced by byte-verified historical Git blobs; USD/geometry/physics unchanged"
+  ]
+}

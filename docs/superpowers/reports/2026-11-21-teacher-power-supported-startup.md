@@ -1,7 +1,0 @@
-# Power supported startup boundary
-
-The first frozen worker exited 1 before launching Isaac. The plan called offline USD scene preparation in the future application process. The existing clean import boundary detected `pxr` before AppLauncher and rejected the launch. No SDK step, DeformX exchange or hand/support contact was recorded. GDB observed inferior exit 1 with no fatal signal. Failure receipt SHA-256 `fa3a9bf5b9375cb1972ca5d27e9a9c34d5971b7e27bec801a539815ea38c9af5`, raw log SHA-256 `015efd07ad3e94ab7c5b07bbbf89f107c8f1f8de62a6d5605432560fdaaaef99`.
-
-Freeze now reads the original task contract and verifies the new Reset and support geometry numerically. The worker uses the existing native scene source/asset verification after AppLauncher owns USD. A regression fails if preflight calls the offline USD scene builder. The exact freeze entry point ran in a fresh process and passed the clean import guard with all real palm artifacts. Its pre-publication fingerprint is `ea3bcc3eb5ce01882f8efe0d6a866e3ea00e1a3d567c09d337230025b5c13fb9`. The next runtime recipe is frozen after publication because the original launcher also pins the Git release manifest.
-
-CPU regression command `python -m pytest -q tests/test_dh116_power_supported_task.py tests/test_dh116_power_end_supported_rod.py tests/test_dh116_power_palm_contact_evidence.py tests/test_dual_hand_rod_runtime.py tests/test_dh116_work_packages.py` passed 114 tests. Both the native contact readback and natural application exit require the single repaired pilot with the same budget.

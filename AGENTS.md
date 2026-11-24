@@ -1,20 +1,10 @@
-# 按工作包持续发布
+# DH116 production workflow
 
-仓库为 `ssdsj12/dexterous-hand-dh116`，发布分支为 `codex/dh116-stereo-privileged-dagger`。用户已授权每个符合发布条件的独立工作包自动提交并推送。`11-10` 是只读基线。PR #2 始终保持 Draft，禁止自动合并。
-
-1. 开始前检查当前分支、HEAD 和 `git status`，确认目标远端及分支。仅在指定开发分支工作，保留用户未提交修改。
-2. 完成工作包后运行相关 CPU 回归，记录命令、实际通过和失败数量。涉及原生物理时，分别报告 CPU、Isaac 原生验证和实际抓取结果。历史结果须注明来源。
-3. 更新对应报告、readiness JSON、`CHANGELOG.md` 和必要的 `README.md` 摘要，记录影响、验证限制、失败项和下一步。
-4. 核对旧 Checkpoint、旧模型、原始数据和受保护源码。仅按明确路径暂存本工作包的源码、配置、测试和报告，审查暂存清单及内容。排除大型模型、`artifacts/`、`archive/`、`runs/`、原始数据、实验日志、临时文件、缓存、密钥、用户隐私及无关文件，保留本地原件。
-5. 测试通过后生成概括实际改动的提交说明，在 Ubuntu 执行 `git commit` 并排入待发布队列。由 Windows 裸仓库正常推送到指定开发分支。推送后在 Windows 重新读取 GitHub 分支 HEAD，核对提交 SHA、文件清单和内容，并确认 PR #2 的 Draft 状态。
-6. 推送失败时查明原因并安全重试。远端有新提交时先 `fetch` 并审查差异，再在保护用户工作内容的前提下处理 rebase 或合并。冲突无法安全处理时报告阻断。禁止 `reset`、强制推送和覆盖用户未提交修改。
-7. 工作包失败时在本地保留日志，提交并推送必要的诊断代码和报告，记录实际失败及 `blocked` 状态。失败模型、数据及轨迹不得进入成功池。
-8. 每个工作包结束后报告远端提交 SHA、改动文件、测试数量、失败项目和下一工作包。未核实推送结果时明确报告当前状态。
-
-长时间原生训练、8 初态同步采集、物理参数修改和其他受资源或实验授权约束的操作，须满足各自批准门槛。持续发布授权只适用于 GitHub 提交和推送。
-
-用户于2026-10-25明确取消单核/单线程限制：允许多核、多线程，按实际吞吐和显存选择并行度。仍不同时启动第二个 Isaac 实例。
-
-## 开发和发布位置
-
-Ubuntu 任务 Worktree 用于开发、测试和提交。发布统一由 Windows 裸仓库执行。Ubuntu 调度器只管理本地提交、待发布队列和 Windows 核验回执。Windows 从 Ubuntu 导入 Git 提交，推送后核对远端 SHA、提交树、文件清单和 Draft PR，再回传回执。Ubuntu 将核验结果写入发布清单，清单提交同样经 Windows 发布。历史 Checkpoint 和原始数据通过服务器原路径只读引用。
+- 默认简体中文。唯一项目根目录/mnt/mydisk/xk/dh116；包src/dh116/，开发分支11-17。不新建日期工作树，不修改11-10。
+- 按env/physics/rl/hand分层，保留cuda_measurements扩展；禁止src反向import脚本，不添加旧包兼容壳。
+- scripts不超过8个入口，tests不超过20份核心测试；新增实现须有实际调用与回归。
+- 不放宽物理/几何/关节守卫，不改变24D/371D合同或30mm Lift、5s Hold、0.5mm Slip标准。
+- CPU、CUDA、Isaac原生和实际抓取成功独立报告。核验源码SHA、二进制SHA与自然退出，禁止硬退出伪造成功。
+- 模型、数据、缓存和日志只写本地runs/build等忽略目录。历史数据保留项目外归档，禁止上传。
+- 全部保留测试与必要原生验证通过后，更新README、CHANGELOG与readiness；确认无无关文件，再按用户要求git add -A及commit。
+- 发布由Windows从Ubuntu导入同一commit后push，核对远端SHA、提交树和文件清单。Ubuntu不直接push。PR #2保持Draft，不merge、force-push、reset或覆盖用户未提交修改。

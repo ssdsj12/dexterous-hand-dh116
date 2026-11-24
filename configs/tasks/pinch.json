@@ -1,0 +1,63 @@
+{
+  "schema": "dh116-shared-task-v1",
+  "task_kind": "deformable_rod",
+  "grasp": "pinch",
+  "rod": {
+    "linear_density_kg_m": 0.065,
+    "axial_stiffness_n": 800.0,
+    "bend_stiffness_n_m2": 0.018,
+    "radius_m": 0.005,
+    "gravity_world_m_s2": [
+      0.0,
+      0.0,
+      -9.81
+    ],
+    "pinned_node_ids": [],
+    "solver_substeps": 12,
+    "solver_iterations": 8,
+    "damping": 1e-06,
+    "drag": 0.2,
+    "drag_quad": 0.0,
+    "drag_quad_t": 0.0,
+    "self_collision": false,
+    "mu_s": 0.5,
+    "mu_k": 0.4,
+    "v_slip_m_s": 0.001,
+    "kappa": 2.0
+  },
+  "hand": {
+    "material_profile": "grip_compliant",
+    "self_collision": false,
+    "fixed_base": true,
+    "active_stiffness": 10.0,
+    "active_damping": 0.2,
+    "active_effort_limit_nm": 0.15,
+    "mimic_stiffness": 400.0,
+    "mimic_damping": 1.0
+  },
+  "table": {
+    "sdf_spacing_m": 0.005,
+    "sdf_margin_m": 0.025,
+    "mu_s": 0.5,
+    "mu_k": 0.4,
+    "material_status": "explicit_candidate_contact_pair_coefficients_not_measured"
+  },
+  "material_status": "explicit_candidate_inherits_P0_solver_coefficients_not_measured_task_material",
+  "scene_input": {
+    "path": "build/scene_bundle/scene.json",
+    "sha256": "d1b8b5404af1ee809e88ffdf384c629fe7833e86ea471f88a3ccfaee5fac9a93"
+  },
+  "qualification": {
+    "teacher": false,
+    "grasp": false,
+    "mechanical": false
+  },
+  "startup_height": {
+    "delta_z_m": [
+      0.005,
+      0.005
+    ],
+    "evidence_sha256": "3d15cbf252698e7cda14f07980e5ee0f236a266f9dd0dfbf9be6826f0aa95503",
+    "evidence_path": "build/scene_bundle/height_failure.json"
+  }
+}

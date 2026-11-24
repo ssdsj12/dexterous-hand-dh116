@@ -1,7 +1,0 @@
-# Staged Pinch observed close driver
-
-The new driver uses the sealed native open Reset `2f8ec96ba01922b81502b4575a7b9657bbae0bc8c928c14698b3811936e2e9a8` and the published absolute candidate. It recreates the source-bound scene and repeats the same physical initialization in a new worker. It admits the 64-step close only after eight measured zero-action steps with table support at every solver substep, no hand-to-rod normal load and the original quiet drift/speed limits. The frozen maximum is 74 SDK steps including two setup steps, 864 solver substeps, one environment and zero training or Lift steps. The driver uses the original measured table/joint guards and locked 44-envelope closure evaluator.
-
-Every completed SDK sample is retained with existing terminal reasons. Reactions are reread from the original 11-slot pair data and reconciled against the solver's step aggregates. The opposed-load diagnostic combines both hands on the same solver substep, requires normal force over 0.05 N on each target pad and over 0.3 N per hand, uses the original weighted normal direction criterion and checks signed compressive opposition. There is no support-slot remapping or inferred force. Even a positive closing window does not establish a stable hold, Lift or training admission.
-
-**158 CPU tests passed**. The freeze-only preflight produced the exact bounded action schedule and did not start Isaac. Native execution is separately checked against the sealed Reset and final published sources.

@@ -1,7 +1,0 @@
-# Supported distal live clearance evidence
-
-The archived Tripod bilateral attempt stopped at SDK 1178. Complete action and rod rows extend through SDK 1177. At SDK 1177, reconstruction from measured hand and rod data estimated a lower clearance bound of 0.258 mm for the left `finger13_link` and 1.061 mm for the nearest right-side non-pad source. The rod moved up to 0.345 mm relative to SDK 752. The failed tick contained no identified collider, so the precise SDK 1178 trigger remains unconfirmed.
-
-`measure_links` now records the actual articulation side, PhysX prim, body index, pose, original local source vertices, individual support margins and lower rod-gap bound when the existing guard rejects a source. The run writes a dedicated JSON record with the current SDK clock and the previous rod snapshot identity and nodes before raising. The failed SDK step still cannot advance the rod solver. Selected fingertip sources may touch the assigned rod material stations, and their support collision guard still applies. Other sources still require more than 0.25 mm rod clearance.
-
-The geometry, supported contact, action, and force CPU suite passed 137 tests. New regressions cover the selected-pad support guard and recording the failing measured body and SDK step before raising. No new Isaac run occurred in this package. Neither grasp qualification nor Teacher admission changed. The next Tripod attempt will start its left closure from an earlier measured safe waypoint and use the recorded deflected rod.

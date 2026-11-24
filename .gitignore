@@ -12,5 +12,20 @@ __pycache__/
 *.pem
 *.key
 
-# Generated code-graph caches (keep local only)
-graphify-out/
+# Project-local build products and native diagnostics (never publish assets).
+/build*/
+/.cache/
+/.local/
+*.so
+*.o
+*.a
+*.pt
+*.pth
+*.etli
+*.core
+core.*
+
+/.superpowers/
+
+# Local editable-install metadata.
+*.egg-info/

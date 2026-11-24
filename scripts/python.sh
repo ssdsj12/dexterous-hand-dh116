@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 project_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-hand_python="${DH116_PYTHON:-/opt/conda/envs/hand/bin/python}"
+hand_python="${DH116_PYTHON:-/mnt/mydisk/xk/envs/dh116/bin/python}"
 python_prefix="$("$hand_python" -c 'import sys;print(sys.prefix)')"
 read -r python_version python_abi < <("$hand_python" -c 'import sys;print(f"{sys.version_info.major}.{sys.version_info.minor}",f"cp{sys.version_info.major}{sys.version_info.minor}")')
 isaac_root="$python_prefix/lib/python$python_version/site-packages/isaacsim"

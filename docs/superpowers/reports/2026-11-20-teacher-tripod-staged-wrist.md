@@ -1,9 +1,0 @@
-# Tripod right wrist convergence before approach
-
-The run used the original 24D contract, USD assets, safety guards and free-rod physics. The right hand began on a path raised by 16 mm. The left hand remained parked. The original cooked clearance check and the independent continuous path screen passed for this candidate. A single Isaac process on Ubuntu executed one run.
-
-The 62 control windows covered an initial idle window, eight wrist rotation windows, 32 wrist-settle windows, 20 translation and finger windows, and one final idle window. The acceptance test read eight consecutive same-instance SDK measurements through step 330. Maximum angular tracking error was 0.097066 mrad against the 0.2 mrad gate. Maximum angular speed was 0.983675 mrad/s against the 1 mrad/s gate. The first approach command used pre-action SDK step 330. The first affected physics sample was SDK step 331. A failed gate prevents issuing the approach commands.
-
-The physical ledger contains both initialization boundaries, one reset, 62 complete control windows, 496 measured SDK steps and 5,952 rod solver substeps. The pair ledger contains table contact only. Hand-to-rod contact pairs were zero. No protection failure was recorded. App close returned and the outer process exited naturally with code 0 after 99.18 seconds. The qualification flags remain false. This raises confidence in the staged wrist command sequence under free-space conditions. Contact, lift, hold, slip and Teacher readiness still require independent evidence.
-
-The CPU regression passed 129 tests. The new tests cover staged channel isolation, fresh eight-step evidence, wrist tracking and speed rejection. The private native evidence and frozen command are indexed by SHA in the readiness contract. The next run candidate needs a bounded near-rod approach separately screened at the original contact height using measured phase-specific tracking.

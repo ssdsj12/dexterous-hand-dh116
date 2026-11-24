@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dh116"
+version = "0.2.0"
+description = "DH116 shared deformable physics, privileged Teacher PPO and stereo Student"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["dh116*"]
+
+[project.scripts]
+dh116-teacher = "dh116.rl.training:train_teacher_main"
+
+[tool.setuptools.package-data]
+dh116 = ["cuda_measurements/*.cu"]

@@ -1,8 +1,0 @@
-{
-  "version": "dh116-tripod-left-index-stabilize-v1",
-  "source_sdk": 1480,
-  "max_travel_rad": 0.0006,
-  "dose_windows": 4,
-  "hold_windows": 24,
-  "normalized_index_action": 0.03
-}

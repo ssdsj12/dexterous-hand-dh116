@@ -25,12 +25,16 @@
   "usd_sha256": "e04195bd95d853b432c5d88c73a81e75d34acc8846d292e98e9c370684b2a9d5",
   "generators": [
     {
-      "path": "/home/xk/coding/dexterous hand/src/go2_pvcnn/control/dh116/hollow_straw.py",
-      "sha256": "1c8daf7bb2c7749b9b981eb1a1cb01cd4d1fc951def7086eb714006656befd2c"
+      "sha256": "1c8daf7bb2c7749b9b981eb1a1cb01cd4d1fc951def7086eb714006656befd2c",
+      "git_commit": "56c53644cd6f9c5de3efd2659be4424aa2cfad85",
+      "git_blob": "d830627d323345f3f963cae5a786685ca399d608",
+      "storage": "immutable_git_history"
     },
     {
-      "path": "/home/xk/coding/dexterous hand/scripts/build_dh116_hollow_straw.py",
-      "sha256": "c31a375056bf9d996ec943a26b2ad5f5732a161e9c1bb9c94067e358e035717c"
+      "sha256": "c31a375056bf9d996ec943a26b2ad5f5732a161e9c1bb9c94067e358e035717c",
+      "git_commit": "56c53644cd6f9c5de3efd2659be4424aa2cfad85",
+      "git_blob": "647477d5855d29dd80008ffd475d1edc39178eb3",
+      "storage": "immutable_git_history"
     }
   ]
 }

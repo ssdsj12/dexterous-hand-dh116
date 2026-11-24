@@ -1,9 +1,0 @@
-# Bind approach geometry to an archived native supported rod
-
-The parked-hand receipt reader now verifies outer and inferior exit, its artifact hashes, the original episode/Reset/rod IDs and the same SDK/solver boundary. Both supports must show a positive normal load in every substep, with no hand or table pairs in the sample. It returns all 41 ordered material positions, velocities and all 40 original rest lengths using their retained dtypes. The arrays are read-only and the interface does not perform a Reset.
-
-The actual parked SDK 240 sample passed at solver tick 2,856. Its minimum Z was 347.067 mm, peak instantaneous node speed 0.012913 m/s, and retained material rest lengths sum to 0.500 m. Raw sample SHA-256 `e99021b41b6e07dae66fa812bb3fcbf9a81f33237e77c50bc44993fcd3a81fc6` and outer receipt SHA-256 `8c0e73409e3a4ef001d1f9807439c14689c538be0d74f944208ab3ea0b4c9620`.
-
-The Tripod geometry verifier accepts this reference only when a separate frozen route contract binds the receipt, same sample and both actual support boxes. The prior Tripod analytical raised curve and nominal shared Reset curve differed by 3.606 mm at their worst material node. Re-running the earlier two segments against the shared nominal curve rejected both, including a middle source envelope clearance of -1.351 mm in the second segment. The old route remains restricted to its original archived geometry. Transfer to a moving live rod needs a new clearance envelope.
-
-CPU tests for source integrity, signal rejection, isolated support pairs, geometry and the work-package registry passed 72. Run `python -m pytest -q tests/test_dh116_supported_rod_reference.py tests/test_dh116_tripod_distal_route.py tests/test_dh116_work_packages.py tests/test_dh116_power_supported_task.py`. No new native experiment or grasp qualification was used here.

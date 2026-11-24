@@ -2,8 +2,8 @@
 set -euo pipefail
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 config="$root/deploy/supervisord.conf"
-control=/opt/conda/envs/hand/bin/supervisorctl
-daemon=/opt/conda/envs/hand/bin/supervisord
+control=/mnt/mydisk/xk/envs/dh116/bin/supervisorctl
+daemon=/mnt/mydisk/xk/envs/dh116/bin/supervisord
 case "${1:-status}" in
   start)
     mkdir -p "$root/runs/services"
