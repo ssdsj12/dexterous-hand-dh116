@@ -1,3 +1,5 @@
+Batched native 128-lane control windows take 16.35/16.31s versus 41.47/44.65s (2.64x), with natural exit 0 and unchanged guards. Actual full 128-lane PPO updates are running separately. [Report](docs/superpowers/reports/2026-11-24-dh116-batched-control-geometry.md)
+
 The actual 128-lane native probe completed two on-policy windows in 41.47/44.65 s with natural exit 0 and 2860 MiB sampled GPU use. CPU control/geometry remain the bottleneck; no optimizer update was performed. [Report](docs/superpowers/reports/2026-11-24-dh116-shared-128-throughput.md)
 
 Actual shared native Teacher PPO now completes two updates and local Reset continuation for two-lane Pinch/Power, with exclusive checkpoint roundtrips and natural exit 0. Three-grasp 128-lane training and grasp qualification remain pending. [Report](docs/superpowers/reports/2026-11-24-dh116-shared-native-ppo.md)

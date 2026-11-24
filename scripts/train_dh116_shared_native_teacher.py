@@ -14,7 +14,7 @@ from time import perf_counter
 
 
 class NativeSharedPPO:
-    def __init__(self,runtime,sim,scenes,seed,bindings,hand_bindings,archive,output,*,updates=2,policy_seed=20261123,probe_windows=0,profile_first_sdk=False):
+    def __init__(self,runtime,sim,scenes,seed,bindings,hand_bindings,archive,output,*,updates=2,policy_seed=20261123,probe_windows=0,profile_first_sdk=False,geometry_evidence="memory",geometry_compute="cuda",control_compute="batch"):
         import torch
         torch.manual_seed(policy_seed)
         torch.cuda.manual_seed_all(policy_seed)
@@ -26,6 +26,13 @@ class NativeSharedPPO:
         from go2_pvcnn.control.dh116.tabletop_native_teacher_collector import NativeJournal
         from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import ROOT
         from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import _digest
+        if geometry_evidence not in ("full","memory"):
+            raise ValueError("explicit full audit or owned training memory required")
+        if geometry_compute not in ("cpu","cuda"):raise ValueError("explicit CPU oracle or CUDA geometry required")
+        if control_compute not in ("scalar","batch"):raise ValueError("explicit original or owned batch control required")
+        self.control_compute=control_compute
+        self.geometry_compute=geometry_compute
+        self.geometry_evidence=geometry_evidence
         self.audit=NativeInputAudit(runtime,sim,scenes,seed,bindings,hand_bindings,archive,output,
                                     action_owner="policy")
         self.runtime,self.sim,self.scenes,self.bindings,self.hands=runtime,sim,scenes,bindings,hand_bindings
@@ -51,11 +58,13 @@ class NativeSharedPPO:
         if archive.style=="pinch":
             from go2_pvcnn.control.dh116.tabletop_native_teacher_sources import _canonical_pinch_history
             with _canonical_pinch_history():
-                prototype=SharedPinchGeometry(ROOT,scope=self.source.scope,radius_source=self.radius)
-            self.guard=[prototype]*len(scenes)
+                prototype=SharedPinchGeometry(ROOT,scope=self.source.scope,radius_source=self.radius,
+                    fast_memory=geometry_evidence=="memory")
+            self.guard=[copy(prototype) for _ in scenes]
         elif archive.style=="tripod":
             task=archive.mesh_plan["task_config"]
             prototype=SharedTripodGeometry(ROOT,scope=self.source.scope,radius_source=self.radius,
+                fast_memory=geometry_evidence=="memory",
                 task_config=Path(task["path"]),task_config_sha256=task["sha256"],mesh_bindings=bindings[0])
             from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import digest
             from go2_pvcnn.control.dh116.tabletop_deformable_r0_replay import encode_owned
@@ -69,6 +78,27 @@ class NativeSharedPPO:
                 guard.sources=dict(prototype.sources,tripod=dict(prototype.sources["tripod"],
                     mesh_bindings_sha256=digest(encode_owned(names))))
                 self.guard.append(guard)
+        self.geometry_cache=self.sdf_cache=None
+        if self.guard and geometry_compute=="cuda":
+            from go2_pvcnn.control.dh116.tabletop_batched_geometry_metrics import BatchedGeometryMetrics
+            names=tuple(tuple(hand.body_names) for hand in scenes[0]["hands"])
+            if any(tuple(tuple(h.body_names) for h in s["hands"])!=names for s in scenes):
+                raise ValueError("same original per-side batch body ordering required")
+            shapes=[(s,names[s].index(name),kind+":"+name,vertices)
+                for s,side in enumerate(("left","right"))
+                for kind,group in self.guard[0]._geometry[side].items()
+                for name,vertices in group.items()]
+            self.geometry_cache=BatchedGeometryMetrics(shapes,device="cuda:0")
+            from go2_pvcnn.control.dh116.tabletop_batched_pad_sdf import BatchedPadSDF
+            pads=[(s,names[s].index(name),name,self.guard[0]._grids[side][name])
+                  for s,side in enumerate(("left","right")) for name in self.guard[0].REQUIRED_PADS]
+            self.sdf_cache=BatchedPadSDF(pads,device="cuda:0",bindings={
+                (s,name):self.guard[0].sources[side]["sdf_binding"][name]
+                for s,side in enumerate(("left","right")) for name in self.guard[0].REQUIRED_PADS})
+
+            for i,guard in enumerate(self.guard):
+                guard.geometry_cache=self.geometry_cache;guard.sdf_cache=self.sdf_cache;guard.geometry_lane=i
+                guard.geometry_body_names=names
         self.rewards={}
         self.last={}
         self.sample=None
@@ -86,15 +116,27 @@ class NativeSharedPPO:
         from go2_pvcnn.control.dh116.tabletop_stereo_contract import file_sha256
         self.recipe_sha256=digest(dict(model=self.model.model_identity,reward=self.config.config_sha256,
             reset_archive=archive.reset_receipt_sha256,actual_hand_seed=seed["sha256"],
+            geometry_evidence=geometry_evidence,geometry_compute=geometry_compute,control_compute=control_compute,
             ppo=asdict(self.trainer.config),seed=policy_seed,
             rollout_steps=32,source_sha256={str(p):file_sha256(p) for p in (
                 Path(__file__),Path(__file__).with_name("smoke_dh116_shared_rod_native.py"),
                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_shared_teacher_reward.py",
                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_shared_parameter_radius.py",
-                ROOT/"src/go2_pvcnn/control/dh116/tabletop_shared_teacher_checkpoint.py")}))
+                ROOT/"src/go2_pvcnn/control/dh116/tabletop_shared_teacher_checkpoint.py",
+                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_owned_memory_geometry.py",
+                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_batched_geometry_metrics.py",
+                  ROOT/"src/go2_pvcnn/control/dh116/tabletop_batched_control.py",
+                  ROOT/"src/go2_pvcnn/control/dh116/tabletop_batched_pad_sdf.py",
+                  ROOT/"src/go2_pvcnn/control/dh116/tabletop_deformable_bimanual_step.py",
+                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_measured_closure_geometry.py",
+                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_native_teacher_policy_pinch_distance.py",
+                 ROOT/"src/go2_pvcnn/control/dh116/tabletop_native_teacher_policy_tripod_distance.py")}))
         from scripts.diagnose_dh116_teacher_initialization import write_new
         write_new(output/"ppo_plan.json",dict(grasp=archive.style,environments=len(scenes),
             planned_updates=self.updates,probe_control_windows=probe_windows,rollout_steps=32,policy_seed=policy_seed,
+            geometry_evidence=geometry_evidence,geometry_compute=geometry_compute,control_compute=control_compute,
+            batched_geometry_active=self.geometry_cache is not None,
+            durable_geometry_evidence=geometry_evidence=="full",
             recipe_sha256=self.recipe_sha256,ppo=asdict(self.trainer.config),source_family="shared_batched_solver_v1",
             source_profile_sha256=self.source.profile.digest,teacher_admission=False))
         self.radius.capture()
@@ -148,7 +190,7 @@ class NativeSharedPPO:
             raise RuntimeError("policy sample does not own current SDK window")
         return self.sample["actions"][lane].detach().cpu().double()
 
-    def after_step(self,action_rows,transactions,capture,measured,issued_routes):
+    def after_step(self,action_rows,transactions,capture,measured,issued_routes,*,all_link_poses=None):
         import numpy as np
         import torch
         from go2_pvcnn.control.dh116.tabletop_training_reward import SourceFailure
@@ -162,6 +204,12 @@ class NativeSharedPPO:
         force=capture["node_forces"].cpu().numpy()
         wrench=capture["mesh_wrenches"].cpu().numpy()
         self.radius.capture()
+        if self.geometry_cache is not None:
+            phase_started=perf_counter()
+            if all_link_poses is None:raise RuntimeError("actual same-SDK all-link geometry source required")
+            self.geometry_cache.capture(all_link_poses,p,frame=self.radius._boundary)
+            self.sdf_cache.capture(all_link_poses,p,frame=self.radius._boundary,radius=self.radius._value)
+            self.timings["batched_geometry_s"]=self.timings.get("batched_geometry_s",0.)+perf_counter()-phase_started
         current=[]
         for i,(readback,transaction,(poses,centers)) in enumerate(zip(action_rows,transactions,measured,strict=True)):
             clock=self.clock(i)
@@ -187,8 +235,13 @@ class NativeSharedPPO:
             current.append(row)
             self.rows[i].append(row)
             if self.archive.style in ("pinch","tripod"):
-                geometry=self.profile_call("geometry",self.guard[i].capture,
-                    row,sim=self.sim,bindings=self.hands[i],read_clock=lambda i=i:self.clock(i))
+                if self.control_compute=="batch":
+                    geometry=self.profile_call("geometry",self.guard[i].capture_from_post,
+                        row,sim=self.sim,bindings=self.hands[i],read_clock=lambda i=i:self.clock(i),
+                        post=readback["post"],all_link_poses=all_link_poses[i])
+                else:
+                    geometry=self.profile_call("geometry",self.guard[i].capture,
+                        row,sim=self.sim,bindings=self.hands[i],read_clock=lambda i=i:self.clock(i))
                 row["closure_geometry"]=geometry
                 if not geometry["source_complete"] or geometry["failure_reasons"]:
                     row["guard_failure"]=geometry.get("terminal_reason") or "source_geometry_unavailable"
@@ -327,6 +380,7 @@ class NativeSharedPPO:
             profile.dump_stats(str(self.output/("cpu_profile_"+label+".stats")))
         self._cpu_profiles.clear()
         self.log.close()
+        self.geometry_cache=self.sdf_cache=None
         self.audit.close()
         self.runtime=self.sim=self.scenes=self.bindings=self.hands=self.source=self.refs=self.model=self.trainer=self.guard=self.audit=self.radius=None
         self.rows={};self.ring.clear()
@@ -351,6 +405,9 @@ def main():
     parser.add_argument("--updates",type=int,choices=(1,2),default=2)
     parser.add_argument("--height-candidate",type=Path)
     parser.add_argument("--height-candidate-sha256")
+    parser.add_argument("--control-compute",choices=("scalar","batch"),default="batch")
+    parser.add_argument("--geometry-compute",choices=("cpu","cuda"),default="cuda")
+    parser.add_argument("--geometry-evidence",choices=("full","memory"),default="memory")
     parser.add_argument("--profile-first-sdk",action="store_true")
     parser.add_argument("--probe-control-windows",type=int,choices=(2,),default=0)
     args=parser.parse_args()
@@ -382,7 +439,8 @@ def main():
              coupled=True,max_sdk_step=end,extra_exercise=partial(coupled,reset=reset,backend=_ropesim,
                  training_height=height,policy_factory=partial(NativeSharedPPO,updates=args.updates,
                                                                 probe_windows=args.probe_control_windows,
-                                                                profile_first_sdk=args.profile_first_sdk)))
+                                                                profile_first_sdk=args.profile_first_sdk,geometry_evidence=args.geometry_evidence,
+                                                                geometry_compute=args.geometry_compute,control_compute=args.control_compute)))
 
 
 if __name__=="__main__":

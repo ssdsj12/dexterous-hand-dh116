@@ -88,7 +88,7 @@ class PolicyOwnedTripodGeometry(PolicyOwnedPinchGeometry):
 
     def _routes(self, rod):
         _require(tuple(rod["mesh_names"]) == PROXIMAL_POWER_MESH_NAMES
-                 and _bytes(rod["mesh_bindings"]) == _bytes(self._mesh_bindings),
+                 and self._same_owned(rod["mesh_bindings"],self._mesh_bindings),
                  "complete actual Tripod mesh layout/bindings differ")
         routes = rod["hand_wrenches_com_world"]
         _require(set(routes) == set(SIDES), "both actual hand wrench sources required")

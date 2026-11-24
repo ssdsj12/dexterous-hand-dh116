@@ -69,9 +69,23 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
     def _radius(self, exchange):
         return _radius(exchange)
 
+    def _expected_radius(self):
+        import json
+        return json.loads((self.project/"configs/dh116_tasks/flexible_pinch_candidate_v1.json").read_bytes())["rod"]["radius_m"]
+
+    def _pad_samples(self,side,matrices,nodes,*,radius):
+        return {n:self._sdf(self._grids[side][n],matrices[n],nodes,radius=radius) for n in self.REQUIRED_PADS}
+
+    def _shape_metrics(self,vertices,matrix,*,side,key,nodes):
+        return self._transform(vertices,matrix),None,None
+
+    def _seal_result(self,raw):
+        return dict(raw=deepcopy(raw),raw_sha256=hashlib.sha256(_bytes(raw)).hexdigest(),
+                    sources=deepcopy(self.sources))
+
     def _evaluate(self,raw,exchange):
         expected=_identity(exchange)
-        _require(raw["identity"]==expected and _bytes(raw["joint_readback"])==_bytes(exchange["action_readback"]["post"]),
+        _require(raw["identity"]==expected and self._same_owned(raw["joint_readback"],exchange["action_readback"]["post"]),
             "same-clock owned SDK pose/joint readback required")
         nodes=_array(raw["rod_nodes_m"],(41,3))
         _array(exchange["rod"]["velocities"],(1,41,3))
@@ -86,8 +100,7 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
         # Existing conservative support certificate is defined at this unchanged
         # locked task radius. An incompatible radius is unknown, never relabelled.
         from .tabletop_polyline_support_certificate import certify,validate as validate_certificate,RADIUS
-        import json
-        expected_radius=json.loads((self.project/"configs/dh116_tasks/flexible_pinch_candidate_v1.json").read_bytes())["rod"]["radius_m"]
+        expected_radius=self._expected_radius()
         _require(math.isclose(radius,expected_radius,rel_tol=2e-6,abs_tol=1e-9),"locked physical radius differs")
         projection=exchange["wrist_projection"];submission=exchange["action_readback"]["submission"]
         _require(projection["projection_source"]==submission["projection_source"]==PROJECTION_SOURCE,"actual wrist projection source differs")
@@ -121,16 +134,19 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
             tables={};gaps={};vertices_all=[]
             for kind,shapes in self._geometry[side].items():
                 for n,vertices in shapes.items():
-                    v=self._transform(vertices,matrices[n]);vertices_all.append(v);key=kind+":"+n
-                    tables[key]=float(v[:,2].min()-.3)
+                    key=kind+":"+n
+                    v,table_hint,lower_hint=self._shape_metrics(vertices,matrices[n],side=side,key=key,nodes=nodes)
+                    vertices_all.append(v)
+                    tables[key]=float(v[:,2].min()-.3) if table_hint is None else table_hint
                     if n not in self.REQUIRED_PADS:
-                        lower=rod_support_lower(v,nodes)+RADIUS-radius
+                        lower=(rod_support_lower(v,nodes) if lower_hint is None else lower_hint)+RADIUS-radius
                         if lower<0:
-                            certificate=certify(v,nodes);validate_certificate(certificate,v,nodes)
+                            exact_vertices=v if lower_hint is None else self._transform(vertices,matrices[n])
+                            certificate=certify(exact_vertices,nodes);validate_certificate(certificate,exact_vertices,nodes)
                             lower=certificate["lower_m"]+RADIUS-radius
                         gaps[key]=lower
             whole[side]=np.concatenate(vertices_all)
-            sdf={n:self._sdf(self._grids[side][n],matrices[n],nodes,radius=radius) for n in self.REQUIRED_PADS}
+            sdf=self._pad_samples(side,matrices,nodes,radius=radius)
             for key,gap in tables.items():
                 if gap<CLEARANCE_M:reasons.append(side+":table:"+key)
             for key,gap in gaps.items():
@@ -147,8 +163,8 @@ class PolicyOwnedPinchGeometry(MeasuredClosureGeometry):
         left,right=whole["left"],whole["right"]
         separation=float(max(np.max(right.min(0)-left.max(0)),np.max(left.min(0)-right.max(0))))
         if separation<0:reasons.append("inter_hand_separation_not_proven")
-        return dict(version=self.VERSION,source_scope=self.scope,raw=deepcopy(raw),raw_sha256=hashlib.sha256(_bytes(raw)).hexdigest(),
-            sources=deepcopy(self.sources),sides=sides,source_complete=not source_errors,source_errors=source_errors,
+        return dict(version=self.VERSION,source_scope=self.scope,**self._seal_result(raw),
+            sides=sides,source_complete=not source_errors,source_errors=source_errors,
             passed=not reasons and not source_errors,failure_reasons=reasons,
             terminal_reason=None if not reasons else "policy_owned_source_geometry_guard",
             original_guard_reason=original,inter_hand_separation_lower_m=separation,rod_radius_m=radius,

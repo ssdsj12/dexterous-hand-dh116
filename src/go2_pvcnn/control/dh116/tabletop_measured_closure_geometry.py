@@ -91,6 +91,9 @@ class MeasuredClosureGeometry:
         self.sources["implementation"]={n:digest(project/n) for n in files}
         self.sources["sdf_summary_sha256"]=SDF_SHA
 
+    def _same_owned(self,a,b):
+        return _bytes(a)==_bytes(b)
+
     def capture(self,exchange,*,sim,bindings,read_clock):
         hand=view=binding=None
         try:
@@ -105,7 +108,7 @@ class MeasuredClosureGeometry:
                 return dict(c,policy_step=expected["policy_step"],substep=expected["substep"])
             current()
             snapshot=_capture(bindings,(env,),lambda:[current()])
-            if _bytes(snapshot)!=_bytes(exchange["action_readback"]["post"]):
+            if not self._same_owned(snapshot,exchange["action_readback"]["post"]):
                 raise ValueError("actual q/qd/targets changed after action post readback")
             raw=dict(identity=expected,joint_readback=snapshot,hands={},
                 rod_nodes_m=_array(exchange["rod"]["node_positions"],(1,41,3))[0])

@@ -52546,6 +52546,32 @@
       "native_ppo_updates": 0,
       "teacher_admission": false,
       "receipt_sha256": "dfd66746cd5572deb3bc6b34c3d5558a801f715e83fde800549a1aaa716efba8"
+    },
+    "teacher.batched-control-geometry-v1": {
+      "title": "Owned one-capture control and GPU original geometry/SDF",
+      "executor": "prepared",
+      "status": "passed",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.shared-native-ppo-software-v1"
+      ],
+      "scope": "software parity, N2 two PPO updates, N128 two-window 2.64x timing; full N128 PPO active",
+      "report": "docs/superpowers/reports/2026-11-24-dh116-batched-control-geometry.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "teacher_admission": false
+    },
+    "teacher.batched-native128-ppo-v1": {
+      "title": "Actual 128-lane batched native PPO updates",
+      "executor": "gated",
+      "status": "running",
+      "branch": "11-17",
+      "dependencies": [
+        "teacher.batched-control-geometry-v1"
+      ],
+      "scope": "two updates each 32 actual control windows, local Reset; not grasp qualification",
+      "report": "docs/superpowers/reports/2026-11-24-dh116-batched-control-geometry.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "teacher_admission": false
     }
   },
   "execution_target": {

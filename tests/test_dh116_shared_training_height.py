@@ -92,6 +92,8 @@ def test_training_cli_forwards_verified_height_to_actual_coupling(monkeypatch,tm
     train.main()
     assert len(calls)==1 and calls[0]["max_sdk_step"]==(26 if probe else 522)
     assert calls[0]["extra_exercise"].keywords["policy_factory"].keywords["probe_windows"]==(2 if probe else 0)
+    assert calls[0]["extra_exercise"].keywords["policy_factory"].keywords["geometry_evidence"]=="memory"
+    assert calls[0]["extra_exercise"].keywords["policy_factory"].keywords["geometry_compute"]=="cuda"
     assert calls[0]["extra_exercise"].keywords["training_height"]=={
         key:height[key] for key in ("delta_z_m","evidence_sha256")}
 

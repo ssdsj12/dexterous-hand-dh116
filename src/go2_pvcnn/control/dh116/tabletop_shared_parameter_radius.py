@@ -43,12 +43,16 @@ class SharedParameterRadius:
 from .tabletop_native_teacher_policy_pinch_distance import PolicyOwnedPinchGeometry
 
 
-class SharedPinchGeometry(PolicyOwnedPinchGeometry):
+from .tabletop_owned_memory_geometry import OwnedGeometryMode
+
+
+class SharedPinchGeometry(OwnedGeometryMode,PolicyOwnedPinchGeometry):
     """Only replaces the radius source; all original guard math is inherited."""
-    def __init__(self, project, *, scope, radius_source):
+    def __init__(self, project, *, scope, radius_source,fast_memory=False):
         if type(radius_source) is not SharedParameterRadius or scope != radius_source.source.scope:
             raise ValueError("same-scope actual shared radius source required")
         self.radius_source=radius_source
+        self.fast_memory=bool(fast_memory);self._frozen_sources=None
         super().__init__(project,scope=scope)
 
     def _radius(self, exchange):
@@ -57,12 +61,13 @@ class SharedPinchGeometry(PolicyOwnedPinchGeometry):
 from .tabletop_native_teacher_policy_tripod_distance import PolicyOwnedTripodGeometry
 
 
-class SharedTripodGeometry(PolicyOwnedTripodGeometry):
+class SharedTripodGeometry(OwnedGeometryMode,PolicyOwnedTripodGeometry):
     """Original Tripod17 guards with an explicit full-parent radius source."""
-    def __init__(self,project,*,scope,radius_source,**kwargs):
+    def __init__(self,project,*,scope,radius_source,fast_memory=False,**kwargs):
         if type(radius_source) is not SharedParameterRadius or scope != radius_source.source.scope:
             raise ValueError("same-scope actual shared radius source required")
         self.radius_source=radius_source
+        self.fast_memory=bool(fast_memory);self._frozen_sources=None
         super().__init__(project,scope=scope,**kwargs)
 
     def _radius(self,exchange):

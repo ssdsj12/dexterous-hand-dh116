@@ -2236,5 +2236,46 @@
       },
       "scope": "first SDK actual calls only; not a 128-lane call-tree profile"
     }
+  },
+  "batched_control_geometry": {
+    "status": "native_128_probe_passed_full_ppo_running",
+    "basis_head": "07547ba91b81afd5b34003d5d519c88f5b458f32",
+    "cpu_tests": {
+      "passed": 91,
+      "skipped": 4,
+      "failed": 0,
+      "log_sha256": "83ec567d6efcb9e93ce9985d547b296a6e936d2cd416326d8fbba3d294608152"
+    },
+    "cuda_sdf_tests": 36,
+    "native_two_lane": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-ppo2-pinch-batch-v1-gpu3-hzv_h5sj",
+      "receipt_sha256": "12d376d847a111c30f34325581a5276ecb9e59ba0528ad4c682cf4f2b8dc8a70",
+      "exit_code": 0,
+      "updates": 2,
+      "controls": 64,
+      "sdk_step": 522,
+      "captures": 1028,
+      "iteration_seconds": [
+        24.103423819877207,
+        24.477327596163377
+      ]
+    },
+    "teacher_admission": false,
+    "three_grasp_128_ppo": false,
+    "report": "docs/superpowers/reports/2026-11-24-dh116-batched-control-geometry.md",
+    "registry_tests": 60,
+    "native_128_probe": {
+      "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-128-pinch-batch-probe-gpu3-0d33sve1",
+      "receipt_sha256": "90973ff12531854aa357b11632948f60bf06ec10c7a447b0ba638c603fb84171",
+      "result_sha256": "b4e5eee8183f5a659af8dc2dd1639b84573704aa4f5792605d81e75e4576a087",
+      "windows_seconds": [
+        16.34795044409111,
+        16.30528509290889
+      ],
+      "sampled_peak_gpu_used_mib": 2882,
+      "exit_code": 0,
+      "captures": 2176
+    },
+    "native_128_ppo_run": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-128-pinch-batch-ppo2-gpu3-tv8ry9vr"
   }
 }

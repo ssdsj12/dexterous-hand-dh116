@@ -258,12 +258,28 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
     reaction = None
     reset_receipt = None
     journal = NativeJournal(output / "shared_coupling.jsonl")
-    input_audit = policy = None
+    input_audit = policy = batch_control = batch_reaction = None
+    def geometry_boundary():
+        links=np.stack([np.stack([h.root_physx_view.get_link_transforms().detach().cpu().numpy()[0]
+                                 for h in scene["hands"]]) for scene in scenes])
+        from go2_pvcnn.control.dh116.tabletop_batched_control import checked_links
+        checked_links(links,len(scenes))
+        floors=collision_clearance(links[..., [0,1,2,6,3,4,5]],shapes)[0]
+        bases=np.stack([np.stack([links[i,s,scene["hands"][s].body_names.index("base_link")]
+                                 for s in (0,1)]) for i,scene in enumerate(scenes)])
+        return links,torch.as_tensor(bases[..., [0,1,2,6,3,4,5]],dtype=torch.float64),torch.as_tensor(floors,dtype=torch.float64)
     try:
         if policy_factory is not None:
             if commands is not None or teacher_source_audit or reset_last_window:
                 raise ValueError("policy, archived commands and standalone diagnostic Reset are exclusive")
             policy=policy_factory(runtime,sim,scenes,seed,bindings,hand_bindings,archive,output)
+            if policy.control_compute=="batch":
+                from go2_pvcnn.control.dh116.tabletop_batched_control import BatchedControl,BatchReactions,batch_projection
+                batch_control=BatchedControl(hand_bindings,lane_clock,device="cuda:0")
+                batch_reaction=BatchReactions(bindings,runtime.mesh_names,measured,device="cuda:0")
+                _,base_boundary,clearance_boundary=geometry_boundary()
+                root_batch=torch.cat(roots).cuda()
+
         if teacher_source_audit:
             from scripts.audit_dh116_shared_teacher_native_inputs import NativeInputAudit
             input_audit = NativeInputAudit(runtime,sim,scenes,seed,bindings,hand_bindings,archive,output)
@@ -274,43 +290,60 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
             phase_started=perf_counter()
             control_index, substep_index = divmod(sdk - start_step - 1, 8)
             transactions = []
-            for lane in range(len(scenes)):
-                if commands is None and policy is None:
-                    transactions.append(None)
-                    continue
-                read_clock = lambda lane=lane: [lane_clock(lane)]
-                geometry = readers[lane]()
-                connection = BimanualStepConnection(env_ids=(lane,), solver_substeps=12)
-                action = (policy.action(sdk,lane)[None] if policy is not None else
-                    torch.as_tensor(command_for_tick(commands, physics_step=sdk,
-                        start_step=start_step, env_id=lane))[None])
-                begin = (partial(policy.profile_call,"begin",connection.begin)
-                         if policy is not None else connection.begin)
-                request = begin(hand_bindings[lane], action, read_clock=read_clock,
-                    palms=palms[lane], angles=angles[lane])
-                projection = project_policy_wrist_targets(root_seed_w=roots[lane],
-                    measured_base_w=geometry["root_poses_w"], common_lift_offset_m=torch.zeros(1, dtype=torch.float64),
-                    measured_clearance_m=geometry["clearance_m"],
-                    palm_offsets_m=palms[lane], requested_palm_offsets_m=request["requested_palm_offsets_m"],
-                    angles_rad=angles[lane], requested_angles_rad=request["requested_angles_rad"],
-                    allowed=torch.ones(1, dtype=torch.bool), live=torch.ones(1, dtype=torch.bool))
-                transactions.append((connection, projection, read_clock))
+            if batch_control is not None:
+                policy.action(sdk,0)  # sample the whole N-lane policy once per control window
+                connections=batch_control.prepare(policy.sample["actions"],torch.cat(palms),torch.cat(angles))
+                projections=batch_projection(connections,root_batch,base_boundary,clearance_boundary,
+                                             torch.cat(palms),torch.cat(angles),device="cuda:0")
+                transactions=[(c,projection,lambda lane=lane:[lane_clock(lane)])
+                              for lane,(c,projection) in enumerate(zip(connections,projections,strict=True))]
+            else:
+                for lane in range(len(scenes)):
+                    if commands is None and policy is None:
+                        transactions.append(None)
+                        continue
+                    read_clock = lambda lane=lane: [lane_clock(lane)]
+                    geometry = readers[lane]()
+                    connection = BimanualStepConnection(env_ids=(lane,), solver_substeps=12)
+                    action = (policy.action(sdk,lane)[None] if policy is not None else
+                        torch.as_tensor(command_for_tick(commands, physics_step=sdk,
+                            start_step=start_step, env_id=lane))[None])
+                    begin = (partial(policy.profile_call,"begin",connection.begin)
+                             if policy is not None else connection.begin)
+                    request = begin(hand_bindings[lane], action, read_clock=read_clock,
+                        palms=palms[lane], angles=angles[lane])
+                    projection = project_policy_wrist_targets(root_seed_w=roots[lane],
+                        measured_base_w=geometry["root_poses_w"], common_lift_offset_m=torch.zeros(1, dtype=torch.float64),
+                        measured_clearance_m=geometry["clearance_m"],
+                        palm_offsets_m=palms[lane], requested_palm_offsets_m=request["requested_palm_offsets_m"],
+                        angles_rad=angles[lane], requested_angles_rad=request["requested_angles_rad"],
+                        allowed=torch.ones(1, dtype=torch.bool), live=torch.ones(1, dtype=torch.bool))
+                    transactions.append((connection, projection, read_clock))
             issued_routes = []
+            prepared_routes=prepared_tensors=None
+            if batch_reaction is not None:
+                w=(torch.zeros((len(scenes),len(plan["entries"]),6),device="cuda:0",dtype=torch.float64)
+                   if reaction is None else reaction["mesh_wrenches"])
+                prepared_routes,prepared_tensors=batch_reaction.prepare(w,measured)
             for lane, (scene, names, (poses, centers)) in enumerate(zip(scenes, bindings, measured, strict=True)):
-                w = (np.zeros((len(plan["entries"]), 6)) if reaction is None
-                     else reaction["mesh_wrenches"][lane].detach().cpu().numpy())
-                named = {entry["name"]: w[i] for i, entry in enumerate(plan["entries"])}
-                routes, _ = route_world_wrenches(
-                    {key: named[key] for key in (*names, "table")}, names, poses, centers)
-                if any(np.linalg.norm(row["forces"], axis=-1).max() > 30 for row in routes.values()):
-                    raise ValueError("original 30 N reaction guard failed")
-                if any(np.any(row["forces"]) for row in routes.values()):
-                    nonzero[lane] += 1
                 composers = {side: hand.permanent_wrench_composer
                              for side, hand in zip(("left", "right"), scene["hands"], strict=True)}
+                if prepared_routes is not None:
+                    routes=prepared_routes[lane]
+                    batch_reaction.write(lane,composers,prepared_tensors)
+                else:
+                    w = (np.zeros((len(plan["entries"]), 6)) if reaction is None
+                         else reaction["mesh_wrenches"][lane].detach().cpu().numpy())
+                    named = {entry["name"]: w[i] for i, entry in enumerate(plan["entries"])}
+                    routes, _ = route_world_wrenches(
+                        {key: named[key] for key in (*names, "table")}, names, poses, centers)
+                    if any(np.linalg.norm(row["forces"], axis=-1).max() > 30 for row in routes.values()):
+                        raise ValueError("original 30 N reaction guard failed")
+                    write_composer_reactions(composers, routes,
+                        to_tensor=lambda value: torch.as_tensor(value, dtype=torch.float32, device=sim.device))
+                if any(np.any(row["forces"]) for row in routes.values()):
+                    nonzero[lane] += 1
                 issued_routes.append(routes)
-                write_composer_reactions(composers, routes,
-                    to_tensor=lambda value: torch.as_tensor(value, dtype=torch.float32, device=sim.device))
                 transaction = transactions[lane]
                 if transaction is not None:
                     connection, projection, read_clock = transaction
@@ -347,12 +380,20 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                         raise ValueError("original joint guard: " + failure)
                     links.append(hand.root_physx_view.get_link_transforms().detach().cpu().numpy()[0])
                 all_links.append(links)
+            if batch_control is not None:
+                from go2_pvcnn.control.dh116.tabletop_batched_control import checked_links
+                checked_links(np.asarray(all_links),len(scenes))
             clearance = collision_clearance(np.asarray(all_links)[..., [0,1,2,6,3,4,5]], shapes)[0]
             if float(clearance.min()) < CLEARANCE_M:
                 if policy is not None:
                     policy.fail("original_table_clearance",dict(sdk_step=sdk,clearance_m=clearance,
                         link_poses_xyzw=np.asarray(all_links),required_clearance_m=CLEARANCE_M))
                 raise ValueError("original table clearance guard failed")
+            if batch_control is not None:
+                bases=np.stack([np.stack([all_links[i][s][scene["hands"][s].body_names.index("base_link")]
+                                         for s in (0,1)]) for i,scene in enumerate(scenes)])
+                base_boundary=torch.as_tensor(bases[..., [0,1,2,6,3,4,5]],dtype=torch.float64)
+                clearance_boundary=torch.as_tensor(clearance,dtype=torch.float64)
             measured = [_live_contact_geometry(scene, names)
                         for scene, names in zip(scenes, bindings, strict=True)]
             for slot, entry in enumerate(plan["entries"]):
@@ -378,7 +419,8 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                     action_readbacks=action_readbacks, counts=capture["counts"].cpu().numpy(), mesh_wrenches=capture["mesh_wrenches"].cpu().numpy(),
                     source_solver_id=id(solver), min_table_clearance_m=float(clearance.min())))
             else:
-                done=policy.after_step(action_readbacks,transactions,capture,measured,issued_routes)
+                done=policy.after_step(action_readbacks,transactions,capture,measured,issued_routes,
+                                       all_link_poses=np.asarray(all_links))
                 if sdk+8<=end:
                     for lane in done:
                         reset_live_lane(sim,scenes,seed,archive,runtime,bindings,lane,start_step=start_step)
@@ -386,6 +428,9 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                         policy.after_reset(lane)
                     if done:
                         measured=[_live_contact_geometry(scene,names) for scene,names in zip(scenes,bindings,strict=True)]
+                        if batch_control is not None:
+                            _,base_boundary,clearance_boundary=geometry_boundary()
+
             if input_audit is not None:
                 input_audit.after_step(action_readbacks)
             if reset_last_window and sdk == end - 8:
@@ -406,6 +451,9 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
             physics_rows=end - start_step, contact_replay=commands is not None,
             local_reset=reset_receipt, per_lane_resets=runtime.resets, per_lane_rod_ticks=runtime.ticks,
             native_qualification=False, teacher_admission=False)
+        if batch_control is not None:
+            result["owned_bimanual_captures"]=batch_control.capture_count
+            result["capture_scope"]="startup/reset pre plus one dynamic finish capture per lane per SDK"
         if policy is not None:
             result["ppo"]=policy.finish()
             result["ppo_updates"]=result["ppo"]["updates"]
@@ -422,6 +470,7 @@ def coupled(sim, scenes, seed, prepared, archive, nodes, owners, output, gpu, en
                 pass
         raise
     finally:
+        batch_control=batch_reaction=None
         if policy is not None:
             policy.close()
         if input_audit is not None:

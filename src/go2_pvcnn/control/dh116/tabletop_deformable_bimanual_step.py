@@ -257,6 +257,12 @@ class BimanualStepConnection:
                     raise ValueError('measured state or backend targets changed before submission')
             if old['mounted'] and not np.array_equal(old['mount_anchor_pose_w'], now['mount_anchor_pose_w']):
                 raise ValueError('mount anchor changed before submission')
+        return self._submit_from_capture(bindings,current,read_clock=read_clock,
+            projected_root_poses=projected_root_poses,projected_angles=projected_angles,
+            projection_source=projection_source)
+
+    def _submit_from_capture(self,bindings,current,*,read_clock,projected_root_poses=None,
+                             projected_angles=None,projection_source=None,copy_result=True):
         n = len(self.env_ids)
         mounted = any(row['mounted'] for row in current['hands'].values())
         roots = angles = None
@@ -281,7 +287,7 @@ class BimanualStepConnection:
             indices = list(row['active_indices'])
             values = target.clone()
             if row['mounted']:
-                local = local_translation(roots[:, hi], torch.from_numpy(row['mount_anchor_pose_w']).double())
+                local = local_translation(roots[:, hi], torch.tensor(row['mount_anchor_pose_w'],dtype=torch.float64))
                 if bool((local.abs() > MOUNT_CONTRACT['limit_m']).any()):
                     raise ValueError('projected wrist translation exceeds original carriage limits')
                 indices += binding.mount.ids + binding.mount.angular_ids
@@ -308,13 +314,16 @@ class BimanualStepConnection:
             projected_angles=None if angles is None else angles.clone(),
             projection_source=projection_source, table_safety_verified_by_this_adapter=False)
         self._state = 'submitted'
-        return deepcopy(self._submission)
+        return deepcopy(self._submission) if copy_result else self._submission
 
     def finish(self, bindings, *, read_clock):
         if self._state != 'submitted':
             raise ValueError('submitted transaction required')
         self._state = 'failed'
         post = _capture(bindings, self.env_ids, read_clock)
+        return self._finish_from_capture(post)
+
+    def _finish_from_capture(self,post,*,copy_result=True):
         for pre, after in zip(self._pre['identity'], post['identity']):
             fixed = ('run_uuid', 'env_id', 'episode_uid', 'reset_id', 'rod_uid', 'policy_step', 'substep')
             if any(pre[key] != after[key] for key in fixed):
@@ -332,9 +341,10 @@ class BimanualStepConnection:
             if not np.allclose(actual, expected['values'], rtol=0, atol=1e-7):
                 raise ValueError('actual backend target differs from submitted float32 target')
         self._state = 'finished'
-        return deepcopy(dict(version=VERSION, env_ids=self.env_ids, pre=self._pre,
+        result=dict(version=VERSION, env_ids=self.env_ids, pre=self._pre,
             request=self._request, submission=self._submission, post=post,
             observed_sdk_step_delta=1, observed_rod_tick_delta=self.solver_substeps,
             new_physics_steps_executed_by_adapter=0, optimizer_updates=0,
             qualified_for_teacher_ppo=False, native_qualified=False,
-            target_readback_is_not_measured_joint_tracking=True))
+            target_readback_is_not_measured_joint_tracking=True)
+        return deepcopy(result) if copy_result else result
