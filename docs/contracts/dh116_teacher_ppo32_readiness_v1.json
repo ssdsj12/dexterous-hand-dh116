@@ -867,7 +867,7 @@
     "pending": [
       "bind actual per-lane Reset, reward and rollout sources to the grouped collector",
       "measure and seal the installed SDK clock with the current source closure",
-      "verify two live lanes with nonzero hand\u2013rod reaction, timeout/terminal endpoint and isolated Reset"
+      "verify two live lanes with nonzero hand–rod reaction, timeout/terminal endpoint and isolated Reset"
     ]
   },
   "ppo64_followup": {
@@ -2412,6 +2412,19 @@
       "peak_sampled_gpu_mib": 2980,
       "result_sha256": "86f1873c86c9387a0992b2d0bd0595151b8cbc738f5441c000df15893c7795a0",
       "target_met": false
+    },
+    "control_fusion": {
+      "status": "cpu_and_contact_cohort_verified",
+      "cpu": {
+        "passed": 84,
+        "skipped": 2,
+        "failed": 0,
+        "log_sha256": "8f2b9de3420cc57cc10d3aa4df552d18bfe482bcedf35786191e218f560290c9"
+      },
+      "gpu_numerical_tests": 147,
+      "thresholds_changed": false,
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-control-fusion.md"
     }
   }
 }

@@ -36357,6 +36357,29 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.full-tensor-native-collector-v1",
+      "branch": "11-17",
+      "status": "native_probe_verified",
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "9ddb3ce37168e21b05799671978fe70b759d1176",
+        "source_tree": "201ed41866278bdb49de2260a74b1b90070a768b",
+        "files_verified": 16,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
+    },
+    {
+      "package": "runtime.tensor-control-fusion-v1",
+      "branch": "11-17",
+      "status": "tested_ready_for_windows_publication",
+      "cpu_passed": 84,
+      "cpu_skipped": 2,
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-control-fusion.md"
     }
   ]
 }

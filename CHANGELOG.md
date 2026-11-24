@@ -1,3 +1,5 @@
+Shared tensor full-24D control now combines numerical validation without changing physical predicates. CPU84 pass/2 CUDA skips; actual two-lane contact/reaction replay and selected Reset exit naturally0. Independent CUDA geometry and Teacher/Student runtime native proof remain separate. [Report](docs/superpowers/reports/2026-11-24-dh116-tensor-control-fusion.md)
+
 Full tensor native foundations now include owned flat CUDA contacts, two regex Articulations, device observations/reward/rollout and original PPO. Native component proofs pass; integrated coupled throughput and the 6–8s target remain unverified. [Report](docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md)
 
 Batched native 128-lane control windows take 16.35/16.31s versus 41.47/44.65s (2.64x), with natural exit 0 and unchanged guards. Actual full 128-lane PPO updates are running separately. [Report](docs/superpowers/reports/2026-11-24-dh116-batched-control-geometry.md)

@@ -116,3 +116,21 @@ def test_mutated_nonfinite_command_is_rejected_before_native_write():
     with pytest.raises(ValueError):
         control.submit(tr,stamp=stamp,wrenches=w,state=state,reaction_source=reaction_identity(stamp,w))
     assert not writes
+
+def test_distinct_nonzero_lane_wrenches_match_original_com_shift():
+    from scripts.verify_dh116_deformx_rigid_bridge import wrench_at_com
+    control,stamp,state,tr,w,writes=submission_fixture()
+    w[0,0]=torch.tensor([.5,-.2,1.,.03,.02,-.01],dtype=torch.float64)
+    w[1,0]=torch.tensor([-.4,.3,.8,-.01,.04,.03],dtype=torch.float64)
+    w[:,1]=-w[:,0]
+    state["link_pose_xyzw"][...,0]=48.125
+    state["body_com_pose_w"][...,0]=48.13500000023
+    state["body_com_pose_w"][...,1]=.003
+    control.submit(tr,stamp=stamp,wrenches=w,state=state,reaction_source=reaction_identity(stamp,w))
+    for s,issued in enumerate(v for v in writes if isinstance(v,dict)):
+        expected=torch.tensor(np.stack([wrench_at_com(w[i,s].numpy(),
+            state["link_pose_xyzw"][i,s,0,:3].numpy(),
+            state["body_com_pose_w"][i,s,0,:3].numpy()) for i in (0,1)]))
+        torch.testing.assert_close(issued["forces"][:,0],expected[:,:3].float(),atol=0,rtol=0)
+        torch.testing.assert_close(issued["torques"][:,0],expected[:,3:].float(),atol=0,rtol=0)
+        assert not torch.equal(issued["forces"][0],issued["forces"][1])

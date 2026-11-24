@@ -52658,6 +52658,23 @@
       "scope": "N128 two-window throughput .785/.581s natural0; target not met, zero new PPO updates",
       "receipt_sha256": "86f1873c86c9387a0992b2d0bd0595151b8cbc738f5441c000df15893c7795a0",
       "native_ppo_updates": 0
+    },
+    "runtime.tensor-control-fusion-v1": {
+      "branch": "11-17",
+      "title": "Shared full-24D tensor control numerical fusion",
+      "executor": "cpu",
+      "status": "passed",
+      "dependencies": [
+        "teacher.full-tensor-software-v1"
+      ],
+      "tests": [
+        "tests/test_dh116_tensor_control.py",
+        "tests/test_dh116_tensor_wrist_projection.py"
+      ],
+      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-control-fusion.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "scope": "84 CPU pass,2 CUDA skips; earlier147 CUDA oracle pass; real218SDK contact cohort0 exit; no grasp admission",
+      "teacher_admission": false
     }
   },
   "execution_target": {

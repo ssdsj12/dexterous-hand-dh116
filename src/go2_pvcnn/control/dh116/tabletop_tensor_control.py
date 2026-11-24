@@ -5,7 +5,7 @@ from .tabletop_deformable_solver_clock import solver_clock_matches
 from .linear_coupling import ACTIVE,MIMIC,active_limits
 from .tabletop_surface_contract import ACTION_CONTRACT,validate_actions
 from .tabletop_command_kernels import finger_pre_guard,surface_final_guard,wrist_requested_targets
-from .tabletop_deformable_wrist_projection import project_policy_wrist_targets
+from .tabletop_tensor_wrist_projection import project_tensor_policy_wrist_targets
 from .tabletop_palm_mount import local_translation,JOINT_NAMES,ANGULAR_JOINT_NAMES,CONTRACT as MOUNT
 DT=1/480
 
@@ -50,23 +50,31 @@ class TensorControl:
     def prepare(self,actions,state,clearance_m,base_poses_wxyz,*,stamp):
         if self._failed:raise ValueError("failed control owner requires a new native scope")
         if self.pending is not None:raise ValueError("previous SDK transaction unfinished")
-        validate_actions(actions)
-        if actions.shape!=(self.n,24) or actions.device!=self.device:
-            raise ValueError("same-device full normalized batch24 required")
+        if (not isinstance(actions,torch.Tensor) or actions.shape!=(self.n,24)
+                or actions.device!=self.device or not actions.is_floating_point()):
+            raise ValueError("same-device full normalized floating batch24 required")
+        finite_inputs=[actions]
         expected_joints=len(self.batch.sides["left"].joint_names)
         for key in ("q","qd","backend_targets"):
             value=state[key]
             if (not isinstance(value,torch.Tensor) or value.shape!=(self.n,2,expected_joints)
-                    or value.device!=self.device or not value.is_floating_point()
-                    or not bool(torch.isfinite(value).all())):
+                    or value.device!=self.device or not value.is_floating_point()):
                 self._failed=True
                 raise ValueError("finite complete original q/qd/backend targets before command projection required")
+            finite_inputs.append(value)
         for value,shape in ((state["root_pose_wxyz"],(self.n,2,7)),
                 (base_poses_wxyz,(self.n,2,7)),(clearance_m,(self.n,2))):
             if (not isinstance(value,torch.Tensor) or value.shape!=shape or value.device!=self.device
-                    or not value.is_floating_point() or not bool(torch.isfinite(value).all())):
+                    or not value.is_floating_point()):
                 self._failed=True
                 raise ValueError("finite complete actual pre-action roots/base/clearance required")
+            finite_inputs.append(value)
+        # Shapes/devices/dtypes precede one current-frame numeric decision.
+        finite=torch.isfinite(torch.cat([v.reshape(-1) for v in finite_inputs])).all()
+        if not bool(finite & ~(actions.abs()>1).any()):
+            validate_actions(actions)  # Preserve action failure semantics on the cold error path.
+            self._failed=True
+            raise ValueError("finite complete actual pre-action state/base/clearance required")
         q=state["q"].double()
         command=torch.cat([state["backend_targets"][:,s,self.active[s]].double() for s in (0,1)],1)
         actual=torch.cat([q[:,s,self.active[s]] for s in (0,1)],1)
@@ -76,7 +84,7 @@ class TensorControl:
         target=finger_pre_guard(command,action,actual,mimic,self.low,self.high,DT,self.rates,policy_owned=True)
         _,target=surface_final_guard(command,target,self.low,self.high,DT)
         palm,angle=wrist_requested_targets(self.palms,self.angles,action,self.rates,DT)
-        projection=project_policy_wrist_targets(root_seed_w=self.roots,measured_base_w=base_poses_wxyz.double(),
+        projection=project_tensor_policy_wrist_targets(root_seed_w=self.roots,measured_base_w=base_poses_wxyz.double(),
             common_lift_offset_m=self.roots.new_zeros(self.n),measured_clearance_m=clearance_m.double(),
             palm_offsets_m=self.palms,requested_palm_offsets_m=palm,
             angles_rad=self.angles,requested_angles_rad=angle,
@@ -109,34 +117,35 @@ class TensorControl:
             if (not isinstance(wrenches,torch.Tensor)
                     or wrenches.shape!=(self.n,self.mesh_count,6)
                     or wrenches.device!=self.device
-                    or not wrenches.is_floating_point()
-                    or not bool(torch.isfinite(wrenches).all())):
+                    or not wrenches.is_floating_point()):
                 raise ValueError("finite complete same-device actual mesh wrenches required")
             for key in ("link_pose_xyzw","body_com_pose_w"):
                 value=state[key]
                 if (not isinstance(value,torch.Tensor) or value.ndim!=4
                         or value.shape[:2]!=(self.n,2) or value.shape[-1]!=7
                         or value.device!=self.device or not value.is_floating_point()
-                        or not bool(torch.isfinite(value).all())
                         or any(max(ids)>=value.shape[2] for ids in self.contact_bodies)):
                     raise ValueError("finite complete actual link and COM poses required")
             for s in (0,1):
                 value=transaction["expected"][s]
                 if (not isinstance(value,torch.Tensor) or value.shape!=(self.n,len(self.write_ids[s]))
-                        or value.device!=self.device or not bool(torch.isfinite(value).all())):
+                        or value.device!=self.device or not value.is_floating_point()):
                     raise ValueError("finite complete projected command before native write required")
-            forces=[];torques=[]
+            finite_inputs=[wrenches,state["link_pose_xyzw"],state["body_com_pose_w"],*transaction["expected"]]
+            finite=torch.isfinite(torch.cat([v.reshape(-1) for v in finite_inputs])).all()
+            forces=[];torques=[];over_force=[]
             for s in (0,1):
                 bodies=self.contact_bodies[s];w=wrenches[:,self.slots[s]].double()
                 origin=state["link_pose_xyzw"][:,s,bodies,:3].double()
                 com=state["body_com_pose_w"][:,s,bodies,:3].double()
                 # The original guard is evaluated before the final SDK FP32 cast.
-                if bool((torch.linalg.vector_norm(w[...,:3],dim=-1)>30).any()):
-                    raise ValueError("original 30 N reaction guard")
+                over_force.append((torch.linalg.vector_norm(w[...,:3],dim=-1)>30).any())
                 forces.append(w[...,:3].float())
                 torques.append((w[...,3:]+torch.linalg.cross(origin-com,w[...,:3],dim=-1)).float())
-            if not bool(torch.stack([torch.isfinite(v).all() for v in forces+torques]).all()):
-                raise ValueError("finite representable SDK force/COM torque required")
+            representable=torch.isfinite(torch.cat([v.reshape(-1) for v in forces+torques])).all()
+            over_force=torch.stack(over_force).any()
+            if not bool(finite & ~over_force & representable):
+                raise ValueError("finite complete command/link/COM/wrench, original 30 N reaction guard and representable SDK force/COM torque required")
             # Complete validation precedes every native mutation.
             for s,side in enumerate(("left","right")):
                 owner=self.batch.sides[side]
