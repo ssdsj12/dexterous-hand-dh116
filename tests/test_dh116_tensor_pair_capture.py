@@ -60,3 +60,6 @@ def test_flat_owned_tensor_abi_equals_original_including_empty_lane():
     actual=flat_cuda_pair_capture(flat,n=2,vertices=41,meshes=3,substeps=12,device="cpu",expected_owner_time_s=.1)
     expected=compact_pair_capture(old,dt_s=1/480,device="cpu")
     for key in expected:torch.testing.assert_close(actual[key],expected[key],rtol=0,atol=0)
+
+    assert torch.equal(actual["pair_lane_meta"],flat["lane_meta_gpu"])
+    assert actual["pair_owner_time_s"]==.1

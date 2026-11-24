@@ -2297,7 +2297,7 @@
     }
   },
   "full_tensor_native_ppo": {
-    "status": "foundations_verified_full_coupled_collector_pending",
+    "status": "n2_native_arithmetic_and_selected_reset_verified_128_throughput_pending",
     "scope": "new flat CUDA candidate and two regex Articulations; no full-chain throughput claim",
     "cpu": {
       "passed": 214,
@@ -2348,7 +2348,15 @@
     ],
     "target_upper_seconds": 10,
     "performance_target_verified": false,
-    "full_coupled_n2_parity": false,
+    "full_coupled_n2_parity": {
+      "arithmetic_and_reset": true,
+      "natural_exit_code": 0,
+      "sdk_steps": 18,
+      "updates": 0,
+      "real_hand_contact_pairs": 0,
+      "nonzero_hand_reaction_qualified": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-native-collector.md"
+    },
     "native128_tensor_updates": 0,
     "three_grasp_tensor_training": false,
     "teacher_admission": false,
@@ -2366,6 +2374,44 @@
       "FP64 raw quaternion COM",
       "exclusive reaction source/Reset identity"
     ],
-    "flat_cli_evidence": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/flat-cli-final-iqprjabr/flat-cuda-native-parity.json"
+    "flat_cli_evidence": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/flat-cli-final-iqprjabr/flat-cuda-native-parity.json",
+    "native128_throughput": {
+      "windows_seconds": [
+        0.7847092230804265,
+        0.5811082550790161
+      ],
+      "window_phases": [
+        {
+          "observation_policy_sample": 0.1862766300328076,
+          "reward_window_begin": 0.006650632014498115,
+          "project_reaction_submit": 0.07423419272527099,
+          "physx_step": 0.06911470694467425,
+          "sdk_readback": 0.007996769156306982,
+          "raw_source_guard_mesh_submit": 0.021055273013189435,
+          "rod_flat_export_reduce": 0.03185173752717674,
+          "geometry_r0_and_post_guards": 0.3633213103748858,
+          "value_and_reward_settlement": 0.02352396002970636,
+          "window_reset": 1.8693972378969193e-05
+        },
+        {
+          "observation_policy_sample": 0.02714072191156447,
+          "reward_window_begin": 0.009996898006647825,
+          "project_reaction_submit": 0.06454700836911798,
+          "physx_step": 0.068027583649382,
+          "sdk_readback": 0.008327898103743792,
+          "raw_source_guard_mesh_submit": 0.020380522357299924,
+          "rod_flat_export_reduce": 0.025815274799242616,
+          "geometry_r0_and_post_guards": 0.3414346829522401,
+          "value_and_reward_settlement": 0.014770559035241604,
+          "window_reset": 1.6458099707961082e-05
+        }
+      ],
+      "natural_exit": 0,
+      "updates": 0,
+      "wall_seconds": 251.39417192083783,
+      "peak_sampled_gpu_mib": 2980,
+      "result_sha256": "86f1873c86c9387a0992b2d0bd0595151b8cbc738f5441c000df15893c7795a0",
+      "target_met": false
+    }
   }
 }

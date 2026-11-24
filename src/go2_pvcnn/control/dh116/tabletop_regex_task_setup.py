@@ -183,7 +183,8 @@ def capture_regex_state(batch, *, body_com_pose_b_xyzw=None):
     result["body_com_velocity_w"] = torch.stack([states[side]["link_velocity"] for side in SIDES], 1)
     if body_com_pose_b_xyzw is None:
         body_com_pose_b_xyzw = torch.stack([
-            batch.sides[side].hand.root_physx_view.get_coms().index_select(0, batch.sides[side].row_indices)
+            batch.sides[side].hand.root_physx_view.get_coms().to(
+                device=batch.sides[side].device).index_select(0, batch.sides[side].row_indices)
             for side in SIDES], 1)
     if (not isinstance(body_com_pose_b_xyzw, torch.Tensor)
             or body_com_pose_b_xyzw.shape != result["link_pose_xyzw"].shape

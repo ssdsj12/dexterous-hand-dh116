@@ -56,7 +56,7 @@ class TensorRodOwner:
             if bool((residual.norm(dim=-1)>1e-3).any()):
                 raise ValueError("original rod/mesh force balance guard failed")
             self.physics_step=physics_step;self._time=new;self._consumed=False;self._reaction=packet
-            return {k:v.clone() for k,v in packet.items()}
+            return {k:v.clone() if isinstance(v,torch.Tensor) else v for k,v in packet.items()}
         except BaseException:
             self._failed=True;self._reaction=None
             raise
@@ -110,6 +110,7 @@ class TensorRodOwner:
         packet=self._reaction;retained=~torch.isin(packet["env_ids"],selected)
         for k in ("env_ids","indices","vectors","normal_force"):packet[k]=packet[k][retained].clone()
         for k in ("counts","node_forces","mesh_wrenches"):packet[k][selected]=0
+        packet["pair_lane_meta"][selected,3]=0
         epochs=list(self.episodes)
         for i,u in zip(ids,episode_uids):
             epochs[i]=u;self.resets[i]+=1;self._reset_step[i]=self.physics_step

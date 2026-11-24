@@ -78,4 +78,5 @@ def flat_cuda_pair_capture(raw,*,n,vertices,meshes,substeps,device,expected_owne
             or not torch.allclose(wrench,raw["mesh_wrenches_gpu"].double(),atol=3e-4,rtol=5e-5)):
         raise ValueError("flat pair native totals differ")
     return dict(counts=counts,env_ids=env_id,indices=pair,vectors=val,
-        normal_force=nf,node_forces=nodes,mesh_wrenches=wrench)
+        normal_force=nf,node_forces=nodes,mesh_wrenches=wrench,
+        pair_lane_meta=meta.clone(),pair_owner_time_s=expected_owner_time_s)

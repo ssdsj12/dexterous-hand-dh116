@@ -36343,6 +36343,20 @@
         "pr2_draft": true,
         "pr2_merged": false
       }
+    },
+    {
+      "package": "teacher.full-tensor-software-v1",
+      "branch": "11-17",
+      "status": "foundation_verified_full_chain_pending",
+      "teacher_admission": false,
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "7454f5a332672b72262696b384422c5a43933fbf",
+        "source_tree": "8b3f583df6fb82bed95f54bab9a6d4dce2cc6c8a",
+        "files_verified": 42,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
     }
   ]
 }

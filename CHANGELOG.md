@@ -4544,3 +4544,5 @@ Shared CUDA selected mesh Reset and actual two-lane DH116 continuation naturally
 Explicit shared parent/row Teacher observations and CUDA model update regression: 57 tests passed; live shared PPO remains pending. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-teacher-source.md).
 
 Real two-lane shared Teacher input readback, local Reset and 29 CUDA diagnostic captures naturally exit 0; actual PPO remains pending. [Report](docs/superpowers/reports/2026-11-23-dh116-shared-native-teacher-inputs.md).
+
+Tensor native Collector: N2 original-path replay and selected Reset verified with natural exit0; actual hand reaction and N128 update throughput remain unqualified.

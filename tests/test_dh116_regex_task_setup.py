@@ -236,3 +236,27 @@ def test_world_com_uses_original_float64_raw_quaternion_arithmetic(setup_sources
         expected[index]=p[:3]+rotation_wxyz(p[[6,3,4,5]])@local[index][:3].numpy().astype(float)
     assert result["body_com_pose_w"].dtype==torch.float64
     np.testing.assert_allclose(result["body_com_pose_w"][...,:3].numpy(),expected,rtol=0,atol=2e-15)
+
+@pytest.mark.skipif(__import__("os").environ.get("DH116_TENSOR_SETUP_CUDA")!="1",reason="explicit CUDA device test")
+def test_startup_cpu_com_buffer_is_copied_once_before_cuda_row_permutation():
+    from go2_pvcnn.control.dh116.tabletop_regex_task_setup import capture_regex_state
+    device=torch.device("cuda:0")
+    links=torch.zeros(2,23,7,device=device);links[...,6]=1
+    local=torch.zeros(2,23,7);local[...,0]=.01;local[...,6]=1
+    fields={key:torch.zeros(2,17,device=device) for key in ("q","qd","backend_targets")}
+    fields.update({key:links[:,0].clone() for key in ("root_pose_wxyz","root_pose_xyzw")})
+    fields.update(root_velocity=torch.zeros(2,6,device=device),link_pose_wxyz=links,link_pose_xyzw=links,
+        link_velocity=torch.zeros(2,23,6,device=device))
+    calls=[]
+    def get_coms():
+        calls.append("startup_static_read")
+        return local
+    batch=SimpleNamespace(read=lambda:{"left":fields,"right":fields},
+        sides={s:SimpleNamespace(device=device,row_indices=torch.tensor([1,0],device=device),
+            body_names=["base_link"]+[f"link{i}" for i in range(22)],
+            hand=SimpleNamespace(root_physx_view=SimpleNamespace(get_coms=get_coms))) for s in ("left","right")})
+    actual=capture_regex_state(batch)
+    assert actual["body_com_pose_b_xyzw"].device==device and len(calls)==2
+    capture_regex_state(batch,body_com_pose_b_xyzw=actual["body_com_pose_b_xyzw"])
+    assert len(calls)==2
+    torch.testing.assert_close(actual["body_com_pose_w"][...,:3],local[...,:3].to(device).double()[:,None].expand(2,2,23,3),atol=0,rtol=0)

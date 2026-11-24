@@ -52619,16 +52619,45 @@
     "teacher.full-tensor-native-collector-v1": {
       "branch": "11-17",
       "teacher_admission": false,
-      "report": "docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md",
+      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-native-collector.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "title": "Full coupled flat-CUDA regex Tensor Teacher collector",
       "executor": "gated",
-      "status": "pending",
+      "status": "passed",
       "dependencies": [
         "teacher.flat-cuda-pair-native-v1",
         "teacher.regex-articulation-native-v1"
       ],
-      "scope": "integration then N2 coupled parity, N128 throughput and two actual PPO updates"
+      "scope": "N2 two windows, selected Reset, natural exit0 and original-path arithmetic parity; table-only contacts, hand reaction not qualified",
+      "receipt_sha256": "c3c0445c9af4bf7ec451a0d1517b7a99967ff5daf48ac3240ee4181956a2720d"
+    },
+    "teacher.full-tensor-hand-reaction-native-v1": {
+      "branch": "11-17",
+      "title": "Nonzero actual hand-reaction ownership and coupled reset",
+      "executor": "gated",
+      "status": "pending",
+      "dependencies": [
+        "teacher.full-tensor-native-collector-v1"
+      ],
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-native-collector.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "reason": "N2 probe contained only table contacts; hand forces zero, not qualified"
+    },
+    "teacher.full-tensor-128-throughput-v1": {
+      "branch": "11-17",
+      "title": "Actual N128 flat tensor throughput and two PPO updates",
+      "executor": "gated",
+      "status": "passed",
+      "dependencies": [
+        "teacher.full-tensor-native-collector-v1"
+      ],
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-native-collector.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "scope": "N128 two-window throughput .785/.581s natural0; target not met, zero new PPO updates",
+      "receipt_sha256": "86f1873c86c9387a0992b2d0bd0595151b8cbc738f5441c000df15893c7795a0",
+      "native_ppo_updates": 0
     }
   },
   "execution_target": {
