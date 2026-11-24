@@ -126,3 +126,65 @@ def test_invalid_owned_boundary_poisoning_prevents_reuse(fault):
                 rod.advance(physics_step=4)
     with pytest.raises(ValueError):
         rod.initial_reaction(physics_step=3)
+
+def test_grasp_contact_requires_each_substep_and_counts_uncancelled_support_load():
+    from dh116.physics.runtime import GraspContactReadout
+
+    names = (
+        'left.finger14_link', 'left.finger23_link', 'left.finger33_link',
+        'right.finger14_link', 'right.finger23_link', 'right.finger33_link',
+        'table', 'support_0', 'support_1',
+    )
+    rows, vectors = [], []
+
+    def pair(env, step, node, slot, normal, load):
+        rows.append((env, step, node, slot))
+        vectors.append([0, 0, 0, *normal, *(x * load for x in normal), 0, 0, 0])
+
+    for env in range(2):
+        for step in range(12):
+            for side, node in enumerate((32, 8)):
+                for finger, direction in enumerate((1., -1., -1.)):
+                    if (env, step, side, finger) != (1, 11, 0, 2):
+                        pair(env, step, node, side * 3 + finger, (direction, 0., 0.), .12)
+    # These forces cancel as a net vector; both are still external contact loads.
+    pair(0, 0, 14, 7, (1., 0., 0.), .1)
+    pair(0, 0, 15, 7, (-1., 0., 0.), .1)
+    keys = torch.tensor(rows)
+    raw = torch.tensor(vectors, dtype=torch.float64)
+    packet = dict(env_ids=keys[:, 0], indices=keys[:, 1:], vectors=raw,
+                  normal_force=(raw[:, 3:6] * raw[:, 6:9]).sum(1))
+    nodes = torch.zeros(2, 41, 3, dtype=torch.float64)
+    nodes[:, :, 1] = torch.arange(41)
+    readout = GraspContactReadout('tripod', names, device='cpu')
+    result = readout(packet, nodes)
+    torch.testing.assert_close(result['coverage_left'], torch.tensor([1., 2/3], dtype=torch.float64))
+    assert result['opposed_left'].tolist() == [True, False]
+    assert result['bilateral_support'].tolist() == [True, False]
+    assert result['off_table'].tolist() == [True, True]
+    assert result['no_external_support'].tolist() == [False, True]
+
+def test_quarantine_parks_only_the_failed_rod_without_opening_a_new_episode():
+    solver, rod = owner()
+    ledger = rod.advance(physics_step=3)
+    peer = solver.p[1].clone()
+    rod.park_rods((0,))
+    assert torch.equal(solver.p[0], solver.initial[0])
+    assert torch.equal(solver.p[1], peer)
+    next_reaction = rod.consume(physics_step=4)
+    assert ledger['counts'].tolist() == [3, 1]
+    assert next_reaction['counts'].tolist() == [0, 1]
+    assert next_reaction['episode_uids'] == ('a', 'b')
+    assert next_reaction['reset_ids'] == (1, 1)
+    assert next_reaction['rod_ticks'] == (12, 12)
+    assert solver.time == ledger['pair_owner_time_s']
+
+
+def test_native_float_clock_uses_exact_advance_once_ulp_is_large():
+    from dh116.physics.solver import solver_clock_matches
+    old = np.float32(8192)
+    dt = np.float32(1 / 480)
+    known = old + dt
+    assert solver_clock_matches(float(old), float(known), steps=1)
+    assert not solver_clock_matches(float(old), float(known + dt), steps=1)
+    assert not solver_clock_matches(float(old), float(old), steps=1)

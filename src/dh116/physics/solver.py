@@ -184,11 +184,16 @@ def solver_clock_matches(before, after, *, steps):
         return False
     rounded = defor_solve_clock__np.float32(before)
     delta = defor_solve_clock__np.float32(defor_solve_clock__DT)
-    if float(defor_solve_clock__np.spacing(defor_solve_clock__np.float32(after))) >= defor_solve_clock__DT / 4:
-        return False
     for _ in range(steps):
-        rounded += delta
-    tolerance = max(1e-08, float(defor_solve_clock__np.spacing(defor_solve_clock__np.float32(after))))
+        advanced = rounded + delta
+        if advanced <= rounded:
+            return False
+        rounded = advanced
+    ulp = float(defor_solve_clock__np.spacing(defor_solve_clock__np.float32(after)))
+    if ulp >= defor_solve_clock__DT / 4:
+        # Beyond this point an ULP tolerance may accept a skipped native tick.
+        return before == float(defor_solve_clock__np.float32(before)) and after == float(rounded)
+    tolerance = max(1e-08, ulp)
     exact = before + steps * defor_solve_clock__DT
     return min(abs(after - exact), abs(after - float(rounded))) <= tolerance
 from dh116.env.contracts import runti_io__ROOT as tenso_backe_profi__ROOT
@@ -418,6 +423,18 @@ class TensorRodOwner:
         ids = tuple(env_ids)
         if not ids or len(set(ids)) != len(ids) or len(ids) != len(episode_uids) or any((type(i) is not int or not 0 <= i < self.solver.num_envs for i in ids)) or any((not isinstance(u, str) or not u or u in self.episodes for u in episode_uids)) or (len(set(episode_uids)) != len(ids)) or self._consumed or (self._reaction is None):
             raise ValueError('distinct selected Reset IDs/epochs with pending reaction required')
+        self.park_rods(ids)
+        epochs = list(self.episodes)
+        for (i, u) in zip(ids, episode_uids):
+            epochs[i] = u
+            self.resets[i] += 1
+            self._reset_step[i] = self.physics_step
+        self.episodes = tuple(epochs)
+
+    @poison_failure
+    def park_rods(self, ids):
+        """Restore selected mechanics at fixed global time without starting new episodes."""
+        self._healthy()
         before = tenso_rod_owner__torch.as_tensor(self.solver.positions(), device=self.device).clone()
         self.solver.reset_envs(tenso_rod_owner__np.asarray(ids, dtype=tenso_rod_owner__np.int32))
         after = tenso_rod_owner__torch.as_tensor(self.solver.positions(), device=self.device)
@@ -428,18 +445,14 @@ class TensorRodOwner:
             self._failed = True
             raise ValueError('zero-time selected rod Reset mutated peer or time')
         packet = self._reaction
+        if packet is None:  # Already consumed for the immediately following SDK step.
+            return
         retained = ~tenso_rod_owner__torch.isin(packet['env_ids'], selected)
         for k in ('env_ids', 'indices', 'vectors', 'normal_force'):
             packet[k] = packet[k][retained].clone()
         for k in ('counts', 'node_forces', 'mesh_wrenches'):
             packet[k][selected] = 0
         packet['pair_lane_meta'][selected, 3] = 0
-        epochs = list(self.episodes)
-        for (i, u) in zip(ids, episode_uids):
-            epochs[i] = u
-            self.resets[i] += 1
-            self._reset_step[i] = self.physics_step
-        self.episodes = tuple(epochs)
 
 def build(output, *, root=nativ_build__ROOT, jobs=8):
     lock = verify_source(root)

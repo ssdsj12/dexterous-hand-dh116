@@ -20,6 +20,7 @@ def setup():
     schemas = tuple((TensorLaneSchema(f'ep-{i}', i, f'reset-{i}', f'rod-{i}', 'cpu_fixture', 'fixture_endpoint', tuple((str(j) for j in range(41))), specs) for i in range(2)))
     reward = TensorTrainingReward(config, num_envs=2, device='cpu')
     reward.reset_selected((0, 1), schemas, frame(0), previous_request=torch.zeros(2, 24, dtype=torch.float64), tokens=('reset', 'reset'), policy_uids=('policy', 'policy'))
+    assert not reward._terminal.any()
     return (reward, schemas, config)
 
 def frame(tick, *, distance=(0.02, 0.02), error=0.01, fail_lane=None):
@@ -111,3 +112,29 @@ def test_measured_goal_errors_use_named_hand_and_participating_joint_axes():
     torch.testing.assert_close(measured_finger_errors(q, goal), torch.tensor([[0.07, 0.0], [0.0, 0.11]], dtype=torch.float64), atol=1e-15, rtol=0)
     q[0, 0, 5] = float('nan')
     assert torch.isnan(measured_finger_errors(q, goal)[0]).all()
+
+def test_goal_full_recipe_preserves_hold_standard_and_a_32_window_rollout():
+    for grasp in ('pinch', 'tripod', 'power'):
+        config = load_config(ROOT / f'configs/training/reward_{grasp}.json', ppo_gamma=0.995, full_grasp=True)
+        engine = TensorTrainingReward(config, num_envs=2, device='cpu')
+        assert engine.full and config.finger_goal.grasp == grasp
+        assert config.ppo['rollout_steps'] == 32
+        assert config.events['trusted_constraint_failure'] == -40
+        assert dict(config.success) == {'net_lift_m': 0.03, 'hold_s': 5.0, 'max_slip_m': 0.0005}
+
+def test_wrist_reference_is_invariant_to_lane_origin_and_rod_yaw():
+    from dh116.physics.runtime import rod_local_wrists
+    rod = torch.zeros((1, 41, 3), dtype=torch.float64)
+    rod[0, :, 1] = torch.linspace(-0.25, 0.25, 41, dtype=rod.dtype)
+    wrists = torch.tensor([[[0.012, 0.20, 0.025, 1, 0, 0, 0],
+                            [0.018, -0.19, 0.040, 1, 0, 0, 0]]], dtype=rod.dtype)
+    ids = torch.tensor([[36, 4]])
+    position, rotation = rod_local_wrists(rod, wrists, ids)
+    yaw = rod.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+    origin = rod.new_tensor([17, 23, 0.5])
+    shifted = wrists.clone()
+    shifted[..., :3] = wrists[..., :3] @ yaw.T + origin
+    shifted[..., 3:] = rod.new_tensor([1, 0, 0, 1]) / (2 ** 0.5)
+    moved_position, moved_rotation = rod_local_wrists(rod @ yaw.T + origin, shifted, ids)
+    torch.testing.assert_close(moved_position, position, rtol=0, atol=1e-13)
+    torch.testing.assert_close(moved_rotation, rotation, rtol=0, atol=1e-13)

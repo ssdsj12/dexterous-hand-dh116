@@ -36,6 +36,12 @@ Pinch仅以拇指/食指作为目标SDF；其余三指仍保留完整非目标�
 
 可显式选择 --scene-build-mode reference 进行旧路径对照。replicated 仅保留诊断入口：本次2路测试在app.close返回后以-6退出（GIL finalization），禁止进入PPO训练，默认不使用。完整CPU/CUDA回归182项通过（169 CPU、13 CUDA），证据及SHA见configs/runtime/readiness.json；本轮仅本地commit，不push。
 
+## 三抓法 Teacher PPO
+
+同一个训练入口使用 `--full-grasp` 启用双腕线缆局部参考、一次性参考姿态到位、实测双侧对向力、完全离架高度和连续保持。Pinch 与 Tripod 的非参与指保持原目标。三个任务均从同钟 DeformX 接触对读取桌面和两个端支架载荷。恢复旧模型前应核对配方和来源 SHA。
+
+控制窗长 8 个 SDK 步，PPO 每 32 窗更新，单回合预算为 480 窗。可信单路越界产生终止事件，该路使用已核验的初态和零反力隔离到窗末，并进行局部 Reset。共享物理步仍计入预算。非有限、求解器错误和来源不一致中止本次运行。按物理 GPU UUID 锁定实例，训练按更新输出汇总及滚动的 `latest.pt` / `best.pt`。
+
 ## 验证与资格
 
 当前验证摘要见configs/runtime/readiness.json。有界控制窗通过不授予抓取或完整回合成功资格；正式Student训练仍需合格Teacher与双目来源，R2和未验证Force Proxy保持关闭。

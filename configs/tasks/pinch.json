@@ -59,5 +59,9 @@
     ],
     "evidence_sha256": "3d15cbf252698e7cda14f07980e5ee0f236a266f9dd0dfbf9be6826f0aa95503",
     "evidence_path": "build/scene_bundle/height_failure.json"
+  },
+  "full_scene_input": {
+    "path": "build/scene_bundle/pinch_supported/scene.json",
+    "sha256": "c43d29b93ef94799eaaf1edf2f97d0241a48994f6ac1891766e5bc4bca86cc44"
   }
 }

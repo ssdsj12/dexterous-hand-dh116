@@ -1,4 +1,7 @@
 """Common vector/hull/rod/pad geometry and explicit CUDA measurement backend."""
+import numpy as np
+import torch
+from scipy.optimize import minimize
 import numpy as defor_dh116_colli__np
 import numpy as geome_math__np
 import numpy as batch_geome__np
@@ -524,8 +527,11 @@ class TensorGeometry:
             side_grids = grids[label]
             side_sources = sources.get(label)
             source_bindings = side_sources.get('sdf_binding') if isinstance(side_sources, dict) else None
-            if not isinstance(side_grids, dict) or not isinstance(source_bindings, dict) or any((name not in inventory['cooked'] or name not in side_grids or name not in source_bindings or (not isinstance(source_bindings[name], dict)) for name in required)):
-                raise ValueError('every required pad needs original cooked hull, locked grid and source binding')
+            if not isinstance(side_grids, dict) or not isinstance(source_bindings, dict) or any((name not in inventory['source']
+                        or (name not in inventory['cooked'] and name not in ('base_link', 'finger52_link'))
+                        or name not in side_grids or not isinstance(source_bindings.get(name), dict)
+                        for name in required)):
+                raise ValueError('every required pad needs its original hull, locked grid and source binding')
             for (kind, entries) in inventory.items():
                 for (name, vertices) in entries.items():
                     if name not in names[side]:
@@ -762,6 +768,420 @@ class TensorGeometry:
         result = TensorGeometryResult(tenso_geome__deepcopy(frame), tenso_geome__deepcopy(self.source_bindings), p, n, radii, minimum, maximum, table, lower, separation, table_failure, non_target_failure, inter_hand_failure, gaps, valid, negative, contact, minimum_ids, minimum_gap, minimum_norm, sdf_valid, tenso_geome__torch.stack(means, 1), source_complete, passed, fallback_rows, support_flags, table_flags, separation_flags, sdf_flags)
         (self.frame, self.result) = (tenso_geome__deepcopy(frame), result)
         return result
+
+
+_DISTANCE_ROUNDING_M = 1e-12
+
+
+def _certify_segment_distance(vertices, start, axis, planes, estimate, scale):
+    """Check a feasible upper bound and a full-vertex separating lower bound."""
+    point = estimate[:3].copy()
+    endpoint = start + np.clip(estimate[3], 0., 1.) * axis
+    normals, offsets = planes[:, :3], planes[:, 3]
+    if np.any(offsets >= 0.):  # The constructed interior is the origin.
+        return None
+    heights = normals @ point
+    positive = heights > 0.
+    if positive.any():
+        factor = min(1., float(np.min(-offsets[positive] / heights[positive])))
+        point *= factor * (1. - 1e-12)
+    if np.any(normals @ point + offsets > 0.):
+        return None
+
+    delta = point - endpoint
+    norm = float(np.linalg.norm(delta))
+    rounding_m = _DISTANCE_ROUNDING_M
+    lower = 0.
+    if norm > 0.:
+        # A non-expansive direction makes support separation a distance bound.
+        normal = delta / (norm * (1. + 1e-12))
+        separation = (vertices @ normal).min() - max(start @ normal, (start + axis) @ normal)
+        lower = max(0., float(separation) * scale - rounding_m)
+    upper = norm * scale + rounding_m
+    # Keep the original capsule contact comparison's nanometre precision.
+    if not 0. <= upper - lower <= 1e-9:
+        return None
+    return point, endpoint, lower
+
+
+def _polish_segment_distance(vertices, start, axis, planes, estimate, scale):
+    """Try at most 64 nearby feature sets; only the original certificate accepts."""
+    from itertools import chain, combinations, islice
+    constraints = np.vstack([
+        np.column_stack([planes[:, :3], np.zeros(len(planes))]),
+        [0., 0., 0., -1.], [0., 0., 0., 1.],
+    ])
+    offsets = np.r_[planes[:, 3], 0., -1.]
+    slack = np.abs(constraints @ estimate + offsets)
+    # Candidate selection only. This does not relax feasibility or distance bounds.
+    active = np.flatnonzero(slack <= 1e-6)
+    active = active[np.argsort(slack[active], kind="stable")]
+    features = chain.from_iterable(combinations(active, size) for size in range(1, 5))
+    residual_matrix = np.column_stack([np.eye(3), -axis])
+    attempts = 0
+    for selected in islice(features, 64):
+        attempts += 1
+        equality, values = constraints[list(selected)], offsets[list(selected)]
+        kkt = np.block([
+            [residual_matrix.T @ residual_matrix, equality.T],
+            [equality, np.zeros((len(equality), len(equality)))],
+        ])
+        rhs = np.r_[residual_matrix.T @ start, -values]
+        try:
+            candidate = np.linalg.lstsq(kkt, rhs, rcond=None)[0][:4]
+        except np.linalg.LinAlgError:
+            continue
+        if (not np.isfinite(candidate).all()
+                or np.max(constraints @ candidate + offsets) > 1e-8):
+            continue
+        checked = _certify_segment_distance(vertices, start, axis, planes, candidate, scale)
+        if checked is not None:
+            return checked, attempts
+    return None, attempts
+
+
+def _tripod_segment_bounds(vertices, start, end):
+    """Certify distance bounds for a convex solid and one finite centreline segment.
+
+    Optimizer success is not a certificate. Both accepted stop statuses require
+    feasible witnesses and full-vertex support bounds within one nanometre.
+    These are unsigned distances, not penetration depth or multi-frame coverage.
+    """
+    v, a = finite_array(vertices), finite_array(start, (3,))
+    axis = finite_array(end, (3,)) - a
+    origin = v.mean(0)
+    scale = max(float(np.ptp(v, axis=0).max()), float(np.linalg.norm(axis)), .001)
+    v, a, axis = (v - origin) / scale, (a - origin) / scale, axis / scale
+    planes = ConvexHull(v).equations
+    normals, offsets = planes[:, :3], planes[:, 3]
+    constraints = np.column_stack([normals, np.zeros(len(planes))])
+
+    def residual(x):
+        return x[:3] - a - x[3] * axis
+
+    def objective(x):
+        d = residual(x)
+        return float(d @ d)
+
+    def jacobian(x):
+        d = residual(x)
+        return np.r_[2 * d, -2 * axis @ d]
+
+    result = minimize(objective, np.r_[v.mean(0), .5], jac=jacobian,
+        bounds=[(None, None)] * 3 + [(0, 1)],
+        constraints=dict(type="ineq", fun=lambda x: -constraints @ x - offsets,
+                         jac=lambda x: -constraints),
+        method="SLSQP", options=dict(ftol=1e-14, maxiter=200))
+    estimate = result.x
+    if (np.isfinite(estimate).all() and -.00000001 <= estimate[3] <= 1.00000001
+            and np.max(constraints @ estimate + offsets) <= 1e-8):
+        if (result.success and result.status == 0) or result.status == 8:
+            checked = _certify_segment_distance(v, a, axis, planes, estimate, scale)
+            method, attempts = "direct_support_bounds", 0
+            if checked is None:
+                checked, attempts = _polish_segment_distance(v, a, axis, planes, estimate, scale)
+                method = "active_feature_polish"
+            if checked is not None:
+                point, endpoint, lower = checked
+                return dict(
+                    lower_m=lower,
+                    upper_m=float(np.linalg.norm(point - endpoint)) * scale + _DISTANCE_ROUNDING_M,
+                    hull_point_m=(point * scale + origin).tolist(),
+                    segment_point_m=(endpoint * scale + origin).tolist(),
+                    optimizer_status=int(result.status),
+                    certificate_method=method, polish_candidates=attempts,
+                )
+    raise ValueError("continuous patch/convex-hull distance did not converge")
+
+
+def _group_envelope_bounds(vertices, support_nodes):
+    """Certify unsigned distance to the entire finite group convex hull.
+
+    SLSQP only proposes feasible points. Full-set support separation and a
+    feasible upper witness must agree within the original one-nanometre bound.
+    """
+    vertices, support_nodes = np.asarray(vertices), np.asarray(support_nodes)
+    origin = vertices.mean(axis=0)
+    scale = max(float(np.ptp(vertices, axis=0).max()),
+                float(np.ptp(support_nodes, axis=0).max()), .001)
+    v, w = (vertices-origin)/scale, (support_nodes-origin)/scale
+    planes = ConvexHull(v).equations
+    normals, offsets = planes[:, :3], planes[:, 3]
+    if np.any(offsets >= 0.):
+        return None
+    count = len(w)
+    constraints = np.column_stack([normals, np.zeros((len(planes), count))])
+    total_gradient = np.r_[np.zeros(3), np.ones(count)]
+
+    def residual(x):
+        return x[:3]-x[3:]@w
+
+    def objective(x):
+        d = residual(x)
+        return float(d@d)
+
+    def jacobian(x):
+        d = residual(x)
+        return np.r_[2*d, -2*w@d]
+
+    fit = minimize(objective, np.r_[np.zeros(3), np.full(count, 1/count)],
+        jac=jacobian, bounds=[(None, None)]*3+[(0., 1.)]*count,
+        constraints=[dict(type="ineq", fun=lambda x: -constraints@x-offsets,
+                          jac=lambda x: -constraints),
+                     dict(type="eq", fun=lambda x: x[3:].sum()-1,
+                          jac=lambda x: total_gradient)],
+        method="SLSQP", options=dict(ftol=1e-14, maxiter=200))
+    if ((not fit.success or fit.status != 0) and fit.status != 8
+            or not np.isfinite(fit.x).all()):
+        return None
+    point = fit.x[:3].copy()
+    weights = np.maximum(fit.x[3:], 0.)
+    total = float(weights.sum())
+    if not np.isfinite(total) or total <= 0.:
+        return None
+    weights /= total
+    group_point = weights@w
+    heights = normals@point
+    positive = heights > 0.
+    if positive.any():
+        factor = min(1., float(np.min(-offsets[positive]/heights[positive])))
+        point *= factor*(1.-1e-12)
+    if np.any(normals@point+offsets > 0.):
+        return None
+    delta = point-group_point
+    length = float(np.linalg.norm(delta))
+    if not np.isfinite(length) or length <= 0.:
+        return None
+    normal = delta/(length*(1.+1e-12))
+    lower = max(0., float(np.min(v@normal)-np.max(w@normal))*scale
+                - _DISTANCE_ROUNDING_M)
+    upper = length*scale+_DISTANCE_ROUNDING_M
+    if not np.isfinite([lower, upper]).all() or not 0. <= upper-lower <= 1e-9:
+        return None
+    # Return the independently checked full-set lower bound; the upper bound
+    # exists solely to certify the proposal and is never the acceptance test.
+    return dict(normal=normal.tolist(), lower_m=lower, upper_m=upper,
+                hull_point_m=(point*scale+origin).tolist(),
+                group_point_m=(group_point*scale+origin).tolist(),
+                source_node_count=count, optimizer_status=int(fit.status))
+
+def _tripod_tube(node_samples, normals):
+    """Represent all recorded material segments by conservative support planes."""
+    samples = np.asarray(node_samples, dtype=float)
+    if (samples.ndim != 3 or samples.shape[1:] != (41, 3) or not len(samples)
+            or not np.isfinite(samples).all()):
+        raise ValueError("finite original 41-node material and 5 mm rod radius required")
+    upper = np.stack([(samples[:, start:start+3].reshape(-1, 3)@normals.T).max(0)+ _TRIPOD_ROD_RADIUS_M
+                      for start in range(0, 40, 2)])
+    return upper
+
+
+def _tripod_separation(vertices, normals, upper):
+    lower = (np.asarray(vertices) @ normals.T).min(0)
+    return float((lower[None, :] - upper).max(axis=-1).min())
+
+
+def _tripod_box_clearance_lower(vertices, low, high):
+    lower = float(np.linalg.norm(
+        np.maximum(np.maximum(low-vertices.max(axis=0), vertices.min(axis=0)-high),0.)))
+    if lower > 0.:
+        return lower
+    return box_relation(vertices, (low+high)/2, high-low)["max_separating_axis_gap_m"]
+
+
+
+
+def _tripod_normals():
+    azimuth = np.linspace(0., 2*np.pi, 72, endpoint=False)
+    elevation = np.linspace(-np.pi/2, np.pi/2, 25)[:, None]
+    normals = np.stack(np.broadcast_arrays(np.cos(elevation)*np.cos(azimuth),
+        np.cos(elevation)*np.sin(azimuth), np.sin(elevation)), axis=-1).reshape(-1, 3)
+    return normals
+
+
+def _tripod_envelope_passes(vertices, nodes, normals):
+    """Certify all 20 full convex node groups for this one measured frame."""
+    origin = vertices.mean(axis=0)
+    vertices, nodes = vertices - origin, nodes - origin
+    upper = _tripod_tube(nodes[None], normals)
+    lower = np.max(np.min(vertices @ normals.T, axis=0)[None, :] - upper, axis=1)
+    lower -= _DISTANCE_ROUNDING_M
+    budget = 40
+    for group in np.flatnonzero(lower < -_TRIPOD_PAD_PENETRATION_M):
+        start = int(group) * 2
+        support_nodes = nodes[start:start + 3]
+        for segment in (start, start + 1):
+            if budget == 0:
+                return False
+            budget -= 1
+            try:
+                bound = _tripod_segment_bounds(vertices, nodes[segment], nodes[segment + 1])
+            except ValueError:
+                return False
+            if bound['upper_m'] - _TRIPOD_ROD_RADIUS_M < -_TRIPOD_PAD_PENETRATION_M:
+                return False
+            delta = np.asarray(bound['hull_point_m']) - np.asarray(bound['segment_point_m'])
+            length = float(np.linalg.norm(delta))
+            if not np.isfinite(length) or length == 0.:
+                return False
+            normal = delta / (length * (1. + 1e-12))
+            support_lower = float(np.min(vertices @ normal) - np.max(support_nodes @ normal)
+                                  - _TRIPOD_ROD_RADIUS_M - _DISTANCE_ROUNDING_M)
+            lower[group] = max(lower[group], support_lower)
+            if lower[group] >= -_TRIPOD_PAD_PENETRATION_M:
+                break
+
+        if lower[group] < -_TRIPOD_PAD_PENETRATION_M:
+            if budget == 0:
+                return False
+            budget -= 1
+            bound = _group_envelope_bounds(vertices, support_nodes)
+            if bound is None:
+                return False
+            normal = np.asarray(bound['normal'])
+            support_lower = float(np.min(vertices @ normal) - np.max(support_nodes @ normal)
+                                  - _TRIPOD_ROD_RADIUS_M - _DISTANCE_ROUNDING_M)
+            lower[group] = max(lower[group], support_lower)
+        if lower[group] < -_TRIPOD_PAD_PENETRATION_M:
+            return False
+    return bool(np.isfinite(lower).all() and lower.min() >= -_TRIPOD_PAD_PENETRATION_M)
+
+
+_TRIPOD_PADS = frozenset(('finger14_link', 'finger23_link', 'finger33_link'))
+_TRIPOD_ROD_RADIUS_M = .005
+_TRIPOD_SUPPORT_LIMIT_M = 1e-10
+_TRIPOD_NON_TARGET_LIMIT_M = .00025
+_TRIPOD_PAD_PENETRATION_M = .00015
+
+
+class TripodSupportGuard:
+    """Use every original convex vertex and both translated Tripod supports.
+
+    Run conservative device bounds first. Near or unresolved bounds use the
+    original raw-quaternion CPU transforms, box SAT and full-envelope proof.
+    A capture is valid only for its measured frame and Reset epoch.
+    """
+
+    def __init__(self, geometry, supports, env_origins):
+        if not isinstance(geometry, TensorGeometry):
+            raise ValueError('original bilateral TensorGeometry owner required')
+        geometry.validate_metadata()
+        self.geometry = geometry
+        self.device = geometry.device
+        self.origins = torch.as_tensor(env_origins, device=self.device, dtype=torch.float64).detach().clone()
+        if (self.origins.ndim != 2 or self.origins.shape[1] != 3 or not 1 <= len(self.origins) <= 512
+                or not bool(torch.isfinite(self.origins).all()) or bool((self.origins[:, 2] != 0).any())):
+            raise ValueError('finite horizontal actual environment origins required')
+        if (len(supports) != 2 or any(type(box['name']) is not str or not box['name'] for box in supports)
+                or len({box['name'] for box in supports}) != 2):
+            raise ValueError('both original independent external supports required')
+        centers, sizes = (np.array([box[key] for box in supports], dtype=np.float64)
+                          for key in ('center_m', 'size_m'))
+        if centers.shape != (2, 3) or sizes.shape != (2, 3) or not np.isfinite([centers, sizes]).all() or np.any(sizes <= 0):
+            raise ValueError('finite complete original support boxes required')
+        self.supports = tenso_geome__deepcopy(supports)
+        self._locked_supports = tenso_geome__deepcopy(self.supports)
+        self._locked_origins = self.origins.clone()
+        self._box_low = self.origins[:, None] + torch.tensor(centers - sizes / 2, device=self.device)
+        self._box_high = self.origins[:, None] + torch.tensor(centers + sizes / 2, device=self.device)
+        self._shapes = tuple((side, link, vertices, device_vertices, key.split(':', 1)[1] in _TRIPOD_PADS)
+                             for side, link, key, vertices, device_vertices in geometry._shapes)
+        if any(len(vertices) < 4 for _, _, vertices, _, _ in self._shapes):
+            raise ValueError('complete original convex vertices required for Tripod support')
+        self._extent = max(float(np.abs(vertices).max()) for _, _, vertices, _, _ in self._shapes)
+        self._normals_cpu = _tripod_normals()
+        self._normals = torch.tensor(self._normals_cpu, dtype=torch.float64, device=self.device)
+        self._groups = torch.arange(0, 40, 2, device=self.device)[:, None] + torch.arange(3, device=self.device)
+        self._thresholds = self._normals.new_tensor([
+            -_TRIPOD_PAD_PENETRATION_M if target else _TRIPOD_NON_TARGET_LIMIT_M
+            for *_, target in self._shapes
+        ])
+        self.frame = self.result = None
+
+    def require_ready(self, *, frame):
+        if self.frame is None or frame != self.frame or self.result is None:
+            raise ValueError('Tripod raw support frame/Reset epoch unavailable or changed')
+        self.geometry.validate_metadata()
+        return self.result
+
+    def _fallback_flags(self, poses, rod):
+        count = len(poses)
+        upper = (rod[:, self._groups] @ self._normals.T).amax(-2) + _TRIPOD_ROD_RADIUS_M
+        support, gaps = [], []
+        for side, link, _, vertices, target in self._shapes:
+            pose = poses[:, side, link]
+            low = high = plane_low = None
+            for start in range(0, len(vertices), 32):
+                local = vertices[None, start:start + 32].expand(count, -1, -1)
+                xyz = pose[:, None, 3:6].expand_as(local)
+                cross = 2 * torch.linalg.cross(xyz, local, dim=-1)
+                world = local + pose[:, None, 6:7] * cross + torch.linalg.cross(xyz, cross, dim=-1) + pose[:, None, :3]
+                a, b, c = world.amin(1), world.amax(1), (world @ self._normals.T).amin(1)
+                low = a if low is None else torch.minimum(low, a)
+                high = b if high is None else torch.maximum(high, b)
+                plane_low = c if plane_low is None else torch.minimum(plane_low, c)
+            support.append(torch.maximum(self._box_low - high[:, None], low[:, None] - self._box_high).clamp_min(0).norm(dim=-1))
+            gap = (plane_low[:, None] - upper).amax(-1).amin(-1)
+            gaps.append(gap - _DISTANCE_ROUNDING_M if target else gap)
+        support = torch.stack(support, 1)
+        gaps = torch.stack(gaps, 1)
+        if not bool(torch.isfinite(support).all() & torch.isfinite(gaps).all()):
+            raise ValueError('nonfinite Tripod raw convex lower bound')
+        magnitude = poses[..., :3].abs().flatten(1).amax(1) + rod.abs().flatten(1).amax(1)
+        margin = DECISION_MARGIN_M + 128 * torch.finfo(torch.float64).eps * (magnitude + self._extent + 1)
+        return (support <= _TRIPOD_SUPPORT_LIMIT_M + margin[:, None, None]).any(-1) | (
+            gaps <= self._thresholds + margin[:, None])
+
+    def _exact_failures(self, poses, rod, flags, selected):
+        cpu_poses = poses.index_select(0, selected).cpu().numpy()
+        cpu_nodes = rod.index_select(0, selected).cpu().numpy()
+        cpu_flags = flags.index_select(0, selected).cpu().numpy()
+        lows = self._box_low.index_select(0, selected).cpu().numpy()
+        highs = self._box_high.index_select(0, selected).cpu().numpy()
+        failures = []
+        for lane, nodes in enumerate(cpu_nodes):
+            failed = False
+            tube = None
+            for column in np.flatnonzero(cpu_flags[lane]):
+                side, link, vertices, _, target = self._shapes[column]
+                pose = cpu_poses[lane, side, link]
+                world = rotated_points(pose[[0, 1, 2, 6, 3, 4, 5]], vertices)
+                support = [_tripod_box_clearance_lower(world, low, high)
+                           for low, high in zip(lows[lane], highs[lane], strict=True)]
+                if target:
+                    rod_failed = not _tripod_envelope_passes(world, nodes, self._normals_cpu)
+                else:
+                    if tube is None:
+                        tube = _tripod_tube(nodes[None], self._normals_cpu)
+                    rod_failed = _tripod_separation(world, self._normals_cpu, tube) <= _TRIPOD_NON_TARGET_LIMIT_M
+                failed |= rod_failed or min(support) <= _TRIPOD_SUPPORT_LIMIT_M
+            failures.append(failed)
+        return failures
+
+    @torch.no_grad()
+    def capture(self, poses_xyzw, nodes, *, frame):
+        """Return this frame's per-environment raw geometry failure mask."""
+        self.frame = self.result = None
+        self.geometry.validate_metadata()
+        if self.supports != self._locked_supports or not torch.equal(self.origins, self._locked_origins):
+            raise ValueError('original Tripod support source or environment origins changed')
+        count = len(self.origins)
+        for value, shape in ((poses_xyzw, (count, 2, 23, 7)), (nodes, (count, 41, 3))):
+            if (not isinstance(value, torch.Tensor) or value.device != self.device or value.shape != shape
+                    or value.dtype not in (torch.float32, torch.float64) or not bool(torch.isfinite(value).all())):
+                raise ValueError('complete finite same-device actual raw poses/material41 required')
+        poses, rod = poses_xyzw.detach().double().clone(), nodes.detach().double().clone()
+        if frame is None or bool(((poses[..., 3:].norm(dim=-1) - 1).abs() > 1e-5).any()):
+            raise ValueError('native unit-tolerance raw quaternion and frame required')
+        flags = self._fallback_flags(poses, rod)
+        failures = torch.zeros(count, dtype=torch.bool, device=self.device)
+        if bool(flags.any()):
+            selected = flags.any(1).nonzero().flatten()
+            failures[selected] = failures.new_tensor(self._exact_failures(poses, rod, flags, selected))
+        self.frame, self.result = tenso_geome__deepcopy(frame), failures
+        return failures
+
+
 cuda_geome__TensorGeometry = TensorGeometry
 ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_MANIFEST = ROOT / 'configs/runtime/geometry.json'
@@ -859,7 +1279,7 @@ def make_tensor_geometry(owner, body_names, *, device, backend=None):
     return cls.from_materialized_geometry(owner['geometry'], owner['grids'], owner['sources'], body_names, required_pads=owner['required_pads'], device=device, backend='eager')
 
 def geometry_measurement_identity(geometry):
-    """Report the real measurement backend; Power has no SDF geometry here."""
+    """Report the real measurement backend without granting qualification."""
     if isinstance(geometry, CudaMeasurementGeometry):
         return geometry.cuda_profile.identity()
     return dict(actual_measurement_backend=getattr(geometry, 'backend', None), binary_sha256=None, manifest_sha256=None, source_sha256={}, native_ready=False, teacher_admission=False)

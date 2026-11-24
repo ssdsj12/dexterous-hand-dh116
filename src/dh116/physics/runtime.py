@@ -21,16 +21,16 @@ from dh116.hand.articulation import capture_regex_state
 from dh116.hand.articulation import restore_regex_seed
 from dh116.env.contracts import validate_runtime_execution
 from dh116.hand.safety import TensorControl
-from dh116.physics.geometry import DECISION_MARGIN_M
+from dh116.physics.geometry import DECISION_MARGIN_M, _rotation_xyzw
 from dh116.physics.geometry import make_tensor_geometry
 from dh116.physics.geometry import TensorMeshBridge
-from dh116.rl.teacher import TensorSourceOwner
+from dh116.rl.teacher import FULL_CONTEXT_MODE, FullTaskContext, TensorSourceOwner
 from dh116.rl.reward import TensorLaneSchema
 from dh116.rl.reward import TensorRewardFrame
 from dh116.rl.reward import TensorTrainingReward
 from dh116.rl.reward import measured_finger_errors
 from dh116.rl.reward import train_rewar__ERROR_FIELDS as ERROR_FIELDS
-from dh116.rl.reward import load_config
+from dh116.rl.reward import load_config, train_rewar__GOAL_FULL
 SIDES = ('left', 'right')
 _MEASURED_FIELDS = ('q', 'qd', 'backend_targets', 'root_pose_wxyz', 'root_pose_xyzw', 'root_velocity', 'link_pose_wxyz', 'link_pose_xyzw', 'body_com_velocity_w', 'body_com_pose_w', 'base_link_pose_w', 'base_link_com_velocity_w')
 
@@ -53,6 +53,199 @@ def probe_copy(value):
         return type(value)((probe_copy(v) for v in value))
     return value
 
+
+def rod_local_wrists(nodes, palms, stations):
+    """Fixed material stations with tangent-Y and gravity-referenced lateral axes."""
+    index = stations.clamp(1, nodes.shape[1] - 2)
+    row = torch.arange(len(nodes), device=nodes.device)[:, None]
+    tangent = nodes[row, index + 1] - nodes[row, index - 1]
+    tangent = tangent / tangent.norm(dim=-1, keepdim=True)
+    up = tangent.new_tensor([0, 0, 1]).expand_as(tangent)
+    alternate = tangent.new_tensor([1, 0, 0]).expand_as(tangent)
+    up = torch.where(tangent[..., 2:].abs() > 0.99, alternate, up)
+    lateral = torch.linalg.cross(tangent, up)
+    lateral = lateral / lateral.norm(dim=-1, keepdim=True)
+    vertical = torch.linalg.cross(lateral, tangent)
+    basis = torch.stack((lateral, tangent, vertical), dim=-1)
+    rel = palms[..., :3] - nodes[row, stations]
+    rotation = _rotation_xyzw(palms[..., [0, 1, 2, 4, 5, 6, 3]])
+    return (rel[..., None, :] @ basis).squeeze(-2), basis.transpose(-1, -2) @ rotation
+
+
+class GraspContactReadout:
+    """Reduce a reconciled DeformX packet at the same rod/SDK boundary."""
+
+    SUPPORTS = ('table', 'support_0', 'support_1')
+    PADS = ('finger14_link', 'finger23_link', 'finger33_link', 'finger43_link', 'finger53_link')
+    MIN_PAD_LOAD_N = 0.05
+    MIN_HAND_LOAD_N = 0.3
+    MAX_OPPOSITION_COS = -0.25
+    SUPPORT_LOAD_LIMIT_N = 1e-6
+
+    def __init__(self, grasp, mesh_names, *, device):
+        self.grasp = grasp
+        self.device = torch.device(device)
+        self.mesh_names = tuple(mesh_names)
+        if len(self.mesh_names) != len(set(self.mesh_names)):
+            raise ValueError('unique contact mesh names required')
+        fingers = {'pinch': self.PADS[:2], 'tripod': self.PADS[:3],
+                   'power': (*self.PADS, 'base_link')}[grasp]
+        self.required = tuple((side, fingers) for side in SIDES)
+        self.pad_slots = tuple(
+            tuple(self.mesh_names.index(f'{side}.{name}') for name in pads)
+            for side, pads in self.required
+        )
+        self.support_slots = tuple(self.mesh_names.index(name) for name in self.SUPPORTS)
+        self.side_by_mesh = torch.tensor(
+            [1 if name.startswith('left.') else -1 if name.startswith('right.') else 0
+             for name in self.mesh_names], device=self.device,
+        )
+
+    def _opposed(self, normals, available):
+        cosine = normals @ normals.transpose(-1, -2)
+        pairs = available[..., :, None] & available[..., None, :]
+        opposed = (cosine <= self.MAX_OPPOSITION_COS) & pairs
+        if self.grasp == 'tripod':
+            thumb, index, middle = normals.unbind(-2)
+            axis = thumb - (index + middle) * 0.5
+            length = axis.norm(dim=-1, keepdim=True)
+            face = (normals * (axis / length.clamp_min(1e-12)).unsqueeze(-2)).sum(-1)
+            return (length.squeeze(-1) > 1e-12) & opposed[..., 0, 1] & opposed[..., 0, 2] & (
+                (face[..., 0] >= 0.2) & (face[..., 1:] <= -0.2).all(-1)
+            )
+        if self.grasp == 'power':
+            return opposed[..., :5, :5].any(dim=(-1, -2)) & opposed[..., 5, :5].any(dim=-1)
+        return opposed[..., 0, 1]
+
+    def __call__(self, packet, nodes):
+        # Each pair has already been checked against the owned solver reductions,
+        # and the complete per-lane pair capacity and clock have been verified.
+        env = packet['env_ids']
+        step, node, mesh = packet['indices'].unbind(-1)
+        vectors = packet['vectors']
+        normal_force = packet['normal_force'].clamp_min(0)
+        batch = nodes.shape[0]
+        meshes = len(self.mesh_names)
+        row = (env * 12 + step) * meshes + mesh
+        loads = torch.zeros(batch * 12 * meshes, device=self.device, dtype=torch.float64)
+        loads.index_add_(0, row, normal_force)
+        weighted_normal = loads.new_zeros((loads.numel(), 3))
+        weighted_normal.index_add_(0, row, vectors[:, 3:6] * normal_force[:, None])
+        force_magnitude = loads.new_zeros(loads.shape)
+        force_magnitude.index_add_(0, row, vectors[:, 6:9].norm(dim=-1))
+        loads = loads.view(batch, 12, meshes)
+        weighted_normal = weighted_normal.view(batch, 12, meshes, 3)
+        support_loads = force_magnitude.view(batch, 12, meshes)[:, :, self.support_slots]
+
+        y = nodes[..., 1]
+        center = (y[:, 0] + y[:, -1]) * 0.5
+        material_orientation = y[:, -1] > y[:, 0]
+        side_sign = self.side_by_mesh[mesh]
+        # Power's original audit checks all hand links; the distal audits check
+        # only the required fingers for wrong-side material contacts.
+        if self.grasp != 'power':
+            required = torch.zeros(meshes, device=self.device, dtype=torch.bool)
+            for slots in self.pad_slots:
+                required[list(slots)] = True
+            side_sign = torch.where(required[mesh], side_sign, 0)
+        wrong = (side_sign != 0) & (((node - 20) * side_sign <= 0) |
+                                    ((y[env, node] - center[env]) * side_sign <= 0))
+        wrong_count = torch.zeros(batch, device=self.device, dtype=torch.long)
+        wrong_count.index_add_(0, env, wrong.long())
+        correct_side = (wrong_count == 0) & material_orientation
+
+        result = {}
+        effective = []
+        contact_nodes = []
+        for side, slots in zip(SIDES, self.pad_slots, strict=True):
+            pad_loads = loads[:, :, slots]
+            pad_normals = weighted_normal[:, :, slots]
+            lengths = pad_normals.norm(dim=-1)
+            directions = pad_normals / lengths.clamp_min(1e-12)[..., None]
+            loaded = pad_loads > self.MIN_PAD_LOAD_N
+            opposed = self._opposed(directions, lengths > 1e-12).all(1) & correct_side
+            effective.append(opposed & loaded.all(dim=(1, 2)) &
+                             (pad_loads.sum(-1) > self.MIN_HAND_LOAD_N).all(1))
+            result['coverage_' + side] = loaded.all(1).double().mean(-1) * correct_side
+            result['opposed_' + side] = opposed
+            required_slot = torch.zeros(meshes, dtype=torch.bool, device=self.device)
+            required_slot[list(slots)] = True
+            node_load = loads.new_zeros(batch * 41)
+            node_load.index_add_(0, env * 41 + node, normal_force * required_slot[mesh])
+            contact_nodes.append(node_load.view(batch, 41).argmax(1))
+        result['contact_nodes'] = torch.stack(contact_nodes, dim=1)
+        result['bilateral_support'] = effective[0] & effective[1]
+        result['off_table'] = (support_loads[:, :, 0] <= self.SUPPORT_LOAD_LIMIT_N).all(1)
+        result['no_external_support'] = (support_loads <= self.SUPPORT_LOAD_LIMIT_N).all(dim=(1, 2))
+        result['support_load_n'] = support_loads.amax(1)
+        return result
+
+
+class FixedGraspAnchors:
+    """Select loaded material nodes once, then read their motion in each palm frame."""
+
+    def __init__(self, batch, device):
+        self.present = torch.zeros(batch, dtype=torch.bool, device=device)
+        self.ids = torch.zeros(batch, 2, dtype=torch.long, device=device)
+        self.ticks = torch.full((batch, 4), -1, dtype=torch.long, device=device)
+        self.reference = torch.full((batch, 4, 3), torch.nan, dtype=torch.float64, device=device)
+        self.reference_tangent = torch.zeros_like(self.reference[:, :2])
+        self.rows = torch.arange(batch, device=device)[:, None]
+        self.station = torch.full((batch, 2), torch.nan, dtype=torch.float64, device=device)
+
+    def reset(self, ids):
+        rows = list(ids)
+        self.present[rows] = False
+        self.ids[rows] = 0
+        self.ticks[rows] = -1
+        self.reference[rows] = torch.nan
+        self.station[rows] = torch.nan
+
+    @staticmethod
+    def _to_palm(vectors, palms):
+        w = palms[..., 3:4]
+        inverse_xyz = -palms[..., 4:]
+        cross = 2 * torch.linalg.cross(inverse_xyz, vectors)
+        return vectors + w * cross + torch.linalg.cross(inverse_xyz, cross)
+
+    def capture(self, tick, nodes, palms, contact, contact_nodes, rest_lengths, rest_total):
+        nodes, palms = nodes.double(), palms.double()
+        acquire = contact & ~self.present
+        chosen = torch.where(acquire[:, None], contact_nodes, self.ids)
+        pair = nodes[self.rows, chosen]
+        lo = nodes[self.rows, (chosen - 1).clamp_min(0)]
+        hi = nodes[self.rows, (chosen + 1).clamp_max(40)]
+        tangent = self._to_palm(hi - lo, palms)
+        length = tangent.norm(dim=-1)
+        require_substep_guard(contact & (length <= 1e-12).any(1), 'contact material tangent is undefined')
+        relative = self._to_palm(pair - palms[..., :3], palms)
+        ref = relative.repeat_interleave(2, dim=1)
+        self.reference = torch.where(acquire[:, None, None], ref, self.reference)
+        self.reference_tangent = torch.where(
+            acquire[:, None, None], tangent / length.clamp_min(1e-12)[..., None], self.reference_tangent,
+        )
+        self.ticks = torch.where(acquire[:, None], tick, self.ticks)
+        self.present |= acquire
+        self.ids = chosen
+        # Full native rest lengths are verified at reset. Rescaling the
+        # prefix at the final node preserves the authoritative total length.
+        stations = torch.nn.functional.pad(rest_lengths.double().cumsum(1), (1, 0))
+        stations = stations / stations[:, -1:] * rest_total[:, None]
+        self.station = torch.where(acquire[:, None], stations[self.rows, chosen], self.station)
+        delta = relative - self.reference[:, ::2]
+        material = delta.norm(dim=-1)
+        tangential = (delta * self.reference_tangent).sum(-1).abs()
+        drift = torch.stack((material, tangential), -1).flatten(1)
+        # Bound the FP32 readback's coordinate rounding before evaluating the
+        # original slip limit. This is numerical uncertainty in simulation.
+        magnitudes = torch.maximum(
+            pair.abs().amax(-1), palms[..., :3].abs().amax(-1),
+        ).clamp_min(1.0)
+        uncertainty = (8 * torch.finfo(torch.float32).eps * magnitudes).repeat_interleave(2, dim=1)
+        return (
+            self.present.clone(), drift, uncertainty, self.reference.clone(), self.ticks.clone(),
+        )
+
 class RawTableClearance:
     """Full original vertex sets and raw SDK quaternion before each rod step."""
 
@@ -65,7 +258,7 @@ class RawTableClearance:
             (bodies, vertices) = zip(*[(j, v) for (side, j, v) in self.shapes if side == i])
             self.sides.append((torch.as_tensor(np.repeat(bodies, [len(v) for v in vertices]), device=device), torch.as_tensor(np.concatenate(vertices), dtype=torch.float64, device=device)))
 
-    def __call__(self, poses):
+    def __call__(self, poses, *, isolate=False):
         clear = []
         for (side, (links, vertices)) in enumerate(self.sides):
             p = poses[:, side].double()
@@ -78,7 +271,7 @@ class RawTableClearance:
         if bool(near.any()):
             (exact, _) = collision_clearance(poses[near].detach().cpu().numpy(), self.shapes)
             clear[near] = clear.new_tensor(exact)
-        if bool((~torch.isfinite(clear) | (clear < CLEARANCE_M)).any()):
+        if bool((~torch.isfinite(clear)).any()) or (not isolate and bool((clear < CLEARANCE_M).any())):
             raise ValueError('original pre-rod raw source table clearance guard failed')
         return clear
 
@@ -148,19 +341,37 @@ class MeasuredPhysicsFrame:
 class NativeTensorPhysicsRuntime:
     """Original physical chain and reward guards, with no policy/model/trainer."""
 
-    def __init__(self, project, sim, batch, prepared, archive, seed, initial, bindings, runtime, profile):
-        self._configure_physics(project, sim, batch, prepared, archive, seed, initial, bindings, runtime, profile)
+    def __init__(self, project, sim, batch, prepared, archive, seed, initial, bindings, runtime, profile,
+                 *, episode_windows=32, wall_cap_s=180.0, full_grasp=False):
+        self._configure_physics(
+            project, sim, batch, prepared, archive, seed, initial, bindings, runtime, profile,
+            episode_windows=episode_windows, wall_cap_s=wall_cap_s, full_grasp=full_grasp,
+        )
         self._initialize_episode()
 
-    def _configure_physics(self, project, sim, batch, prepared, archive, seed, initial, bindings, runtime, profile):
+    def _configure_physics(self, project, sim, batch, prepared, archive, seed, initial, bindings, runtime, profile,
+                           *, episode_windows=32, wall_cap_s=180.0, full_grasp=False):
         validate_runtime_execution()
+        if type(episode_windows) is not int or episode_windows < 1:
+            raise ValueError('positive independent episode window budget required')
+        self.episode_windows = episode_windows
         (self.sim, self.batch, self.runtime) = (sim, batch, runtime)
         (self.initial, self.state) = (initial, initial)
         self.device = runtime.device
         (self.style, self.n) = (archive.style, runtime.solver.num_envs)
         self.ids = tuple(range(self.n))
         self.origins = initial['env_origins'] + initial['env_origins'].new_tensor(seed['origin'])
-        self.source = TensorSourceOwner(runtime, sim, profile, self.origins, self.device, self.style, 32 / 60, 180.0, rod_uids=tuple((f'rod:{i}' for i in self.ids)))
+        self.config = load_config(project / f'configs/training/reward_{self.style}.json',
+                                  ppo_gamma=0.995, full_grasp=full_grasp)
+        self.full_grasp = self.config.profile == train_rewar__GOAL_FULL
+        if self.full_grasp and self.episode_windows <= 300:
+            raise ValueError('complete grasp episode must allow approach before the 300-window hold')
+        source_options = {'context_mode': FULL_CONTEXT_MODE} if self.full_grasp else {}
+        self.source = TensorSourceOwner(
+            runtime, sim, profile, self.origins, self.device, self.style,
+            self.episode_windows / 60, wall_cap_s, rod_uids=tuple(f'rod:{i}' for i in self.ids),
+            **source_options,
+        )
         self.joints = tuple((tuple(batch.sides[s].joint_names) for s in SIDES))
         names = tuple((tuple(batch.sides[s].body_names) for s in SIDES))
         for (side, body_names) in zip(SIDES, names, strict=True):
@@ -170,12 +381,16 @@ class NativeTensorPhysicsRuntime:
                 if tuple(paths[idx]) != tuple((prefix + '/' + side + 'Hand/' + name for name in body_names)):
                     raise ValueError('actual link identity differs from original source geometry')
         self.reset_proofs = []
+        self.prove_peer_reset = True
         self.probe_dir = None
         self.bindings = bindings
         self._views = tuple((batch.sides[s].hand.root_physx_view for s in SIDES))
         roots = initial['root_seed_w'].new_tensor(seed['reset_root_pose_w'])[None].repeat(self.n, 1, 1)
         roots[..., :3] += initial['env_origins'][:, None]
-        self.ctrl = TensorControl(batch, roots, bindings, runtime.mesh_names)
+        self.ctrl = TensorControl(batch, roots, bindings, runtime.mesh_names, isolate_constraints=self.full_grasp)
+        if self.full_grasp:
+            self.ctrl.fixed_fingers = tuple(i + s * 6 for s in (0, 1) for i in range(6)
+                                            if i not in self.config.finger_goal.participating)
         self.effort = float(prepared['candidate_physics']['hand']['active_effort_limit_nm'])
         self.raw_clearance = RawTableClearance(prepared, names, self.device)
         self.bridge = TensorMeshBridge(runtime.mesh_names, bindings, initial['mesh_positions_world_m'], initial['mesh_quaternions_xyzw'])
@@ -183,19 +398,30 @@ class NativeTensorPhysicsRuntime:
         self.radius = float(runtime.solver.parameter_snapshot()['contact_radius_m'])
         self.radii = torch.full((self.n,), self.radius, dtype=torch.float64, device=self.device)
         self.geometry = None
-        if self.style == 'pinch':
+        self.support_geometry = None
+        if self.style in ('pinch', 'tripod'):
             original = pinch_geometry_inputs(archive.scene_inputs['geometry'])
+            if self.style == 'tripod':
+                original['required_pads'] = GraspContactReadout.PADS[:3]
             expected_radius = float(archive.mesh_plan['cfg']['rod']['radius_m'])
             if not math.isclose(self.radius, expected_radius, abs_tol=1e-09, rel_tol=2e-06):
-                raise ValueError('locked Pinch material radius differs')
+                raise ValueError('locked pad geometry material radius differs')
             for side in SIDES:
-                if len(self.ctrl.slots[SIDES.index(side)]) != 5:
-                    raise ValueError('original Pinch reaction route layout required')
+                expected_routes = 5 if len(runtime.mesh_names) == 11 and self.style == 'pinch' else 7
+                if len(self.ctrl.slots[SIDES.index(side)]) != expected_routes:
+                    raise ValueError('original named hand reaction route layout required')
                 for (name, locked) in original['sources'][side]['sdf_binding'].items():
                     row = bindings[side + '.' + name]
                     if row['sdf_sha256'] != locked['sha256'] or row['capture_sha256'] != locked['capture_sha256']:
                         raise ValueError('original locked SDF or capture differs')
             self.geometry = make_tensor_geometry(original, names, device=self.device)
+            if self.style == 'tripod':
+                from dh116.physics.geometry import TripodSupportGuard
+                if len(runtime.mesh_names) != 17 or archive.task is None:
+                    raise ValueError('Tripod needs all 17 original mesh slots and both supports')
+                self.support_geometry = TripodSupportGuard(
+                    self.geometry, archive.task['support_scene']['supports'], initial['env_origins'],
+                )
         elif self.style == 'power':
             goal = json.loads(checked_file(project / 'configs/tasks/power_reference.json', archive.task['near_open_source_sha256']))
             targets = [goal['candidate'][s]['target_pose_wxyz'][:3] for s in SIDES]
@@ -203,8 +429,59 @@ class NativeTensorPhysicsRuntime:
             self.stations = (self.targets[:, :, None] - runtime._initial[:, None].double()).norm(dim=-1).argmin(-1)
             self.row = torch.arange(self.n, device=self.device)[:, None]
         else:
-            raise ValueError('Tripod requires its complete native support and route guard')
-        self.config = load_config(project / f'configs/training/reward_{self.style}.json', ppo_gamma=0.995)
+            raise ValueError('unknown grasp geometry')
+        self.contact = None
+        if self.full_grasp:
+            ref = json.loads(checked_file(project / f'configs/tasks/{self.style}_reference.json',
+                                          self.config.finger_goal.reference_sha256))
+            if self.style == 'pinch':
+                ref_poses = [ref['resolved_poses'][s]['dh116_base_pose_w'] for s in SIDES]
+                ref_nodes = roots.new_tensor(ref['reference_layout']['wire_points'])
+            elif self.style == 'tripod':
+                ref_poses = [ref['styles']['tripod'][s]['base_pose_wxyz'] for s in SIDES]
+                rod = ref['rod_seed_nodes']
+                ref_nodes = roots.new_tensor([[rod['x_m'], y, rod['z_m']]
+                                              for y in np.linspace(rod['y_min_m'], rod['y_max_m'], 41)])
+            else:
+                ref_poses = [ref['candidate'][s]['target_pose_wxyz'] for s in SIDES]
+                ref_nodes = runtime._initial[0].double() - initial['env_origins'][0]
+                original = archive.scene_inputs['geometry']
+                grids = {s: {} for s in SIDES}
+                sources = {s: {'sdf_binding': {}} for s in SIDES}
+                pads = (*GraspContactReadout.PADS, 'base_link', 'finger52_link')
+                for entry in archive.mesh_plan['entries']:
+                    label = entry['name']
+                    if label in bindings:
+                        side, link = label.split('.')
+                        grids[side][link] = {k: entry[k] for k in ('values', 'origin', 'spacing')}
+                        sources[side]['sdf_binding'][link] = {
+                            k: bindings[label][k] for k in ('sdf_sha256', 'capture_sha256')
+                        }
+                self.geometry = make_tensor_geometry(
+                    dict(geometry=original['geometry'], grids=grids, sources=sources, required_pads=pads),
+                    names, device=self.device,
+                )
+            ref_poses = roots.new_tensor(ref_poses)
+            station = (ref_poses[:, None, :3] - ref_nodes).norm(dim=-1).argmin(-1)
+            if self.style == 'pinch':
+                contact_points = roots.new_tensor([ref['contact_points'][s]['thumb']['point_w'] for s in SIDES])
+                station = (contact_points[:, None] - ref_nodes).norm(dim=-1).argmin(-1)
+            self.wrist_stations = station.expand(self.n, -1)
+            self.wrist_reference = rod_local_wrists(ref_nodes[None], ref_poses[None], station[None])
+            if not all(bool(torch.isfinite(x).all()) for x in self.wrist_reference):
+                raise ValueError('finite source-bound bilateral wrist reference required')
+            if self.style == 'power':
+                self.pad_thresholds = roots.new_tensor([
+                    -0.00025 if link == 'base_link' else -0.00015 for _, _, link, *_ in self.geometry._pads
+                ])
+            else:
+                self.pad_thresholds = roots.new_full((len(self.geometry.pad_columns),), -0.00015)
+            if len(runtime.mesh_names) != 17 or archive.task is None:
+                raise ValueError('complete grasp reward requires the original supported 17-mesh scene')
+            self.contact = GraspContactReadout(self.style, runtime.mesh_names, device=self.device)
+            self.anchors = FixedGraspAnchors(self.n, self.device)
+            self._lift_reached = torch.zeros(self.n, dtype=torch.bool, device=self.device)
+            self._hold_position = torch.full((self.n, 41, 3), torch.nan, dtype=torch.float64, device=self.device)
 
     def _initialize_episode(self):
         self.reward = TensorTrainingReward(self.config, num_envs=self.n, device=self.device)
@@ -269,7 +546,7 @@ class NativeTensorPhysicsRuntime:
             if self._capture_cadence == 'substep':
                 self._notify_capture('pre')
             ready = self._sdk_impl(actions, end)
-            if self.runtime.physics_step < window['start_step'] + 8:
+            if not self.full_grasp and self.runtime.physics_step < window['start_step'] + 8:
                 require_substep_guard(ready, 'terminal lane before end of shared SDK window')
             if self._capture_cadence == 'substep':
                 self._notify_capture('post')
@@ -309,7 +586,7 @@ class NativeTensorPhysicsRuntime:
             if not window['recorded']:
                 self.record_window_request()
             self.ages += 1
-            timeout = (self.ages >= 32) & ~self.reward._terminal
+            timeout = (self.ages >= self.episode_windows) & ~self.reward._terminal
             if truncated is not None:
                 timeout |= truncated
             full = None if buffer_full is None else torch.as_tensor(buffer_full, device=self.device, dtype=torch.bool).expand(self.n) & ~timeout & ~self.reward._terminal
@@ -402,7 +679,8 @@ class NativeTensorPhysicsRuntime:
 
     def source_guards(self):
         state = self.state
-        bad = self.ctrl.joint_failures(state)
+        joint_bad = self.ctrl.joint_failures(state)
+        bad = torch.zeros_like(joint_bad)
         for name in ('backend_targets', 'root_pose_wxyz', 'body_com_velocity_w', 'link_pose_xyzw', 'body_com_pose_w'):
             bad |= ~torch.isfinite(state[name]).flatten(1).all(1)
         for (i, s) in enumerate(SIDES):
@@ -417,7 +695,11 @@ class NativeTensorPhysicsRuntime:
             bad |= ~torch.isfinite(target).all(1) | ~torch.isfinite(root).all(1)
             bad |= (root[:, 3:].norm(dim=-1) - 1).abs() > 1e-05
             bad |= (root - state['root_pose_wxyz'][:, i].double()).abs().amax(-1) > 1e-06
-        require_substep_guard(bad, 'original mounted17 source/joint/cache guards')
+        bad |= ((state['link_pose_xyzw'][..., 3:].double().norm(dim=-1) - 1.0).abs() > 1e-5).any((1, 2))
+        require_substep_guard(bad, 'original mounted17 numerical/source/cache guards')
+        if not self.full_grasp:
+            require_substep_guard(joint_bad, 'original mounted17 joint guards')
+        return joint_bad
 
     def arm_probe(self, output):
         if self.n != 2:
@@ -441,32 +723,144 @@ class NativeTensorPhysicsRuntime:
     def distance(self, stamp, *, reset=False):
         (p, v) = self.rod_state()
         (self.nodes, self.velocity) = (p, v)
-        if self.geometry is None:
+        self._geometry_bad = torch.zeros(self.n, dtype=torch.bool, device=self.device)
+        power_distance = None
+        if self.style == 'power':
             target = self.targets + p[self.row, self.stations].double() - self.runtime._initial[self.row, self.stations].double()
-            return (self.state['base_link_pose_w'][..., :3].double() - target).norm(dim=-1).mean(-1)
-        geometry = self.geometry.capture(self.state['link_pose_xyzw'], p, frame=stamp, radius=self.radii)
-        accepted = geometry.source_complete if reset else geometry.geometry_passed
-        require_substep_guard(~accepted, 'original source geometry or SDF coverage')
-        return geometry.positive_pad_mean_m.mean(-1)
+            power_distance = (self.state['base_link_pose_w'][..., :3].double() - target).norm(dim=-1).mean(-1)
+            if self.geometry is None:
+                return power_distance
+        geometry = self.geometry.capture(
+            self.state['link_pose_xyzw'], p, frame=stamp, radius=self.radii,
+            sdf_thresholds=(-0.00015, -0.00025) if self.full_grasp else (),
+        )
+        accepted = geometry.source_complete if reset and not self.full_grasp else geometry.geometry_passed
+        if power_distance is not None:
+            # Closed Power may have pads outside their contact lattice. Use
+            # actual in-lattice depths and retain the convex/table guards.
+            accepted = ~(geometry.non_target_failure.any(1) | geometry.table_failure.any(1) |
+                         geometry.inter_hand_failure)
+        self._geometry_bad = ~accepted
+        if self.full_grasp:
+            penetrated = geometry.sdf_node_valid & (geometry.sdf_node_gaps_m < self.pad_thresholds[None, :, None])
+            self._geometry_bad |= penetrated.any((1, 2))
+        if self.support_geometry is not None:
+            self._geometry_bad |= self.support_geometry.capture(self.state['link_pose_xyzw'], p, frame=stamp)
+        if reset or not self.full_grasp:
+            require_substep_guard(self._geometry_bad, 'original source geometry/SDF or Tripod clearance')
+        if power_distance is not None:
+            return power_distance
+        distance = geometry.positive_pad_mean_m.mean(-1)
+        if self.full_grasp and not reset:
+            # Unsupported SDF samples end the lane. Retain its preceding measured
+            # potential at that terminal boundary instead of inventing a gap.
+            distance = torch.where(geometry.source_complete, distance, self.last.fields['distance'])
+        return distance
 
-    def frame(self, stamp, distance):
+    def frame(self, stamp, distance, *, capture=None, constraint=None, suppress_contact=None):
         q = torch.stack([self.state['q'][:, s, self.ctrl.active[s]] for s in (0, 1)], dim=1)
         errors = measured_finger_errors(q, self.config.finger_goal)
         healthy = torch.full_like(distance, self.runtime.solver.last_error == 0, dtype=torch.bool)
-        guard = self.ctrl.joint_failures(self.state)
+        guard = self.ctrl.joint_failures(self.state) if constraint is None else constraint
         fields = dict(distance=distance, numerical_health=healthy, constraint_failure=guard, original_guard_joint_force_clearance_geometry=guard)
         fields.update(zip(ERROR_FIELDS, errors.unbind(-1), strict=True))
-        return TensorRewardFrame(torch.full_like(distance, stamp.sdk_step, dtype=torch.long), torch.full_like(distance, stamp.solver_time_s, dtype=torch.float64), fields)
+        tick = torch.full_like(distance, stamp.sdk_step, dtype=torch.long)
+        solver_time = torch.full_like(distance, stamp.solver_time_s, dtype=torch.float64)
+        if self.contact is None:
+            return TensorRewardFrame(tick, solver_time, fields)
+
+        nodes = self.nodes.double()
+        pos, rotation = rod_local_wrists(nodes, self.state['base_link_pose_w'].double(), self.wrist_stations)
+        goal_pos, goal_rotation = self.wrist_reference
+        angle_delta = (goal_rotation.transpose(-1, -2) @ rotation).diagonal(dim1=-2, dim2=-1).sum(-1)
+        fields['wrist_goal_m'] = (pos - goal_pos).norm(dim=-1).amax(-1)
+        fields['wrist_goal_rad'] = ((angle_delta - 1) * 0.5).clamp(-1.0, 1.0).acos().amax(-1)
+        z = nodes[..., 2]
+        fields.update(median_z=z.median(1).values, min_z=z.amin(1))
+        if capture is None:
+            # Reset has no completed 12-substep contact capture. No support-free
+            # assertion or new contact is made on that boundary.
+            zeros = torch.zeros_like(distance, dtype=torch.bool)
+            contact = dict(
+                coverage_left=distance.new_zeros(self.n), coverage_right=distance.new_zeros(self.n),
+                opposed_left=zeros, opposed_right=zeros, bilateral_support=zeros,
+                off_table=zeros, no_external_support=zeros,
+                contact_nodes=torch.zeros((self.n, 2), device=self.device, dtype=torch.long),
+            )
+        else:
+            if capture['pair_owner_time_s'] != stamp.solver_time_s:
+                raise ValueError('grasp contact does not belong to the elapsed solver boundary')
+            contact = self.contact(capture, nodes)
+        fields.update({key: val for key, val in contact.items() if key not in ('contact_nodes', 'support_load_n')})
+        if suppress_contact is not None:
+            # A parked pose is infrastructure, not task contact evidence.
+            for key in ('coverage_left', 'coverage_right', 'opposed_left', 'opposed_right',
+                        'bilateral_support', 'off_table', 'no_external_support'):
+                fields[key] = fields[key].masked_fill(suppress_contact, 0)
+        present = fields['bilateral_support']
+        fields['prohibited_support'] = self._lift_reached & ~fields['no_external_support'] if capture is not None else torch.zeros_like(present)
+        if suppress_contact is not None:
+            fields['prohibited_support'] &= ~suppress_contact
+        fields['hold_motion'] = torch.zeros_like(present)
+        if capture is not None:
+            height = torch.minimum(fields['median_z'] - self.reward._median, fields['min_z'] - self.reward._min)
+            lifted = present & fields['no_external_support'] & fields['off_table'] & (
+                height >= self.config.success['net_lift_m']
+            )
+            self._lift_reached |= lifted
+            has_reference = torch.isfinite(self._hold_position).all(dim=(1, 2))
+            candidate = torch.where(has_reference[:, None, None], self._hold_position, nodes)
+            excursion = (nodes - candidate).norm(dim=-1).amax(1)
+            # The hold interval restarts if the rod moves outside the original
+            # half-millimetre allowance about the fixed world hold reference.
+            stable = excursion <= self.config.success['max_slip_m']
+            fields['hold_motion'] = lifted & stable
+            self._hold_position = torch.where(
+                lifted[:, None, None],
+                torch.where(stable[:, None, None], candidate, nodes),
+                torch.nan,
+            )
+        anchors = self.anchors.capture(
+            tick[:, None], nodes, self.state['base_link_pose_w'], present,
+            contact['contact_nodes'], self.source.rest_lengths_m, self.source.rest_length_m,
+        )
+        return TensorRewardFrame(tick, solver_time, fields, *anchors)
+
+    def task_context(self, stamp):
+        if not self.full_grasp:
+            return self.source.contexts()
+        context = self.reward.post_context
+        readouts = self.reward._last_values
+        phase = torch.where(
+            context['hold_s'] > 0, 3,
+            torch.where(readouts['bilateral_support'], 2, torch.where(self.reward._arrived, 1, 0)),
+        )
+        reasons = getattr(self.reward, '_reasons', {})
+        terminal = self.reward._terminal
+        zeros = torch.zeros_like(terminal)
+        return self.source.contexts(full=FullTaskContext(
+            source=stamp, phase=phase, contact_fraction=torch.stack(
+                (readouts['coverage_left'], readouts['coverage_right']), dim=-1,
+            ), contact_duration_s=context['contact_s'], hold_duration_s=context['hold_s'],
+            anchor_station_m=self.anchors.station, anchor_valid=self.anchors.present[:, None].expand(-1, 2),
+            prohibited_support_latched=reasons.get('prohibited_support', zeros) & terminal,
+            success_event_emitted=reasons.get('success', zeros) & terminal,
+            trusted_failure_event_emitted=reasons.get('constraint_failure', zeros) & terminal,
+        ))
 
     def _reset_refs(self, ids):
         stamp = self.source._boundary()
         if self.radius != float(self.runtime.solver.parameter_snapshot()['contact_radius_m']):
             raise ValueError('Reset changed the verified contact radius')
-        self.source_guards()
+        require_substep_guard(self.source_guards(), 'original Reset joint guards')
         self.clear = self.raw_clearance(self.state['link_pose_wxyz'])
         d = self.distance(stamp, reset=True)
-        self.last = self.frame(stamp, d)
         self.source.reset(ids, d[list(ids)])
+        if self.full_grasp:
+            self.anchors.reset(ids)
+            self._lift_reached[list(ids)] = False
+            self._hold_position[list(ids)] = torch.nan
+        self.last = self.frame(stamp, d)
         selected = list(ids)
         for (field, seed_field) in (('q', 'seed_q'), ('qd', 'seed_qd'), ('root_pose_wxyz', 'seed_root_pose_w')):
             if not torch.allclose(self.state[field][selected], self.initial[seed_field][selected], atol=1e-06, rtol=0):
@@ -476,10 +870,45 @@ class NativeTensorPhysicsRuntime:
         ds = 'NativePowerPoseApproach.fixed_material_station' if self.style == 'power' else 'PolicyOwned' + self.style.title() + 'Approach.fixed_material41'
         guardsource = 'original_joint_force_clearance_and_policy_source_geometry_guards'
         specs = (('distance', 'm', ds), ('numerical_health', 'dimensionless', 'RopeBatch.last_error.same_owner'), ('constraint_failure', 'dimensionless', guardsource), ('original_guard_joint_force_clearance_geometry', 'dimensionless', guardsource), *((name, 'rad', 'sdk_named_active_q') for name in ERROR_FIELDS))
-        schemas = tuple((TensorLaneSchema(stamp.episode_uids[i], i, str(stamp.reset_ids[i]), stamp.rod_uids[i], 'unqualified_source', 'policy_owned_' + self.style + '_endpoint_v1', tuple(map(str, range(41))), specs) for i in ids))
+        schema_options = {}
+        if self.full_grasp:
+            from dh116.rl.reward import train_rewar___FULL_UNITS
+            contact_source = 'DeformX.flat_pairs.same_SDK_and_rod_boundary'
+            frame_sources = {
+                'median_z': 'DeformX.actual_41_world_nodes', 'min_z': 'DeformX.actual_41_world_nodes',
+                'hold_motion': 'derived:fixed_world_hold_reference',
+                'prohibited_support': 'derived:post_lift_external_load_from_DeformX',
+            }
+            specs += tuple((key, unit, frame_sources.get(key, contact_source))
+                           for key, unit in train_rewar___FULL_UNITS.items())
+            specs += (('slip', 'm', 'derived:fixed_material_and_tangential_anchors'),
+                      ('wrist_goal_m', 'm', self.config.finger_goal.reference_sha256),
+                      ('wrist_goal_rad', 'rad', self.config.finger_goal.reference_sha256))
+            schema_options['required_pad_ids'] = self.contact.required
+        schemas = []
+        for i in ids:
+            episode = stamp.episode_uids[i]
+            anchor_specs = tuple(
+                (f'{episode}:{side}:{kind}', 'DeformX.fixed_material_node_in_SDK_palm',
+                 'bounded_fp32_coordinate_rounding')
+                for side in SIDES for kind in ('material', 'tangential')
+            ) if self.full_grasp else ()
+            schemas.append(TensorLaneSchema(
+                episode, i, str(stamp.reset_ids[i]), stamp.rod_uids[i], 'unqualified_source',
+                'policy_owned_' + self.style + '_endpoint_v1', tuple(map(str, range(41))),
+                specs, anchor_specs=anchor_specs, **schema_options,
+            ))
+        schemas = tuple(schemas)
         f = self.last
         selected = list(ids)
-        reset = replace(f, physics_tick=f.physics_tick[selected], solver_time_s=f.solver_time_s[selected], fields={k: v[selected] for (k, v) in f.fields.items()})
+        annotations = {
+            key: getattr(f, key)[selected] for key in (
+                'anchor_present', 'anchor_drift', 'anchor_uncertainty',
+                'anchor_reference', 'anchor_reference_tick',
+            )
+        } if self.full_grasp else {}
+        reset = replace(f, physics_tick=f.physics_tick[selected], solver_time_s=f.solver_time_s[selected],
+                        fields={k: v[selected] for k, v in f.fields.items()}, **annotations)
         self.reward.reset_selected(ids, schemas, reset, previous_request=self.source.previous_request[selected], tokens=tuple((self.source.previous_request_tokens[i] for i in ids)), policy_uids=('controller_reset_zero',) * len(ids))
         self.ages[selected] = 0
 
@@ -493,7 +922,8 @@ class NativeTensorPhysicsRuntime:
             self.timings[name] = self.timings.get(name, 0.0) + now - phase_start
             phase_start = now
         pre = self.source._boundary()
-        trans = self.ctrl.prepare(actions, self.state, self.clear, self.state['base_link_pose_w'], stamp=pre)
+        halted = self.reward._terminal
+        trans = self.ctrl.prepare(actions, self.state, self.clear, self.state['base_link_pose_w'], stamp=pre, halted=halted)
         if self.controls == 0 and pre.sdk_step == self.first_sdk:
             reaction = self.runtime.initial_reaction(physics_step=pre.sdk_step + 1)
         else:
@@ -514,34 +944,57 @@ class NativeTensorPhysicsRuntime:
         self.batch.update(1 / 480)
         self.state = capture_regex_state(self.batch, body_com_pose_b_xyzw=self.initial['body_com_pose_b_xyzw'])
         mark('sdk_readback')
-        self.clear = self.raw_clearance(self.state['link_pose_wxyz'])
-        self.source_guards()
+        self.clear = self.raw_clearance(self.state['link_pose_wxyz'], isolate=self.full_grasp)
+        measured = self.state
+        guard = trans['constraint_failure'] | self.source_guards() | (self.clear < CLEARANCE_M).any(1)
+        parked = halted | guard
+        if self.full_grasp and bool(parked.any()):
+            self._park(parked)
         self.bridge.submit(self.runtime.solver, self.state['link_pose_xyzw'])
         mark('raw_source_guard_mesh_submit')
         capture = self.runtime.advance(physics_step=sdk)
         mark('rod_flat_export_reduce')
         post = self.source._boundary()
-        self.ctrl.finish(trans, self.state, stamp=post)
-        if self.geometry is not None:
+        guard |= self.ctrl.finish(trans, measured, stamp=post)
+        if self.geometry is not None or self.full_grasp:
             projection = trans['projection']
             if projection['projection_source'] != SOURCE:
                 raise ValueError('original wrist projection source differs')
-            tracking = (self.state['base_link_pose_w'][..., :3].double() - projection['projected_root_poses'][..., :3]).norm(dim=-1)
-            speed = self.state['base_link_com_velocity_w'][..., :3].double().norm(dim=-1)
-            angular = torch.stack([self.state['q'][:, s, [self.joints[s].index(k) for k in WRIST_ANGULAR]] for s in (0, 1)], 1)
+            tracking = (measured['base_link_pose_w'][..., :3].double() - projection['projected_root_poses'][..., :3]).norm(dim=-1)
+            speed = measured['base_link_com_velocity_w'][..., :3].double().norm(dim=-1)
+            angular = torch.stack([measured['q'][:, s, [self.joints[s].index(k) for k in WRIST_ANGULAR]] for s in (0, 1)], 1)
             wrench = capture['mesh_wrenches'][:, self.ctrl.slots[0] + self.ctrl.slots[1]]
             bad = ((tracking > WRIST['tracking_guard_m']) | (speed > WRIST['linear_speed_guard_m_s'])).any(1)
             bad |= (angular.double().abs() > math.pi / 2).any((1, 2)) | (wrench[..., :3].norm(dim=-1) > 30).any(1)
-            bad |= ~torch.isfinite(self.state['body_com_velocity_w']).all((1, 2, 3)) | ~torch.isfinite(self.state['backend_targets']).all((1, 2))
-            require_substep_guard(bad, 'original force or wrist guard')
-        self.last = self.frame(post, self.distance(post))
+            if not self.full_grasp:
+                require_substep_guard(bad, 'original force or wrist guard')
+            guard |= bad & ~parked
+        distance = self.distance(post)
+        guard |= self._geometry_bad & ~parked
+        self.last = self.frame(post, distance, capture=capture, constraint=guard, suppress_contact=parked if self.full_grasp else None)
         ready = self.reward.observe(self.last)
+        if self.full_grasp and bool(self.reward._terminal.any()):
+            self._park(self.reward._terminal, clear_controller=True)
+            self.nodes, self.velocity = self.rod_state()
         mark('geometry_r0_and_post_guards')
         if evidence is not None:
             evidence.update(post=post, state_post=self.state, nodes_post=self.nodes, velocity_post=self.velocity, post_clearance=self.clear, capture=capture, post_frame=self.last, geometry=None if self.geometry is None else self.geometry.result)
             self.snapshot('sdk_' + str(sdk), evidence)
             mark('n2_cold_parity_evidence')
         return ready
+
+    def _park(self, mask, *, clear_controller=False):
+        # Quarantine reads/writes select only failed lanes. The shared SDK and
+        # solver still advance, so parked work is counted in the physical budget.
+        # No parked state becomes a policy transition after terminal settlement.
+        ids = mask.nonzero().flatten().tolist()
+        self.state = restore_regex_seed(self.sim, self.batch, self.initial, env_ids=ids,
+                                        active_effort_limit_nm=self.effort)
+        self.runtime.park_rods(ids)
+        mesh_reset(self.runtime.solver, self.bridge, self.state, ids)
+        self.clear = self.raw_clearance(self.state['link_pose_wxyz'])
+        if clear_controller:
+            self.ctrl.invalidate(ids)
 
     def peer_state(self, peers):
         """Cold probe only. Keep exact byte patterns including signed zero and NaNs."""
@@ -570,7 +1023,7 @@ class NativeTensorPhysicsRuntime:
         return result
 
     def _reset_impl(self, ids):
-        peers = tuple(sorted(set(self.ids) - set(ids)))
+        peers = tuple(sorted(set(self.ids) - set(ids))) if self.prove_peer_reset else ()
 
         def peer_epochs():
             return tuple(((self.runtime.episodes[i], self.runtime.resets[i], self.runtime.ticks[i], self.reward.schemas[i], self.source.previous_request_tokens[i]) for i in peers))
@@ -590,4 +1043,5 @@ class NativeTensorPhysicsRuntime:
         self.snapshot('reset_' + str(sdk), dict(ids=ids, state=self.state, nodes=self.nodes, velocities=self.velocity, source=self.source._boundary(), references=self.last, schemas=tuple(self.reward.schemas)))
         if self.sim.current_time_step_index != sdk:
             raise ValueError('Reset unexpectedly advanced PhysX')
-        self.reset_proofs.append(dict(sdk_step=sdk, selected=list(ids), peers=list(peers), peer_fields=list(before), native_mesh_verified=True, reset_ids=list(self.runtime.resets)))
+        if self.prove_peer_reset:
+            self.reset_proofs.append(dict(sdk_step=sdk, selected=list(ids), peers=list(peers), peer_fields=list(before), native_mesh_verified=True, reset_ids=list(self.runtime.resets)))

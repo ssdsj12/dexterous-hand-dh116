@@ -336,3 +336,131 @@ def test_native_session_restores_arguments_and_closes_after_post_launch_import_f
         run_native_session(tmp_path, SimpleNamespace(experience='fixture.kit'), 0, 2, tmp_path, max_sdk_step=66, author_and_exercise=lambda *args: pytest.fail('authoring preceded SDK startup'), owned_names=('runtime',), runtime_source_audit=False)
     assert sys.argv is argv
     assert events == [('launch', ('teacher',)), ('close', {'wait_for_replicator': False})]
+
+
+def test_scene_lanes_place_512_environments_in_the_existing_namespace():
+    from dh116.env.lifecycle import scene_lanes
+
+    lanes = scene_lanes(512, (1.5, 1.0, 0.1))
+    assert len(lanes) == 512
+    assert all(
+        path == f'/World/DH116BatchAudit/lane_{i:03d}'
+        and origin == (2.5 * (i % 23), 2.5 * (i // 23), 0.0)
+        for i, (path, origin) in enumerate(lanes)
+    )
+    with pytest.raises(ValueError):
+        scene_lanes(513, (1.5, 1.0, 0.1))
+
+
+def test_512_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch):
+    from dh116.env import scene
+    from dh116.env.lifecycle import NativeOwners
+    from dh116.hand.articulation import prepare_regex_task
+
+    class ReachedAuthoring(Exception):
+        pass
+
+    def stop_at_scene_inputs(*args):
+        raise ReachedAuthoring
+
+    monkeypatch.setattr(scene, 'spawn_parameters', stop_at_scene_inputs)
+    sim = SimpleNamespace(current_time_step_index=0)
+    archive = SimpleNamespace(style='pinch', scene_inputs={})
+    lanes = [(f'/World/DH116BatchAudit/lane_{i:03d}', (float(i), 0.0, 0.0)) for i in range(512)]
+    with pytest.raises(ReachedAuthoring):
+        prepare_regex_task(sim, NativeOwners(), None, tmp_path, {}, archive, lanes)
+    with pytest.raises(ValueError, match='original physical lanes'):
+        prepare_regex_task(sim, NativeOwners(), None, tmp_path, {}, archive, lanes + [lanes[-1]])
+
+
+@pytest.fixture
+def physical_gpus(tmp_path, monkeypatch):
+    import subprocess
+    from dh116.env import lifecycle
+
+    pytest.importorskip('fcntl')
+    uuids = {
+        0: 'GPU-b7b79e46-2e95-fd6b-2ac9-38fad64fe99c',
+        1: 'GPU-1d290889-01ad-85ec-f69d-bfe9e1762c5e',
+    }
+    memory = {}
+    occupancy_queries = []
+    monkeypatch.setattr(lifecycle, 'NATIVE_LOCK', tmp_path / 'dh116-isaac-single-instance.lock')
+
+    def query(argv, *, text):
+        assert text and argv[0] == 'nvidia-smi' and argv[1] == '-i'
+        selector = argv[2]
+        if argv[3] == '--query-gpu=index,uuid':
+            return f'{selector}, {uuids[int(selector)]}\n'
+        assert argv[3] == '--query-gpu=uuid,memory.used'
+        assert selector in uuids.values()
+        occupancy_queries.append(selector)
+        return f'{selector}, {memory.get(selector, 0)}\n'
+
+    monkeypatch.setattr(subprocess, 'check_output', query)
+    return SimpleNamespace(uuids=uuids, memory=memory, occupancy_queries=occupancy_queries)
+
+
+def test_native_gpu_lock_excludes_same_gpu_and_allows_distinct_gpus(physical_gpus, monkeypatch):
+    from dh116.env.lifecycle import native_gpu_lock
+
+    first, second = physical_gpus.uuids.values()
+    monkeypatch.setenv('CUDA_VISIBLE_DEVICES', first)
+    with native_gpu_lock(0) as gpu_uuid:
+        assert gpu_uuid == first
+        with pytest.raises(BlockingIOError), native_gpu_lock(0):
+            pytest.fail('the physical GPU already has an owner')
+        assert physical_gpus.occupancy_queries == [first]
+        monkeypatch.setenv('CUDA_VISIBLE_DEVICES', second)
+        with native_gpu_lock(1) as gpu_uuid:
+            assert gpu_uuid == second
+    assert physical_gpus.occupancy_queries == [first, second]
+
+
+def test_native_gpu_lock_conflicts_with_legacy_lock_in_both_directions(physical_gpus, monkeypatch):
+    from dh116.env.lifecycle import NATIVE_LOCK, native_file_lock, native_gpu_lock
+
+    gpu_uuid = physical_gpus.uuids[0]
+    monkeypatch.setenv('CUDA_VISIBLE_DEVICES', gpu_uuid)
+    with native_file_lock(NATIVE_LOCK):
+        with pytest.raises(BlockingIOError), native_gpu_lock(0):
+            pytest.fail('the legacy launch already has an owner')
+        assert physical_gpus.occupancy_queries == []
+    with native_gpu_lock(0):
+        with pytest.raises(BlockingIOError), native_file_lock(NATIVE_LOCK):
+            pytest.fail('the legacy launch overlaps a per-GPU launch')
+
+
+@pytest.mark.parametrize('selector', ['1', 'GPU-b7b79e46', 'GPU-1d290889-01ad-85ec-f69d-bfe9e1762c5e'])
+def test_native_gpu_lock_requires_verified_full_cuda_uuid(physical_gpus, monkeypatch, selector):
+    from dh116.env.lifecycle import native_gpu_lock
+
+    monkeypatch.setenv('CUDA_VISIBLE_DEVICES', selector)
+    with pytest.raises(ValueError, match='CUDA_VISIBLE_DEVICES'), native_gpu_lock(0):
+        pytest.fail('the CUDA device has not been bound to this physical GPU')
+    assert physical_gpus.occupancy_queries == []
+
+
+def test_physical_gpu_lookup_rejects_invalid_or_mismatched_inventory(monkeypatch):
+    import subprocess
+    from dh116.env.lifecycle import resolve_physical_gpu_uuid
+
+    for response in ('0, GPU-short', '1, GPU-b7b79e46-2e95-fd6b-2ac9-38fad64fe99c'):
+        monkeypatch.setattr(subprocess, 'check_output', lambda *args, **kwargs: response)
+        with pytest.raises(ValueError, match='physical GPU'):
+            resolve_physical_gpu_uuid(0)
+
+
+def test_native_gpu_lock_releases_both_locks_on_occupied_gpu(physical_gpus, monkeypatch):
+    from dh116.env.lifecycle import NATIVE_LOCK, native_file_lock, native_gpu_lock
+
+    gpu_uuid = physical_gpus.uuids[0]
+    monkeypatch.setenv('CUDA_VISIBLE_DEVICES', gpu_uuid)
+    physical_gpus.memory[gpu_uuid] = 513
+    with pytest.raises(RuntimeError, match='physical GPU is occupied'), native_gpu_lock(0):
+        pytest.fail('an occupied physical GPU cannot launch')
+    with native_file_lock(NATIVE_LOCK):
+        pass
+    physical_gpus.memory[gpu_uuid] = 512
+    with native_gpu_lock(0) as verified:
+        assert verified == gpu_uuid

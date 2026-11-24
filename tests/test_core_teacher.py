@@ -233,3 +233,118 @@ def test_source_owner_verifies_actual_v2_profile_and_rejects_duck_typed_profile(
     owner.profile = SimpleNamespace(digest=profile.digest, manifest_path=profile.manifest_path, verify=lambda : None)
     with pytest.raises(ValueError):
         owner._verify_profile()
+
+
+def full_context_fixture(kw):
+    values = kw['task_context'].clone()
+    valid = kw['task_context_valid'].clone()
+    valid[:, (4, 5, 6, 7, 47)] = True
+    values[:, 4:8] = torch.tensor([[1.0, 1.0, 0.8, 0.2], [0.25, 0.0, 0.0, 0.0]])
+    values[:, 47] = 0.0
+    values[0, :4] = torch.tensor([0.0, 0.0, 0.0, 1.0])
+    values[0, 8:12] = torch.tensor([0.3, 0.75, 1.0, 1.0])
+    valid[0, 8:10] = True
+    return values, valid
+
+
+def test_full_context_applicability_tracks_anchors_in_each_environment(monkeypatch):
+    from dh116.rl.teacher import CONTEXT_FIELDS, ContextMetadata, TaskContextPacket, validate_context
+
+    _, _, profile, _, (_, _, kw) = teacher_data(monkeypatch)
+    values, valid = full_context_fixture(kw)
+    applicable = tuple(tuple(row) for row in valid.tolist())
+    reasons = tuple(tuple(None if field else 'unavailable_in_this_row' for field in row) for row in applicable)
+    metadata = ContextMetadata(
+        'owner', kw['context_identities'], profile.digest, 'cpu_fixture', 'flexible_train_r1_full',
+        tuple(field['source'] for field in CONTEXT_FIELDS), applicable, reasons, (('reset', 'reset_fixture'),), 'request',
+    )
+    context = TaskContextPacket(values, valid, metadata)
+    assert validate_context(context, backend_profile=profile, identities=kw['context_identities']) is context
+    with pytest.raises(ValueError, match='applicability'):
+        wrong = replace(metadata, applicable=metadata.applicable[::-1], reasons=metadata.reasons[::-1])
+        validate_context(replace(context, metadata=wrong), backend_profile=profile)
+    with pytest.raises(ValueError, match='reason'):
+        wrong = replace(metadata, reasons=(reasons[0], (None,) * 50))
+        validate_context(replace(context, metadata=wrong), backend_profile=profile)
+    with pytest.raises(ValueError, match='identity'):
+        validate_context(context, backend_profile=profile, identities=kw['context_identities'][::-1])
+
+
+def test_full_tensor_packet_requires_profile_and_row_matched_context(monkeypatch):
+    smoke, _, backend, cfg, (q, qd, kw) = teacher_data(monkeypatch)
+    values, valid = full_context_fixture(kw)
+    kw = dict(kw, task_context=values, task_context_valid=valid, context_mode='flexible_train_r1_full')
+    packet = pack_shared_tensor_inputs(q, qd, **kw)
+    assert packet.inputs['common_valid'].sum(1).tolist() == [66, 66]
+    assert packet.inputs['task_context_valid'][:, 8:10].tolist() == [[True, True], [False, False]]
+    assert not packet.native_qualified
+    with pytest.raises(ValueError, match='contract'):
+        packet.for_teacher(smoke, current_identity=packet.source)
+    with pytest.raises(ValueError, match='row/time/episode'):
+        pack_shared_tensor_inputs(q, qd, **dict(kw, context_identities=kw['context_identities'][::-1]))
+    with pytest.raises(ValueError, match='mode'):
+        pack_shared_tensor_inputs(q, qd, **dict(kw, context_mode='made-up-mode'))
+    with pytest.raises(ValueError, match='smoke'):
+        pack_shared_tensor_inputs(q, qd, **dict(kw, context_mode='approach_wiring_smoke_v1'))
+    with pytest.raises(ValueError, match='anchor'):
+        wrong = values.clone()
+        wrong[1, 10] = 1.0
+        pack_shared_tensor_inputs(q, qd, **dict(kw, task_context=wrong))
+
+
+def test_full_teacher_uses_exact_goal_reward_profile(monkeypatch):
+    smoke, smoke_inputs, backend, cfg, (q, qd, kw) = teacher_data(monkeypatch)
+    reward = load_config(ROOT / 'configs/training/reward_pinch.json', ppo_gamma=0.995, full_grasp=True)
+    model = TensorNativeTeacher(cfg, backend_profile=backend, num_envs=2, reward_config=reward)
+    values, valid = full_context_fixture(kw)
+    packet = pack_shared_tensor_inputs(q, qd, **dict(
+        kw, context_mode=model.context_mode, task_context=values, task_context_valid=valid,
+    ))
+    obs = packet.for_teacher(model, current_identity=packet.source)
+    assert model.model_identity['context_mode'] == 'flexible_train_r1_full'
+    assert model.model_identity['reward_config_sha256'] == reward.config_sha256
+    assert model.latent_mean(obs).shape == (2, 24)
+    assert torch.isfinite(model.value(obs)).all()
+    with pytest.raises(ValueError, match='qualified contact/support'):
+        model.latent_mean(smoke_inputs)
+    with pytest.raises(ValueError, match='identity'):
+        model.load_state_dict(smoke.state_dict())
+
+
+def test_full_source_context_uses_current_device_history_and_fixed_stations(monkeypatch):
+    from dh116.rl.teacher import FullTaskContext, TensorSourceOwner
+
+    _, _, _, _, (_, _, kw) = teacher_data(monkeypatch)
+    stamp = kw['source_identity']
+    owner = object.__new__(TensorSourceOwner)
+    owner.context_mode = 'flexible_train_r1_full'
+    owner.n, owner.device = 2, torch.device('cpu')
+    owner._boundary = lambda: stamp
+    owner._reset_identities = kw['context_identities']
+    owner._reset_z = torch.tensor([[0.2, 0.1], [0.2, 0.1]])
+    owner._reset_distance = torch.tensor([0.003, 0.02])
+    owner._reference_policy_time = torch.zeros(2)
+    owner._rest_total = torch.tensor([0.2, 0.25], dtype=torch.float64)
+    owner._previous = torch.zeros(2, 24)
+    owner.episode_cap_s = owner.wall_cap_s = 10.0
+    owner.started = 0.0
+    full = FullTaskContext(
+        source=stamp, phase=torch.tensor([3, 0]), contact_fraction=torch.tensor([[1, 1], [0.25, 0.0]]),
+        contact_duration_s=torch.tensor([0.2, 0.0]), hold_duration_s=torch.tensor([1.0, 0.0]),
+        anchor_station_m=torch.tensor([[0.06, 0.15], [torch.nan, torch.nan]], dtype=torch.float64),
+        anchor_valid=torch.tensor([[True, True], [False, False]]), prohibited_support_latched=torch.tensor([False, True]),
+        success_event_emitted=torch.tensor([True, False]), trusted_failure_event_emitted=torch.tensor([False, True]),
+    )
+    values, valid, identities = owner.contexts(full=full)
+    expected, _ = full_context_fixture(kw)
+    torch.testing.assert_close(values[:, :12], expected[:, :12], equal_nan=True)
+    torch.testing.assert_close(values[:, 47:50], torch.tensor([[0, 1, 0], [1, 0, 1]], dtype=torch.float32))
+    assert valid[:, 47:50].all()
+    assert torch.isnan(values[1, 8:10]).all() and not valid[1, 8:10].any()
+    assert identities == kw['context_identities']
+    with pytest.raises(ValueError, match='boundary'):
+        owner.contexts(full=replace(full, source=replace(stamp, sdk_step=1)))
+    with pytest.raises(ValueError, match='full context'):
+        owner.contexts()
+    with pytest.raises(ValueError, match='full context'):
+        owner.contexts(full=replace(full, contact_fraction=full.contact_fraction.fill_(torch.nan)))

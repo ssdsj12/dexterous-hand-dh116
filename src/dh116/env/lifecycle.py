@@ -1,6 +1,9 @@
 """Single-instance ownership, lifetime release and source/SDK cleanup auditing."""
 import gc as nativ_owner__gc, json as nativ_owner__json, os, time, types as nativ_owner__types, weakref as nativ_owner__weakref
 import sys as nativ_sessi__sys
+import re
+import subprocess
+from contextlib import contextmanager
 from pathlib import Path as nativ_resou_lock__Path
 from pathlib import Path as runti_lifec__Path
 import hashlib as runti_sourc_audit__hashlib
@@ -16,17 +19,58 @@ import functools
 from dh116.env.contracts import write_new as write_json
 from pathlib import Path as nativ_sessi__Path
 
-def native_file_lock(path, *, acquire=True):
-    """Open the existing nonblocking Linux native launch lock."""
+def native_file_lock(path, *, acquire=True, shared=False):
+    """Open a nonblocking Linux native launch lock."""
     import fcntl
     stream = path.open('a+b')
     try:
         if acquire:
-            fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            mode = fcntl.LOCK_SH if shared else fcntl.LOCK_EX
+            fcntl.flock(stream.fileno(), mode | fcntl.LOCK_NB)
     except BaseException:
         stream.close()
         raise
     return stream
+
+
+def _physical_gpu_query(selector, fields):
+    query = [
+        'nvidia-smi', '-i', str(selector), f'--query-gpu={fields}',
+        '--format=csv,noheader,nounits',
+    ]
+    rows = subprocess.check_output(query, text=True).strip().splitlines()
+    values = [value.strip() for value in rows[0].split(',')] if len(rows) == 1 else []
+    if len(values) != 2 or not all(values):
+        raise ValueError(f'expected one physical GPU record for {selector}')
+    return values
+
+
+def resolve_physical_gpu_uuid(gpu):
+    """Resolve an nvidia-smi physical index to its full CUDA GPU UUID."""
+    if type(gpu) is not int or gpu < 0:
+        raise ValueError('nonnegative physical GPU index required')
+    index, gpu_uuid = _physical_gpu_query(gpu, 'index,uuid')
+    if index != str(gpu) or re.fullmatch(r'GPU-[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}', gpu_uuid) is None:
+        raise ValueError(f'nvidia-smi did not verify the physical GPU UUID for index {gpu}')
+    return 'GPU-' + gpu_uuid[4:].lower()
+
+
+@contextmanager
+def native_gpu_lock(gpu):
+    """Hold the legacy shared lock and the physical GPU's exclusive launch lock."""
+    gpu_uuid = resolve_physical_gpu_uuid(gpu)
+    if os.environ.get('CUDA_VISIBLE_DEVICES') != gpu_uuid:
+        raise ValueError('CUDA_VISIBLE_DEVICES must match the verified physical GPU UUID')
+    gpu_path = NATIVE_LOCK.with_name(f'dh116-isaac-{gpu_uuid}.lock')
+    with native_file_lock(NATIVE_LOCK, shared=True), native_file_lock(gpu_path):
+        reported_uuid, memory_used = _physical_gpu_query(gpu_uuid, 'uuid,memory.used')
+        if reported_uuid != gpu_uuid or not memory_used.isascii() or not memory_used.isdecimal():
+            raise ValueError(f'nvidia-smi did not verify physical GPU occupancy for {gpu_uuid}')
+        if int(memory_used) > 512:
+            raise RuntimeError(f'physical GPU is occupied: {gpu_uuid}')
+        yield gpu_uuid
+
+
 import weakref as runti_lifec__weakref
 from pathlib import Path as runti_sourc_audit__Path
 from pathlib import Path as simul_owner_clean__Path
@@ -94,8 +138,8 @@ BOUNDARY_VERSION = 'dh116-pinch-import-boundary-v3'
 
 def scene_lanes(count, table_size):
     size = np.asarray(table_size, dtype=float)
-    if count not in (2, 32, 64, 128) or size.shape != (3,) or (not np.isfinite(size).all()) or (size <= 0).any():
-        raise ValueError('2, 32, 64 or 128 lanes and a positive original table size required')
+    if count not in (2, 32, 64, 128, 512) or size.shape != (3,) or (not np.isfinite(size).all()) or (size <= 0).any():
+        raise ValueError('2, 32, 64, 128 or 512 lanes and a positive original table size required')
     columns = nativ_sessi__math.ceil(nativ_sessi__math.sqrt(count))
     spacing = float(max(size[:2]) + 1.0)
     return [(f'/World/DH116BatchAudit/lane_{i:03d}', (spacing * (i % columns), spacing * (i // columns), 0.0)) for i in range(count)]

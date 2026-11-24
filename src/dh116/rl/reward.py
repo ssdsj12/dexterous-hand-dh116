@@ -28,8 +28,10 @@ train_rewar__SUCCESS = train_rewar__MappingProxyType({'net_lift_m': 0.03, 'hold_
 train_rewar__CONTACT = 'approach_contact_prelift_v1'
 train_rewar__SMOKE = 'approach_wiring_smoke_v1'
 train_rewar__FULL = 'flexible_train_r1_full'
+train_rewar__GOAL_FULL = 'flexible_train_goal_full_v1'
 train_rewar__CURRICULUM = 'flexible_train_curriculum_v1'
 _SCOPES = ('cpu_fixture', 'unqualified_source')
+_FULL_PROFILES = (train_rewar__FULL, train_rewar__CURRICULUM, train_rewar__GOAL_FULL)
 train_rewar___BASE_UNITS = {'distance': 'm', 'numerical_health': 'dimensionless', 'constraint_failure': 'dimensionless'}
 train_rewar___FULL_UNITS = {'median_z': 'm', 'min_z': 'm', 'coverage_left': 'dimensionless', 'coverage_right': 'dimensionless', 'opposed_left': 'dimensionless', 'opposed_right': 'dimensionless', 'bilateral_support': 'dimensionless', 'off_table': 'dimensionless', 'no_external_support': 'dimensionless', 'hold_motion': 'dimensionless', 'prohibited_support': 'dimensionless'}
 _CONTACT_UNITS = {name: train_rewar___FULL_UNITS[name] for name in ('coverage_left', 'coverage_right', 'opposed_left', 'opposed_right', 'bilateral_support')}
@@ -236,14 +238,15 @@ class RewardConfig:
         return self.ppo['gamma']
 
 def _profile_spec(profile):
-    full = profile in (train_rewar__FULL, train_rewar__CURRICULUM)
+    full = profile in _FULL_PROFILES
+    long_rollout = full and profile != train_rewar__GOAL_FULL
     weights = {'distance': 2.0, 'contact': 2.0, 'persistence': 0.5, 'geometry': 1.0, 'lift': 4.0, 'hold': 4.0} if full else {'distance': 2.0}
     if profile == train_rewar__CONTACT:
         weights = {'distance': 2.0, 'contact': 2.0, 'persistence': 0.5, 'geometry': 1.0}
-    slip_cost = 0.25 if profile == train_rewar__CURRICULUM else 1.0 if profile == train_rewar__FULL else None
+    slip_cost = 0.25 if profile == train_rewar__CURRICULUM else 1.0 if profile in (train_rewar__FULL, train_rewar__GOAL_FULL) else None
     costs = {'command_rate': 0.05, 'time': 0.1, 'slip': slip_cost, 'velocity': 0.0 if full else None}
     events = {'trusted_constraint_failure': -40.0, 'prohibited_support': -50.0 if full else None, 'success': 100.0 if full else None}
-    ppo = dict(gae_lambda=0.97 if full else 0.95, rollout_steps=256 if full else 32, learning_rate=0.0001, epochs=3 if full else 1, minibatches=4 if full else 1, clip=0.2, entropy=0.005, value=0.5, max_grad_norm=0.5, target_kl=0.02, kl_backtrack_steps=3)
+    ppo = dict(gae_lambda=0.97 if long_rollout else 0.95, rollout_steps=256 if long_rollout else 32, learning_rate=0.0001, epochs=3 if long_rollout else 1, minibatches=4 if long_rollout else 1, clip=0.2, entropy=0.005, value=0.5, max_grad_norm=0.5, target_kl=0.02, kl_backtrack_steps=3)
     return (weights, costs, events, ppo)
 
 def _config_mapping(value, expected, name):
@@ -273,7 +276,7 @@ def _sha256_text(value):
     return type(value) is str and len(value) == 64 and all((c in '0123456789abcdef' for c in value))
 
 def _validate_reward_config(config):
-    if not _identity_text(config.profile) or config.profile not in (train_rewar__SMOKE, train_rewar__FULL, train_rewar__CURRICULUM, train_rewar__CONTACT):
+    if not _identity_text(config.profile) or config.profile not in (train_rewar__SMOKE, train_rewar__FULL, train_rewar__CURRICULUM, train_rewar__CONTACT, train_rewar__GOAL_FULL):
         raise ValueError('loaded approved config profile required')
     if type(config.profile_version) is not int or config.profile_version != 1:
         raise ValueError('exact approved config version required')
@@ -281,14 +284,16 @@ def _validate_reward_config(config):
         raise ValueError('primitive full config SHA256 identity required')
     if not _sha256_text(config.schema_sha256) or config.schema_sha256 != train_rewar__SCHEMA_SHA256:
         raise ValueError('loaded approved config schema SHA256 required')
-    if config.finger_goal is not None and (config.profile != train_rewar__SMOKE or type(config.finger_goal) is not FingerGoal):
-        raise ValueError('finger goal is restricted to a native approach diagnostic')
+    if config.finger_goal is not None and (config.profile not in (train_rewar__SMOKE, train_rewar__GOAL_FULL) or type(config.finger_goal) is not FingerGoal):
+        raise ValueError('finger goal requires a declared goal-conditioned profile')
+    if config.profile == train_rewar__GOAL_FULL and config.finger_goal is None:
+        raise ValueError('complete grasp reward requires its grasp-specific reference')
     (weights, costs, events, ppo) = _profile_spec(config.profile)
     _config_mapping(config.weights, weights, 'weights')
     _config_mapping(config.costs, costs, 'costs')
     _config_mapping(config.events, events, 'events')
     gamma = _config_ppo(config.ppo, ppo)
-    slip_max = 2.0 * config.costs['slip'] if config.profile in (train_rewar__FULL, train_rewar__CURRICULUM) else 0.0
+    slip_max = 2.0 * config.costs['slip'] if config.profile in _FULL_PROFILES else 0.0
     maximum = 0.05 + 0.1 + slip_max
     bound = maximum / (CONTROL_HZ * (1.0 - gamma))
     if not _finite(config.cost_max_per_second) or not train_rewar__math.isclose(config.cost_max_per_second, maximum, rel_tol=0, abs_tol=1e-12):
@@ -299,7 +304,7 @@ def _validate_reward_config(config):
 def _config_payload(config):
     return tuple((getattr(config, f.name) for f in fields(RewardConfig) if f.init))
 
-def load_config(path, *, ppo_gamma=None):
+def load_config(path, *, ppo_gamma=None, full_grasp=False):
     """Read actual file bytes; only this loader binds a configuration to a source."""
     source_path = Path(path).resolve()
     raw = source_path.read_bytes()
@@ -309,7 +314,7 @@ def load_config(path, *, ppo_gamma=None):
     if data.get('gamma_source') != 'ppo.gamma' or 'reward_gamma' in data or 'gamma' in data:
         raise ValueError('reward gamma must come only from ppo.gamma')
     profile = data.get('profile')
-    if not _identity_text(profile) or profile not in (train_rewar__SMOKE, train_rewar__FULL, train_rewar__CURRICULUM, train_rewar__CONTACT):
+    if not _identity_text(profile) or profile not in (train_rewar__SMOKE, train_rewar__FULL, train_rewar__CURRICULUM, train_rewar__CONTACT, train_rewar__GOAL_FULL):
         raise ValueError('independent approved reward profile required')
     success = data.get('success')
     if profile == train_rewar__CURRICULUM:
@@ -332,7 +337,14 @@ def load_config(path, *, ppo_gamma=None):
     _config_mapping(data.get('potential_weights'), weights, 'weights')
     _config_mapping(data.get('costs_per_second'), costs, 'costs')
     _config_mapping(data.get('events'), events, 'events')
-    slip_max = 2.0 * costs['slip'] if profile in (train_rewar__FULL, train_rewar__CURRICULUM) else 0.0
+    if full_grasp and profile != train_rewar__GOAL_FULL:
+        if profile != train_rewar__SMOKE or data.get('enable_full_grasp') is not True:
+            raise ValueError('current grasp configuration must explicitly enable full reward')
+        profile = train_rewar__GOAL_FULL
+        weights, costs, events, expected_ppo = _profile_spec(profile)
+        _config_ppo(ppo, expected_ppo)
+        raw += b'\0' + profile.encode()
+    slip_max = 2.0 * costs['slip'] if profile in _FULL_PROFILES else 0.0
     maximum = 0.05 + 0.1 + slip_max
     bound = maximum / (CONTROL_HZ * (1.0 - gamma))
     if abs(events['trusted_constraint_failure']) < bound:
@@ -408,7 +420,8 @@ def validate_reward_config(config):
     if not _identity_text(config._source_path) or not Path(config._source_path).is_absolute():
         raise ValueError('actual file-backed loader provenance required')
     try:
-        actual = load_config(config._source_path, ppo_gamma=config.gamma)
+        actual = load_config(config._source_path, ppo_gamma=config.gamma,
+                             full_grasp=config.profile == train_rewar__GOAL_FULL)
     except (OSError, ValueError) as exc:
         raise ValueError('reward config source file no longer validates against loaded bytes') from exc
     if _config_payload(config) != _config_payload(actual):
@@ -565,7 +578,7 @@ class TensorTrainingReward:
         if type(num_envs) is not int or num_envs <= 0:
             raise ValueError('positive batch size required')
         (self.n, self.device) = (num_envs, torch.device(device))
-        self.full = self.config.profile in (tenso_train_rewar__FULL, tenso_train_rewar__CURRICULUM)
+        self.full = self.config.profile in _FULL_PROFILES
         self.schemas = [None] * num_envs
         self._tokens = [set() for _ in range(num_envs)]
         self._episodes = [set() for _ in range(num_envs)]
@@ -590,6 +603,7 @@ class TensorTrainingReward:
         self._previous = torch.full((num_envs, 24), tenso_train_rewar__math.nan, device=self.device, dtype=torch.float64)
         (self._previous_tokens, self._previous_policies) = ([None] * num_envs, [None] * num_envs)
         (self._phi, self._closed, self._quarantined) = (self._f(tenso_train_rewar__math.nan), self._b(True), self._b())
+        self._terminal = self._b()
         self._terms = {}
         self._last_values = {}
 
@@ -641,6 +655,8 @@ class TensorTrainingReward:
             units.update(((name, 'dimensionless') for name in names if name.startswith('original_guard_')))
             if self.config.finger_goal is not None:
                 units.update(((name, 'rad') for name in tenso_train_rewar__ERROR_FIELDS))
+            if self.config.profile == train_rewar__GOAL_FULL and s.scope == 'unqualified_source':
+                units.update(wrist_goal_m='m', wrist_goal_rad='rad')
             if any((name not in names for name in units)):
                 raise tenso_train_rewar__SourceFailure('missing applicable original reward field')
             if any((name in units and unit != units[name] for (name, unit, source) in s.field_specs)):
@@ -703,6 +719,13 @@ class TensorTrainingReward:
             goal = self.config.finger_goal
             errors = torch.stack([v[n] for n in tenso_train_rewar__ERROR_FIELDS], dim=1)
             pg = torch.exp(-(errors - goal.tolerance_rad).clamp_min(0.0) / goal.scale_rad).sum(dim=1) / 2.0
+            if self.config.profile == train_rewar__GOAL_FULL and 'wrist_goal_m' in v:
+                wrist = torch.exp(-v['wrist_goal_m'] / 0.025 - v['wrist_goal_rad'] / 0.35)
+                pg = (pg + wrist) * 0.5
+            if self.config.profile == train_rewar__GOAL_FULL and not reset:
+                # Once the pre-grasp posture was reached, free the policy to
+                # close around the actual rod without losing shaping potential.
+                pg = torch.where((self._arrived | self._arrival_pending)[ids], 1.0, pg)
             terms['finger_goal'] = pg
             phi = phi + pg
         if self.full:
@@ -710,10 +733,12 @@ class TensorTrainingReward:
             contact = (v['coverage_left'] == 1) & (v['coverage_right'] == 1) & v['opposed_left'] & v['opposed_right']
             cs = torch.where(contact, torch.where(self._contact_start[ids] < 0, tick, self._contact_start[ids]), -1)
             contact_s = torch.where(cs < 0, 0.0, (tick - cs).to(torch.float64) / tenso_train_rewar__PHYSICS_HZ)
-            slip = torch.where(present, (d + u).amax(dim=1), torch.nan)
+            slip_observed = (present & contact & v['bilateral_support']
+                             if self.config.profile == train_rewar__GOAL_FULL else present)
+            slip = torch.where(slip_observed, (d + u).amax(dim=1), torch.nan)
             slip_false = (d - u > 0.0005).any(dim=1)
             slip_true = (d + u <= 0.0005).all(dim=1)
-            status = torch.where(present, torch.where(slip_false, 0, torch.where(slip_true, 1, -1)), -1)
+            status = torch.where(slip_observed, torch.where(slip_false, 0, torch.where(slip_true, 1, -1)), -1)
             md = v['median_z'] - self._median[ids]
             mn = v['min_z'] - self._min[ids]
             h = torch.minimum(md, mn)
@@ -737,7 +762,7 @@ class TensorTrainingReward:
             phi = phi + terms['contact'] + terms['persistence'] + terms['geometry'] + terms['lift'] + terms['hold']
             state.update(_contact_start=cs, _contact_s=contact_s, _hold_start=hs, _hold_s=hold_s, _slip=slip, _slip_status=status, _ever_bilateral=self._ever_bilateral[ids] | contact, _anchor_latched=self._anchor_latched[ids] | present)
             state['_derived_bad'] |= ~torch.isfinite(md) | ~torch.isfinite(mn) | ~torch.isfinite(hold_s) | ~torch.isfinite(contact_s)
-            state['_derived_bad'] |= present & (~torch.isfinite(slip / 0.0005) | ~torch.isfinite(slip / success['max_slip_m']))
+            state['_derived_bad'] |= slip_observed & (~torch.isfinite(slip / 0.0005) | ~torch.isfinite(slip / success['max_slip_m']))
             if self.config.profile == tenso_train_rewar__CURRICULUM:
                 state['_derived_bad'] |= lift_ok & ~torch.isfinite(lift_h / success['net_lift_m'])
             else:
@@ -822,6 +847,7 @@ class TensorTrainingReward:
         self._commit(ids, active, phi, terms, state, tick, time, values, anchors)
         self._previous[ids] = previous
         self._closed[ids] = False
+        self._terminal[ids] = False
         self._quarantined[ids] = False
         self._poisoned_lanes.difference_update(lane_ids)
         self._previous_tokens = list(self._previous_tokens)
@@ -907,6 +933,14 @@ class TensorTrainingReward:
             ulp = torch.where(both == 0, 2.0 ** (-149), ulp)
             bound = (0.5 * ulp.sum(dim=1) + abs(_STEP32 - 1.0 / tenso_train_rewar__PHYSICS_HZ)).clamp_max(1e-06)
             match |= native & ((both >= 0) & (both <= float.fromhex('0x1.fffffep+127')) & (both == f32)).all(dim=1) & ((interval - 1.0 / tenso_train_rewar__PHYSICS_HZ).abs() <= bound)
+        if self.config.profile == train_rewar__GOAL_FULL:
+            # The installed RopeBatch stores time in float; accept its exact
+            # representable next time after the original one-step addition.
+            current_f32 = self._time.float()
+            next_f32 = (current_f32 + _STEP32).double()
+            match |= self._native_float32_clock & (self._time == current_f32.double()) & (
+                (time == next_f32) & (next_f32 > self._time)
+            )
         return match
 
     def observe(self, frame):
@@ -917,6 +951,8 @@ class TensorTrainingReward:
         try:
             (tick, time, v, anchors, bad) = self._frame(frame, field_names=self._window_fields, anchor_available=self._window_anchors)
             active = ~self._terminal & (self._count < 8)
+            if self.config.profile == train_rewar__GOAL_FULL:
+                self._guard(~v['numerical_health'], 'invalid original numerical or solver source')
             bad |= (tick != self._tick + 1) | ~self._interval(time)
             ids = torch.arange(self.n, device=self.device)
             (phi, terms, state) = self._potential(ids, tick, v, anchors)
@@ -939,6 +975,8 @@ class TensorTrainingReward:
                 tol = ~failure
                 for name in tenso_train_rewar__ERROR_FIELDS:
                     tol &= v[name] <= goal.tolerance_rad
+                if 'wrist_goal_m' in v:
+                    tol &= (v['wrist_goal_m'] <= 0.010) & (v['wrist_goal_rad'] <= 0.15)
                 dwell = torch.where(tol, self._dwell + 1, 0)
                 change = active & ~self._arrived
                 self._dwell = torch.where(change, dwell, self._dwell)

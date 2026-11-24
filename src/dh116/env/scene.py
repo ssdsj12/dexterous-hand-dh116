@@ -499,11 +499,11 @@ def verify_material_properties(properties, profile, expected_shapes):
     return dict(shapes=expected_shapes, static_friction=values[0, :, 0].tolist(), dynamic_friction=values[0, :, 1].tolist(), restitution=values[0, :, 2].tolist())
 ERROR_FIELDS = tuple(('finger_goal_max_error_' + side for side in teach_pose_goal__SIDES))
 
-def load_task_scene(grasp, *, root=ROOT):
+def load_task_scene(grasp, *, root=ROOT, full_grasp=False):
     from types import SimpleNamespace
     root = scene_input__Path(root)
     task = scene_input__json.loads((root / 'configs/tasks' / (grasp + '.json')).read_text())
-    spec = task['scene_input']
+    spec = task.get('full_scene_input', task['scene_input']) if full_grasp else task['scene_input']
     inputs = load_scene_inputs(root / spec['path'], spec['sha256'], root=root)
     if inputs['grasp'] != grasp:
         raise ValueError('independent grasp scene identity differs')

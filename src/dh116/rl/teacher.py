@@ -1,3 +1,4 @@
+import math
 from dh116.env.contracts import source_file
 """Current Teacher network, pure six-key/context/material schema, tensor inputs and source-context owner; contains no policy collector."""
 from dataclasses import dataclass as tenso_nativ_input__dataclass
@@ -105,7 +106,8 @@ class _MaterialEncoder(tenso_teach_schem__nn.Module):
         maximum = encoded.masked_fill(~active, -tenso_teach_schem__torch.inf).amax(1)
         return tenso_teach_schem__torch.cat((mean, maximum), dim=-1)
 CONTACT_PRELIFT = 'approach_contact_prelift_v1'
-MODES = ('approach_wiring_smoke_v1', 'flexible_train_r1_full', CONTACT_PRELIFT)
+FULL_CONTEXT_MODE = 'flexible_train_r1_full'
+MODES = ('approach_wiring_smoke_v1', FULL_CONTEXT_MODE, CONTACT_PRELIFT)
 CONTACT_PRELIFT_EXCLUDED = (7, 47)
 SCOPES = ('cpu_fixture', 'owner_source_unqualified')
 tenso_teach_schem__SMOKE_EXCLUDED = (4, 5, 6, 7, 47)
@@ -194,8 +196,25 @@ class ContextMetadata:
         for value in (self.sources, self.applicable, self.reasons, self.reference_uids):
             if type(value) is not tuple:
                 raise ValueError('immutable context metadata tuples required')
-        if len(self.sources) != 50 or len(self.applicable) != 50 or len(self.reasons) != 50 or any((type(x) is not bool for x in self.applicable)) or any((type(x) is not str or not x for x in self.sources)) or any((x is not None and (type(x) is not str or not x.strip()) for x in self.reasons)) or (not self.reference_uids) or any((type(x) is not tuple or len(x) != 2 or any((type(y) is not str or not y for y in x)) for x in self.reference_uids)) or (len({x[0] for x in self.reference_uids}) != len(self.reference_uids)):
-            raise ValueError('complete immutable context source/applicability/reference metadata required')
+        if len(self.sources) != 50 or any((type(x) is not str or not x for x in self.sources)) or (not self.reference_uids) or any((type(x) is not tuple or len(x) != 2 or any((type(y) is not str or not y for y in x)) for x in self.reference_uids)) or (len({x[0] for x in self.reference_uids}) != len(self.reference_uids)):
+            raise ValueError('complete immutable context source/reference metadata required')
+        applicable, reasons = self._applicability_rows()
+        if len(applicable) != len(self.identities) or len(reasons) != len(self.identities):
+            raise ValueError('context applicability/reason identity batch differs')
+        for applies, why in zip(applicable, reasons):
+            if type(applies) is not tuple or len(applies) != 50 or any(type(value) is not bool for value in applies):
+                raise ValueError('complete immutable context applicability required for each row')
+            if type(why) is not tuple or len(why) != 50 or any(
+                value is not None and (type(value) is not str or not value.strip()) for value in why
+            ):
+                raise ValueError('complete immutable context reasons required for each row')
+
+    def _applicability_rows(self):
+        # The original flat metadata describes a uniform batch. A nested pair
+        # uses the exact ordering of the immutable per-environment identities.
+        if self.applicable and type(self.applicable[0]) is bool:
+            return (self.applicable,) * len(self.identities), (self.reasons,) * len(self.identities)
+        return self.applicable, self.reasons
 
 @tenso_teach_schem__dataclass(frozen=True, slots=True)
 class TaskContextPacket:
@@ -244,7 +263,7 @@ def validate_context_tensors(values, valid, *, mode=None):
     if mode == MODES[0]:
         if bool(valid[:, tenso_teach_schem__SMOKE_EXCLUDED].any()) or not bool((values[:, 0] == 1).all()):
             raise ValueError('smoke context excludes contact/support and remains physical Approach')
-    elif mode == MODES[1]:
+    elif mode == FULL_CONTEXT_MODE:
         if not bool(valid[:, tenso_teach_schem__SMOKE_EXCLUDED].all()):
             raise ValueError('full context requires qualified contact/support/history sources')
     elif mode == CONTACT_PRELIFT:
@@ -271,25 +290,14 @@ def validate_context(packet, *, backend_profile, identities=None):
         raise ValueError('context time/episode identity differs')
     if meta.sources != tuple((x['source'] for x in CONTEXT_FIELDS)):
         raise ValueError('required context source schema differs')
-    applicable = list(meta.applicable)
-    wanted = [True] * 50
-    wanted[46] = False
-    for j in (0, 1):
-        anchors = packet.valid[:, 8 + j]
-        if not bool((anchors == anchors[0]).all()):
-            raise ValueError('different anchor applicability needs separate context packet')
-        wanted[8 + j] = bool(anchors[0])
-    if meta.mode == MODES[0]:
-        for i in tenso_teach_schem__SMOKE_EXCLUDED:
-            wanted[i] = False
-    elif meta.mode == CONTACT_PRELIFT:
-        for i in CONTACT_PRELIFT_EXCLUDED:
-            wanted[i] = False
-    if applicable != wanted:
-        raise ValueError('context applicability differs from task/source profile')
-    for (i, applies) in enumerate(applicable):
-        if applies and (not bool(packet.valid[:, i].all())) or (not applies and (bool(packet.valid[:, i].any()) or not meta.reasons[i])):
-            raise ValueError('required applicable unknown or missing explicit NA reason')
+    applicable, reasons = meta._applicability_rows()
+    # The tensor validator establishes the required mode mask and links each
+    # material station's validity to that environment/hand's anchor flag.
+    mask = packet.valid.new_tensor(applicable)
+    if not tenso_teach_schem__torch.equal(mask, packet.valid):
+        raise ValueError('context applicability differs from task/source profile or anchor row')
+    if any(not applies and reason is None for row, why in zip(applicable, reasons) for applies, reason in zip(row, why)):
+        raise ValueError('missing explicit NA reason for context row')
     return packet
 
 @tenso_teach_schem__dataclass(frozen=True, slots=True)
@@ -310,6 +318,28 @@ class SharedSourceIdentity:
     solver_time_s: float
     profile_sha256: str
     scope: str
+
+@tenso_nativ_input__dataclass(frozen=True, slots=True)
+class FullTaskContext:
+    """Full physical endpoint, in shared source row order.
+
+    Phase is int64 (Approach, Close, Lift, Hold). Contact fractions and anchor
+    stations are ordered L, R. Durations are seconds, stations are metres
+    along the rest material. Unavailable stations require NaN and a false mask.
+    """
+
+    source: SharedSourceIdentity
+    phase: tenso_nativ_input__torch.Tensor
+    contact_fraction: tenso_nativ_input__torch.Tensor
+    contact_duration_s: tenso_nativ_input__torch.Tensor
+    hold_duration_s: tenso_nativ_input__torch.Tensor
+    anchor_station_m: tenso_nativ_input__torch.Tensor
+    anchor_valid: tenso_nativ_input__torch.Tensor
+    prohibited_support_latched: tenso_nativ_input__torch.Tensor
+    success_event_emitted: tenso_nativ_input__torch.Tensor
+    trusted_failure_event_emitted: tenso_nativ_input__torch.Tensor
+
+
 tenso_nativ_input__common_selection = common_selection
 tenso_nativ_input___features = tenso_teach_schem___features
 tenso_nativ_input__ContextIdentity = ContextIdentity
@@ -336,6 +366,7 @@ class TensorTeacherPacket:
     grasp: str
     context_identities: tuple
     source_family: str = tenso_nativ_input__FAMILY
+    context_mode: str = MODES[0]
 
     @property
     def native_qualified(self):
@@ -353,7 +384,7 @@ class TensorTeacherPacket:
         if type(model) is not _tenso_nativ_input_import__TensorNativeTeacher:
             raise ValueError('explicit current tensor-source Teacher required')
         identity = model.model_identity
-        if identity['source_family'] != self.source_family or identity['parent_num_envs'] != self.source.parent_num_envs or identity['grasp'] != self.grasp or (identity['backend_profile_sha256'] != self.source.profile_sha256):
+        if identity['source_family'] != self.source_family or identity['parent_num_envs'] != self.source.parent_num_envs or identity['grasp'] != self.grasp or (identity['backend_profile_sha256'] != self.source.profile_sha256) or identity['context_mode'] != self.context_mode:
             raise ValueError('shared Teacher source/grasp/profile/environment contract differs')
         model._parts(self.inputs)
         return {key: value.detach().clone() for (key, value) in self.inputs.items()}
@@ -375,11 +406,14 @@ def _source(source, n, contexts, profile_sha, grasp, scope):
     expected = tuple((tenso_nativ_input__ContextIdentity(source.run_uuid, i, source.episode_uids[i], source.reset_ids[i], source.rod_uids[i], source.sdk_step, source.rod_ticks[i], source.policy_time_s, source.solver_time_s) for i in range(n)))
     if contexts != expected:
         raise ValueError('common/rod/context shared parent row/time/episode source differs')
+from dh116.rl.reward import train_rewar__GOAL_FULL as GOAL_FULL
+from dh116.rl.reward import train_rewar__SMOKE as SMOKE
 from dh116.rl.reward import validate_reward_config as validate_reward_config
+_TEACHER_CONTEXT_MODES = {SMOKE: MODES[0], GOAL_FULL: FULL_CONTEXT_MODE}
 _EXCLUDED = (*tenso_sourc_owner__SMOKE_EXCLUDED, 8, 9, 46)
 
 @tenso_nativ_input__torch.no_grad()
-def pack_shared_tensor_inputs(q, qd, *, joint_names, body_link_pose_w, body_com_velocity_w, root_seed_w, env_origins, rod_positions_w, rod_velocities_w, rest_lengths_m, task_context, task_context_valid, source_identity, context_identities, backend_profile_sha256, grasp, scope):
+def pack_shared_tensor_inputs(q, qd, *, joint_names, body_link_pose_w, body_com_velocity_w, root_seed_w, env_origins, rod_positions_w, rod_velocities_w, rest_lengths_m, task_context, task_context_valid, source_identity, context_identities, backend_profile_sha256, grasp, scope, context_mode=MODES[0]):
     """Pack [N,2,17] native q/qd into the original common66+rod41x13+context50.
 
     ``joint_names`` is a pair of complete, source-verified 17DOF name tuples,
@@ -407,7 +441,9 @@ def pack_shared_tensor_inputs(q, qd, *, joint_names, body_link_pose_w, body_com_
         raise ValueError('horizontal origins and raw unit WXYZ quaternion required')
     context = _tensor('task context', task_context, (n, 50), device, dtype=tenso_nativ_input__torch.float32, finite=False)
     context_valid = _tensor('task context validity', task_context_valid, (n, 50), device, dtype=tenso_nativ_input__torch.bool)
-    tenso_nativ_input__validate_context_tensors(context, context_valid, mode='approach_wiring_smoke_v1')
+    if context_mode not in _TEACHER_CONTEXT_MODES.values():
+        raise ValueError('explicit supported Teacher context mode required')
+    tenso_nativ_input__validate_context_tensors(context, context_valid, mode=context_mode)
     ledger = tenso_nativ_input__torch.full((n, 371), tenso_nativ_input__torch.nan, dtype=tenso_nativ_input__torch.float32, device=device)
     valid = tenso_nativ_input__torch.zeros((n, 371), dtype=tenso_nativ_input__torch.bool, device=device)
     (lower, upper) = active_limits()
@@ -447,8 +483,7 @@ def pack_shared_tensor_inputs(q, qd, *, joint_names, body_link_pose_w, body_com_
     mask = tenso_nativ_input__torch.ones((n, 41), dtype=tenso_nativ_input__torch.bool, device=device)
     nodes = tenso_nativ_input___features(snapshot, ledger[:, tenso_nativ_input__common_selection()], mask)
     inputs = dict(common371=ledger, common_valid=valid, rod_nodes=nodes, rod_mask=mask, task_context=context.clone(), task_context_valid=context_valid.clone())
-    return TensorTeacherPacket(inputs, source_identity, grasp, context_identities)
-from dh116.rl.reward import train_rewar__SMOKE as SMOKE
+    return TensorTeacherPacket(inputs, source_identity, grasp, context_identities, context_mode=context_mode)
 _REQUIRED = tuple((i for i in range(50) if i not in _EXCLUDED))
 
 def _common(ledger, valid):
@@ -461,24 +496,29 @@ def _common(ledger, valid):
     return ledger[:, tenso_nativ_teach__common_selection()]
 
 class TensorSourceOwner:
-    """Owner of source identities and GPU smoke reset/action references.
+    """Owner of source identities and GPU Reset/action context references.
 
     ``profile`` is the source-bound current TensorBackendProfile. Its manifest
     path and digest are fixed for this owner. Profile verification and native parameter
     validator run at construction/Reset, never at substep/context capture.
 
     ``contexts()`` returns (float32[N,50], bool[N,50], ContextIdentity tuple).
+    Full mode requires a device-resident ``FullTaskContext`` from the same
+    physical boundary supplying the current per-environment task history.
     ``reset(env_ids, distance_m)`` accepts K primitive row IDs and a device
     floating [K] tensor measured at each actual fresh Reset. Only those GPU
     reference rows change. Wall time remains external and elapsed time comes
     from the original SDK-derived policy timestamp, not a fitted offset.
     """
 
-    def __init__(self, runtime, sim, profile, env_origins, device, grasp, episode_cap_s, wall_cap_s, *, scope=None, rod_uids=None):
+    def __init__(self, runtime, sim, profile, env_origins, device, grasp, episode_cap_s, wall_cap_s, *, scope=None, rod_uids=None, context_mode=MODES[0]):
         if type(runtime) is not TensorRodOwner:
             raise ValueError('actual TensorRodOwner required')
         if grasp not in ('pinch', 'tripod', 'power') or any((type(x) not in (float, int) or not tenso_sourc_owner__math.isfinite(x) or x <= 0 for x in (episode_cap_s, wall_cap_s))):
             raise ValueError('original grasp and finite source-owned episode/wall caps required')
+        if context_mode not in _TEACHER_CONTEXT_MODES.values():
+            raise ValueError('explicit supported source context mode required')
+        self.context_mode = context_mode
         (self.runtime, self.sim, self.profile) = (runtime, sim, profile)
         self.device = tenso_sourc_owner__torch.device(device)
         self.scope = ('cpu_fixture' if self.device.type == 'cpu' else 'owner_source_unqualified') if scope is None else scope
@@ -586,7 +626,7 @@ class TensorSourceOwner:
         timer_dt = float(np.float32(dt)) if callable(getter) else dt
         if dt not in (1 / 480, fp32_dt) or not np.isfinite(float(self.sim.current_time)):
             raise ValueError('actual 480Hz SDK dt and finite native time required')
-        if r._failed or solver.last_error != 0 or float(solver.time) != r._time or (self.sim.current_time_step_index != r.physics_step) or (abs(float(self.sim.current_time) - r.physics_step * timer_dt) > max(1e-09, r.physics_step * 1e-14)):
+        if r._failed or solver.last_error != 0 or float(solver.time) != r._time or (self.sim.current_time_step_index != r.physics_step) or (abs(float(self.sim.current_time) - r.physics_step * timer_dt) > min(dt / 4, max(1e-09, r.physics_step * math.ulp(float(self.sim.current_time))))):
             raise ValueError('shared SDK/solver source boundary changed or failed')
         return tenso_sourc_owner__SharedSourceIdentity(id(solver), solver.num_envs, tuple(range(solver.num_envs)), r.run_uuid, r.episodes, self.rod_uids, tuple(r.resets), tuple(r.ticks), r.physics_step, float(self.sim.current_time), dt, timer_dt, r.physics_step / 480, float(solver.time), self.profile.digest, self.scope)
 
@@ -673,8 +713,49 @@ class TensorSourceOwner:
         self._previous = values.float().clone()
         self._previous_tokens = [token] * self.n
 
-    def contexts(self):
+    def _fill_full_context(self, values, valid, full):
+        torch = tenso_sourc_owner__torch
+        n, device = self.n, self.device
+        phase = _tensor('full context phase', full.phase, (n,), device, dtype=torch.int64)
+        fractions = _tensor('full context contact fractions', full.contact_fraction, (n, 2), device, finite=False)
+        contact = _tensor('full context contact duration', full.contact_duration_s, (n,), device, finite=False)
+        hold = _tensor('full context hold duration', full.hold_duration_s, (n,), device, finite=False)
+        anchor = _tensor('full context anchor flags', full.anchor_valid, (n, 2), device, dtype=torch.bool)
+        station = _tensor('full context material station', full.anchor_station_m, (n, 2), device, finite=False)
+        normalized_station = station / self._rest_total[:, None]
+        valid_station = (normalized_station >= 0) & (normalized_station <= 1)
+        unknown_station = torch.isnan(station)
+        if not bool((
+            (phase >= 0) & (phase < 4)
+            & ((fractions >= 0) & (fractions <= 1)).all(dim=1)
+            & torch.isfinite(contact) & (contact >= 0)
+            & torch.isfinite(hold) & (hold >= 0)
+            & torch.where(anchor, valid_station, unknown_station).all(dim=1)
+        ).all()):
+            raise ValueError('full context requires actual phase, finite contact/history and valid fixed stations')
+
+        values[:, :4] = phase[:, None] == torch.arange(4, device=device)
+        values[:, 4:6] = fractions
+        values[:, 6] = contact / CONTEXT_FIELDS[6]['scale']
+        values[:, 7] = hold / CONTEXT_FIELDS[7]['scale']
+        values[:, 8:10] = normalized_station
+        valid[:, 8:10] = anchor
+        values[:, 10:12] = anchor
+        valid[:, tenso_sourc_owner__SMOKE_EXCLUDED] = True
+        for index, name in (
+            (47, 'prohibited_support_latched'), (48, 'success_event_emitted'), (49, 'trusted_failure_event_emitted'),
+        ):
+            values[:, index] = _tensor('full context ' + name, getattr(full, name), (n,), device, dtype=torch.bool)
+
+    def contexts(self, *, full=None):
         boundary = self._boundary()
+        if self.context_mode == FULL_CONTEXT_MODE:
+            if type(full) is not FullTaskContext:
+                raise ValueError('source-owned full context endpoint required')
+            if type(full.source) is not SharedSourceIdentity or full.source != boundary:
+                raise ValueError('full context endpoint and live shared boundary differ')
+        elif full is not None:
+            raise ValueError('smoke source cannot accept a full context endpoint')
         identities = self._identities(boundary)
         for (current, reset) in zip(identities, self._reset_identities):
             if reset is None or current.epoch != reset.epoch:
@@ -696,6 +777,8 @@ class TensorSourceOwner:
         values[:, 44] = remaining
         values[:, 45] = 0.0
         values[:, 48:50] = 0.0
+        if full is not None:
+            self._fill_full_context(values, valid, full)
         if bool((valid & ~tenso_sourc_owner__torch.isfinite(values) | ~valid & ~tenso_sourc_owner__torch.isnan(values)).any()):
             raise ValueError('finite actual context with explicit NA values required')
         if self._boundary() != boundary:
@@ -741,12 +824,13 @@ class TensorNativeTeacher(EagerRuntimePolicy, PrivilegedTeacher):
         model = config.get('model', {})
         grasp = config.get('grasp')
         expected = dict(common_size=371, action_size=24, hidden=[256, 256], rod_feature_size=13, rod_hidden=64)
-        if type(num_envs) is not int or not 2 <= num_envs <= 512 or grasp not in ('pinch', 'tripod', 'power') or (config.get('task_kind') != 'deformable_rod') or (config.get('use_cameras') is not False) or (set(model) != set(expected) | {'initial_std'}) or any((model[k] != v for (k, v) in expected.items())) or (type(model['initial_std']) not in (int, float)) or (not 0.001 <= model['initial_std'] <= 0.3) or (reward.profile != SMOKE) or (reward.finger_goal is None) or (reward.finger_goal.grasp != grasp):
+        if type(num_envs) is not int or not 2 <= num_envs <= 512 or grasp not in ('pinch', 'tripod', 'power') or (config.get('task_kind') != 'deformable_rod') or (config.get('use_cameras') is not False) or (set(model) != set(expected) | {'initial_std'}) or any((model[k] != v for (k, v) in expected.items())) or (type(model['initial_std']) not in (int, float)) or (not 0.001 <= model['initial_std'] <= 0.3) or reward.profile not in _TEACHER_CONTEXT_MODES or (reward.finger_goal is None) or (reward.finger_goal.grasp != grasp):
             raise ValueError('unchanged shared finger-goal model/reward configuration required')
-        identity = dict(policy_version='dh116-tensor-native-context-teacher-v1', source_family='shared_batched_solver_v1', grasp=grasp, task_kind='deformable_rod', parent_num_envs=num_envs, action_size=24, common_size=371, measured_common_size=66, raw_common_unknown='NaN_false_305', context_size=50, context_mode=SMOKE, input_keys=list(tenso_nativ_teach__INPUT_KEYS), backend_sha256=backend_profile.binary_sha256, backend_profile_sha256=backend_profile.digest, source_tree_sha256=backend_profile.source_tree_sha256, config_semantic_sha256=tenso_nativ_teach__digest(config), reward_config_sha256=reward.config_sha256, rod_position_frame='world_minus_environment_origin', other_rod_vector_frames='world', physics_coordinate_frame='world', checkpoint_namespace='tensor_native_teacher_' + grasp + '_v1', native_ready=False, teacher_admission=False, grasp_qualified=False, backend_scope='flat_candidate_unqualified', architecture=dict(common=[66, 256, 256], rod=[13, 64, 64], context=[100, 64, 64], fusion=448, actor=24, critic=1))
+        context_mode = _TEACHER_CONTEXT_MODES[reward.profile]
+        identity = dict(policy_version='dh116-tensor-native-context-teacher-v1', source_family='shared_batched_solver_v1', grasp=grasp, task_kind='deformable_rod', parent_num_envs=num_envs, action_size=24, common_size=371, measured_common_size=66, raw_common_unknown='NaN_false_305', context_size=50, context_mode=context_mode, input_keys=list(tenso_nativ_teach__INPUT_KEYS), backend_sha256=backend_profile.binary_sha256, backend_profile_sha256=backend_profile.digest, source_tree_sha256=backend_profile.source_tree_sha256, config_semantic_sha256=tenso_nativ_teach__digest(config), reward_config_sha256=reward.config_sha256, rod_position_frame='world_minus_environment_origin', other_rod_vector_frames='world', physics_coordinate_frame='world', checkpoint_namespace='tensor_native_teacher_' + grasp + '_v1', native_ready=False, teacher_admission=False, grasp_qualified=False, backend_scope='flat_candidate_unqualified', architecture=dict(common=[66, 256, 256], rod=[13, 64, 64], context=[100, 64, 64], fusion=448, actor=24, critic=1))
         identity['dependency_source_sha256'] = {name: file_sha256(source_file(name)) for name in ('rl/teacher.py','rl/device.py','physics/solver.py','rl/ppo.py','env/contracts.py')}
         identity['model_identity_sha256'] = tenso_nativ_teach__digest(identity)
-        initialize_native_network(self, identity, backend_profile, SMOKE, model['initial_std'])
+        initialize_native_network(self, identity, backend_profile, context_mode, model['initial_std'])
 
     @property
     def model_identity(self):

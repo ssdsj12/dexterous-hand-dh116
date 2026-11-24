@@ -45,7 +45,7 @@
   "material_status": "explicit_candidate_inherits_P0_solver_coefficients_not_measured_task_material",
   "scene_input": {
     "path": "build/scene_bundle/power/scene.json",
-    "sha256": null
+    "sha256": "081018119e60ff42f46083425836a62565996c35e54f7e4117b11103c7bacb48"
   },
   "qualification": {
     "teacher": false,

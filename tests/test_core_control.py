@@ -225,3 +225,18 @@ def test_reaction_faults_are_rejected_before_any_sdk_write(fault):
     with pytest.raises(ValueError):
         control.submit(tr, stamp=stamp, wrenches=w, state=state, reaction_source=source)
     assert not writes
+
+def test_full_control_rejects_only_the_unsafe_reaction_row_before_sdk_write():
+    control, stamp, state, tr, w, source, writes = control_fixture()
+    control.isolate_constraints = True
+    old = [row[1].clone() for row in tr['expected']]
+    w[0, 0, 0] = 30 + 1e-7
+    w[1, 0, 0] = 7
+    control.submit(tr, stamp=stamp, wrenches=w, state=state, reaction_source=source)
+    assert tr['constraint_failure'].tolist() == [True, False]
+    issued = [row for row in writes if isinstance(row, dict)]
+    assert issued[0]['forces'][:, 0, 0].tolist() == [0, 7]
+    for side, expected in enumerate(tr['expected']):
+        torch.testing.assert_close(expected[0], state['backend_targets'][0, side, control.write_ids[side]])
+        torch.testing.assert_close(expected[1], old[side], atol=0, rtol=0)
+    assert w[0, 0, 0] > 30

@@ -42,6 +42,7 @@
   },
   "profile": "approach_wiring_smoke_v1",
   "profile_version": 1,
+  "enable_full_grasp": true,
   "schema_sha256": "5c31eda15b12d7c364e541c8cf032e4d052dfb2faa1a284bff89fb0da5263655",
   "success": {
     "hold_s": 5.0,

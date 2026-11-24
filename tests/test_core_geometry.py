@@ -242,4 +242,111 @@ def test_lattice_margin_routes_only_original_cell_face_ambiguity(face_offset):
     result = _capture_owner(grid).capture(_poses(1), torch.tensor(nodes)[None], frame=('face', face_offset))
     assert result.sdf_fallback[0].tolist() == [abs(face_offset) < 0.0001] * 2
     assert result.sdf_node_valid.all()
+
+
+def _tripod_box(low=(-.001, -.001, -.001), high=(.001, .001, .001)):
+    return np.array([[x, y, z] for x in (low[0], high[0])
+                     for y in (low[1], high[1]) for z in (low[2], high[2])])
+
+
+def _tripod_guard(shapes, origins):
+    from dh116.physics.geometry import TensorGeometry, TripodSupportGuard
+
+    geometry = TensorGeometry(shapes, device='cpu')
+    supports = [
+        dict(name='support_0', center_m=[2., 0., .6], size_m=[.02, .02, .02]),
+        dict(name='support_1', center_m=[-2., 0., .6], size_m=[.02, .02, .02]),
+    ]
+    return TripodSupportGuard(geometry, supports, origins)
+
+
+def _tripod_inputs(origins):
+    poses = _poses(len(origins))
+    poses[:, 0, :, 0], poses[:, 1, :, 0] = -1., 1.
+    poses[..., :3] += origins[:, None, None]
+    nodes = torch.zeros(len(origins), 41, 3, dtype=torch.float64)
+    nodes[..., 1] = torch.linspace(-.02, .02, 41, dtype=torch.float64)
+    nodes[..., 2] = .6
+    return poses, nodes + origins[:, None]
+
+
+def test_tripod_raw_source_cooked_and_non_target_thresholds():
+    origins = torch.zeros(4, 3, dtype=torch.float64)
+    guard = _tripod_guard([
+        (0, 0, 'source:finger33_link', _tripod_box()),
+        (0, 1, 'cooked:finger33_link', _tripod_box()),
+        (1, 0, 'source:finger43_link', _tripod_box()),
+    ], origins)
+    poses, nodes = _tripod_inputs(origins)
+    poses[:, 0, 0, 0] = torch.tensor([.005849, .005851, .005851, .005851], dtype=torch.float64)
+    poses[:, 0, 1, 0] = torch.tensor([.005851, .005849, .005851, .005851], dtype=torch.float64)
+    poses[:, 1, 0, 0] = torch.tensor([.006251, .006251, .006249, .006251], dtype=torch.float64)
+    failed = guard.capture(poses, nodes, frame=('cpu_fixture', 190))
+    assert failed.dtype is torch.bool and failed.tolist() == [True, True, True, False]
+
+
+def test_tripod_both_supports_and_raw_quaternion_survive_fallback():
+    origins = torch.tensor([[0., 0., 0.], [5., 1., 0.], [-3., 2., 0.]], dtype=torch.float64)
+    guard = _tripod_guard([
+        (0, 0, 'source:finger33_link', _tripod_box()),
+        (1, 0, 'cooked:finger43_link', _tripod_box()),
+    ], origins)
+    poses, nodes = _tripod_inputs(origins)
+    poses[0, 0, 0, 0] = 2.
+    poses[1, 1, 0, 0] = origins[1, 0] - 2.
+    poses[2, 0, 0, 3:] = torch.tensor([0., 0., .7071074, .7071074], dtype=torch.float64)
+    poses[2, 0, 0, 0] = origins[2, 0] + 2.011000002
+    assert guard.capture(poses, nodes, frame=1).tolist() == [True, True, True]
+    poses[..., 3:] /= poses[..., 3:].norm(dim=-1, keepdim=True)
+    assert guard.capture(poses, nodes, frame=2).tolist() == [True, True, False]
+
+
+def test_tripod_exact_fallback_certifies_the_full_bent_node_group():
+    from scipy.spatial.transform import Rotation
+
+    # The segment QPs alone cannot recover the closest support plane of the
+    # triangle formed by the three nodes. The full group reaches x=0 before
+    # rotation, so the analytic clearances are .004853 and .004840 m.
+    origins = torch.zeros(2, 3, dtype=torch.float64)
+    rotation = Rotation.from_euler('z', 1., degrees=True).as_matrix()
+    vertices = _tripod_box((.004853, -.0001, -.001), (.006853, .0001, .001)) @ rotation.T
+    guard = _tripod_guard([
+        (0, 0, 'source:finger33_link', vertices),
+        (1, 0, 'source:finger43_link', _tripod_box()),
+    ], origins)
+    poses, _ = _tripod_inputs(origins)
+    poses[:, 0, 0, :2] = 0.
+    poses[1, 0, 0, :3] -= torch.tensor(.000013 * rotation[:, 0])
+    line = np.c_[np.zeros(41), np.linspace(0., .4, 41), np.zeros(41)]
+    line[:3] = [[0., -.001, 0.], [-.001, 0., 0.], [0., .001, 0.]]
+    nodes = torch.from_numpy(line @ rotation.T).expand(2, -1, -1).clone()
+    nodes[..., 2] += .6
+    assert guard.capture(poses, nodes, frame=1).tolist() == [False, True]
+
+
+def test_tripod_clear_rows_use_device_geometry_and_invalidate_failed_capture(monkeypatch):
+    origins = torch.zeros(1, 3, dtype=torch.float64)
+    guard = _tripod_guard([
+        (0, 0, 'source:finger33_link', _tripod_box()),
+        (1, 0, 'source:finger43_link', _tripod_box()),
+    ], origins)
+    poses, nodes = _tripod_inputs(origins)
+
+    def reject_host_copy(*args, **kwargs):
+        pytest.fail('ordinary Tripod rows transferred to CPU fallback')
+
+    with monkeypatch.context() as patch:
+        patch.setattr(torch.Tensor, 'cpu', reject_host_copy)
+        patch.setattr(torch.Tensor, 'numpy', reject_host_copy)
+        result = guard.capture(poses, nodes, frame=('cpu_fixture', 1))
+    assert result.tolist() == [False]
+    assert torch.equal(guard.require_ready(frame=('cpu_fixture', 1)), result)
+    with pytest.raises(ValueError, match='frame'):
+        guard.require_ready(frame=('cpu_fixture', 2))
+    with pytest.raises(ValueError, match='finite'):
+        guard.capture(poses, nodes * torch.nan, frame=('cpu_fixture', 2))
+    with pytest.raises(ValueError, match='frame'):
+        guard.require_ready(frame=('cpu_fixture', 1))
+
+
 FROZEN = {'matrix': [[-0.6666666666666669, 0.13333333333333336, 0.7333333333333335, 0.137], [0.6666666666666667, -0.33333333333333337, 0.6666666666666667, -0.293], [0.33333333333333337, 0.9333333333333336, 0.1333333333333333, 0.619], [0.0, 0.0, 0.0, 1.0]], 'world': [[0.13826666666666668, -0.28966666666666663, 0.6178666666666667], [0.13573333333333334, -0.30233333333333334, 0.6201333333333333], [0.12293333333333334, -0.29933333333333334, 0.6305333333333333]], 'float32': {'phi': [-0.014999999664723873, -0.004698506090790033, 0.02863915078341961, float('nan'), float('nan'), 0.007799999788403511, 0.010073472745716572], 'gradient': [[1.0, 0.0, 0.0], [1.0000001192092896, 0.19033001363277435, 0.1313900649547577], [1.0, 0.11479991674423218, 0.22189989686012268], [float('nan'), float('nan'), float('nan')], [float('nan'), float('nan'), float('nan')], [1.0, 0.14000004529953003, 0.14000004529953003], [1.0, 0.04402998462319374, 0.11962996423244476]], 'valid': [True, True, True, False, False, True, True], 'contact': {'minimum_gap_m': -0.019999999552965164, 'minimum_node_id': 0, 'gradient_norm_at_minimum': 1.0, 'in_lattice_nodes': [0, 1, 2, 5, 6], 'negative_gap_nodes': [0, 1], 'contact_predicate_nodes': [0, 1], 'node_gaps_m': [-0.019999999552965164, -0.009698506444692612, 0.023639149963855743, None, None, 0.0027999994345009327, 0.0050734723918139935], 'local_node_at_minimum': [-0.019999999552965164, -0.019999999552965164, -0.019999999552965164], 'cpu_dtype': 'float32', 'native_contact_observed': False}}, 'float64': {'phi': [-0.015, -0.0046985059, 0.02863915, float('nan'), float('nan'), 0.007800000000000001, 0.010073472699999999], 'gradient': [[0.9999999999999999, 0.0, 0.0], [0.9999999999999999, 0.19032999999999997, 0.1313899999999998], [1.0000000000000002, 0.11480000000000032, 0.22189999999999988], [float('nan'), float('nan'), float('nan')], [float('nan'), float('nan'), float('nan')], [0.9999999999999996, 0.13999999999999985, 0.13999999999999985], [0.9999999999999993, 0.04402999999999995, 0.1196299999999999]], 'valid': [True, True, True, False, False, True, True], 'contact': {'minimum_gap_m': -0.0200000002, 'minimum_node_id': 0, 'gradient_norm_at_minimum': 0.9999999999999999, 'in_lattice_nodes': [0, 1, 2, 5, 6], 'negative_gap_nodes': [0, 1], 'contact_predicate_nodes': [0, 1], 'node_gaps_m': [-0.0200000002, -0.0096985061, 0.0236391498, None, None, 0.002799999800000001, 0.005073472499999999], 'local_node_at_minimum': [-0.02, -0.02, -0.02], 'cpu_dtype': 'float64', 'native_contact_observed': False}}, 'box': [{'intersects': True, 'max_separating_axis_gap_m': -1.9999999920083944e-10, 'top_clearance_m': -0.021, 'bounds_world_m': [[-0.01, -0.001, -0.001], [0.01, 0.001, 0.001]]}, {'intersects': True, 'max_separating_axis_gap_m': 0.0, 'top_clearance_m': -0.021, 'bounds_world_m': [[-0.01, -0.001, -0.001], [0.01, 0.001, 0.001]]}, {'intersects': True, 'max_separating_axis_gap_m': 5.00000006675716e-11, 'top_clearance_m': -0.021, 'bounds_world_m': [[-0.01, -0.001, -0.001], [0.01, 0.001, 0.001]]}, {'intersects': False, 'max_separating_axis_gap_m': 1.9999999920083944e-10, 'top_clearance_m': -0.021, 'bounds_world_m': [[-0.01, -0.001, -0.001], [0.01, 0.001, 0.001]]}], 'near': {'zero': {'minimum_gap_m': -3.259629011154175e-09, 'minimum_node_id': 0, 'gradient_norm_at_minimum': 1.002785563468933, 'in_lattice_nodes': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40], 'negative_gap_nodes': [0], 'contact_predicate_nodes': [0], 'node_gaps_m': [-3.259629011154175e-09, 0.030726855620741844, 0.027867088094353676, 0.030682550743222237, 0.03138137608766556, 0.028573663905262947, 0.029565172269940376, 0.0288101639598608, 0.024525219574570656, 0.031001107767224312, 0.026088831946253777, 0.032569289207458496, 0.03362388536334038, 0.028464024886488914, 0.029559502378106117, 0.0285926703363657, 0.03341834247112274, 0.030559683218598366, 0.027277899906039238, 0.029900474473834038, 0.027850205078721046, 0.024211958050727844, 0.029880007728934288, 0.0293260607868433, 0.027829410508275032, 0.029318178072571754, 0.03252110257744789, 0.031077397987246513, 0.027450433000922203, 0.025908946990966797, 0.028800858184695244, 0.025781093165278435, 0.026995519176125526, 0.03518608212471008, 0.024357523769140244, 0.0331207700073719, 0.027745341882109642, 0.029553858563303947, 0.03420774266123772, 0.027047762647271156, 0.029308883473277092], 'local_node_at_minimum': [-0.013271000236272812, -0.013271000236272812, -0.011719048023223877], 'cpu_dtype': 'float32', 'native_contact_observed': False}, 'threshold': {'minimum_gap_m': -0.00015000347048044205, 'minimum_node_id': 0, 'gradient_norm_at_minimum': 1.002785563468933, 'in_lattice_nodes': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40], 'negative_gap_nodes': [0], 'contact_predicate_nodes': [0], 'node_gaps_m': [-0.00015000347048044205, 0.030576853081583977, 0.027717089280486107, 0.03053254820406437, 0.03123137168586254, 0.02842366136610508, 0.029415173456072807, 0.028660161420702934, 0.024375220760703087, 0.030851105228066444, 0.025938833132386208, 0.03241929039359093, 0.03347388282418251, 0.028314026072621346, 0.02940949983894825, 0.02844267152249813, 0.033268339931964874, 0.030409684404730797, 0.02712790109217167, 0.02975047565996647, 0.027700206264853477, 0.024061957374215126, 0.02973000891506672, 0.029176058247685432, 0.027679407969117165, 0.029168179258704185, 0.032371100038290024, 0.030927399173378944, 0.027300434187054634, 0.025758948177099228, 0.028650859370827675, 0.025631090626120567, 0.02684551663696766, 0.035036079585552216, 0.024207523092627525, 0.032970767468214035, 0.027595339342951775, 0.02940385602414608, 0.03405774012207985, 0.02689776010811329, 0.029158884659409523], 'local_node_at_minimum': [-0.013271000236272812, -0.013271000236272812, -0.011719048023223877], 'cpu_dtype': 'float32', 'native_contact_observed': False}, 'lattice_face': {'minimum_gap_m': -0.0196098443120718, 'minimum_node_id': 0, 'gradient_norm_at_minimum': 1.002785563468933, 'in_lattice_nodes': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40], 'negative_gap_nodes': [0], 'contact_predicate_nodes': [0], 'node_gaps_m': [-0.0196098443120718, 0.017845915630459785, 0.014986144378781319, 0.017801610752940178, 0.0185004323720932, 0.01569272391498089, 0.016684232279658318, 0.015929222106933594, 0.011644279584288597, 0.018120165914297104, 0.013207891955971718, 0.01968834549188614, 0.02074294164776802, 0.015583084896206856, 0.01667855866253376, 0.01571173407137394, 0.020537396892905235, 0.017678741365671158, 0.014396963641047478, 0.01701953634619713, 0.014969266951084137, 0.011331018060445786, 0.01699906773865223, 0.01644512079656124, 0.014948468655347824, 0.016437239944934845, 0.019640158861875534, 0.018196457996964455, 0.014569493010640144, 0.013028007000684738, 0.015919916331768036, 0.012900151312351227, 0.014114579185843468, 0.022305140271782875, 0.011476581916213036, 0.020239826291799545, 0.014864398166537285, 0.01667291671037674, 0.02132679708302021, 0.014166820794343948, 0.016427945345640182], 'local_node_at_minimum': [-0.019999900832772255, -0.013271000236272812, -0.011719048023223877], 'cpu_dtype': 'float32', 'native_contact_observed': False}, 'flat': {'minimum_gap_m': -0.005000000353902578, 'minimum_node_id': 0, 'gradient_norm_at_minimum': 0.0, 'in_lattice_nodes': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40], 'negative_gap_nodes': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40], 'contact_predicate_nodes': [], 'node_gaps_m': [-0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578, -0.005000000353902578], 'local_node_at_minimum': [-0.013271000236272812, -0.013271000236272812, -0.011719048023223877], 'cpu_dtype': 'float32', 'native_contact_observed': False}, 'outside': {'minimum_gap_m': None, 'minimum_node_id': None, 'gradient_norm_at_minimum': None, 'in_lattice_nodes': [], 'negative_gap_nodes': [], 'contact_predicate_nodes': [], 'node_gaps_m': [None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None], 'local_node_at_minimum': None, 'cpu_dtype': 'float32', 'native_contact_observed': False}}, 'table': [0.0020990000000000175, 0.0020999999999999908, 0.002100999999999964], 'coarse_support': -0.005002}

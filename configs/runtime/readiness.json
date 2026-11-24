@@ -286,5 +286,337 @@
       "automatic_retries": 0,
       "forced_terminations": 0
     }
+  },
+  "grasp_training_r2": {
+    "baseline_commit": "3e8e41d4ef8c71ef510b7c51f8406b9934c1d563",
+    "qualified_grasp": false,
+    "student_training_admitted": false,
+    "dry_run_tests": {
+      "cpu": 193,
+      "cuda": 13
+    },
+    "native_probes": {
+      "pinch": {
+        "2": {
+          "scene_sha256": "c43d29b93ef94799eaaf1edf2f97d0241a48994f6ac1891766e5bc4bca86cc44",
+          "episode_windows": 480,
+          "recipe_sha256": "f5bd03057abed73b8b4890dd52af17f538f408ef51170f26bc331195387199bc",
+          "exit_code": 0,
+          "sdk_step": 18,
+          "controls": 2,
+          "updates": 0,
+          "window_seconds": [
+            0.560007823863998,
+            0.2881981248501688
+          ],
+          "peak_cuda_allocated_bytes": 20900352,
+          "receipt": "build/grasp_train_ready_r2/pinch-full-2-pose/native_result.json",
+          "sha256": "b581538bc0b8163a5eb1e224d54e1fce51f1f6893e3eacf483dd7e968e16340e",
+          "physical_gpu": 2,
+          "selected_reset_verified": true
+        },
+        "128": {
+          "scene_sha256": "c43d29b93ef94799eaaf1edf2f97d0241a48994f6ac1891766e5bc4bca86cc44",
+          "episode_windows": 480,
+          "recipe_sha256": "dff67955ba4b7779204dbe574451e5fe2a90b05415f8047e8906a6661a96c155",
+          "exit_code": 0,
+          "sdk_step": 18,
+          "controls": 2,
+          "updates": 0,
+          "window_seconds": [
+            0.5627674169372767,
+            0.3726680858526379
+          ],
+          "peak_cuda_allocated_bytes": 130961408,
+          "receipt": "build/grasp_train_ready_r2/pinch-full-128-pose/native_result.json",
+          "sha256": "4616d70c4906486e5759a6188886e0ae4e5f17db35090296f45207788cf9eebe",
+          "physical_gpu": 2
+        },
+        "512": {
+          "scene_sha256": "c43d29b93ef94799eaaf1edf2f97d0241a48994f6ac1891766e5bc4bca86cc44",
+          "episode_windows": 480,
+          "recipe_sha256": "8c4fb8689788414f3d6dad241a8e2f3771805fd94a8fbd3001b39ad23b42c917",
+          "exit_code": 0,
+          "sdk_step": 18,
+          "controls": 2,
+          "updates": 0,
+          "window_seconds": [
+            0.731409200001508,
+            0.655291924951598
+          ],
+          "peak_cuda_allocated_bytes": 466265088,
+          "receipt": "build/grasp_train_ready_r2/pinch-full-512-pose/native_result.json",
+          "sha256": "31ceb20e9480c3e01f82284add56f32bcf0c4c1ff6d910685efb1467fb52e14d",
+          "physical_gpu": 2
+        }
+      },
+      "tripod": {
+        "2": {
+          "scene_sha256": "1ed7cfa0e3ceb19508d09bbac02eed9dfcb4fe2040031e70aef62ec9385c4609",
+          "episode_windows": 480,
+          "recipe_sha256": "fa31decde1033969f274cff15c0fa1a77c98af0247bf88a8055cbca4f6c4c785",
+          "exit_code": 0,
+          "sdk_step": 18,
+          "controls": 2,
+          "updates": 0,
+          "window_seconds": [
+            1.5376264518126845,
+            1.157819411950186
+          ],
+          "peak_cuda_allocated_bytes": 25130496,
+          "receipt": "build/grasp_train_ready_r2/tripod-full-2-pose/native_result.json",
+          "sha256": "df5ee62e45a134b744b9384985b8f847d87629c67a32313736aeb94349d29ad4",
+          "physical_gpu": 3,
+          "selected_reset_verified": true
+        },
+        "128": {
+          "scene_sha256": "1ed7cfa0e3ceb19508d09bbac02eed9dfcb4fe2040031e70aef62ec9385c4609",
+          "episode_windows": 480,
+          "recipe_sha256": "36e289d08ec4d3fd9a0010a45ff2b1d0b56896ed40531b5435a936e4e0786d6f",
+          "exit_code": 0,
+          "sdk_step": 18,
+          "controls": 2,
+          "updates": 0,
+          "window_seconds": [
+            1.9853949369862676,
+            1.820904809050262
+          ],
+          "peak_cuda_allocated_bytes": 181511168,
+          "receipt": "build/grasp_train_ready_r2/tripod-full-128-pose/native_result.json",
+          "sha256": "add7e1f100c2d2917d47925b1960165fc488d26b657f375d3c9b041197586786",
+          "physical_gpu": 3
+        },
+        "512": {
+          "scene_sha256": "1ed7cfa0e3ceb19508d09bbac02eed9dfcb4fe2040031e70aef62ec9385c4609",
+          "episode_windows": 480,
+          "recipe_sha256": "63fdc0fa5994ee4b3474eab0845a22193727904757b1e8264e75d227b3095401",
+          "exit_code": 0,
+          "sdk_step": 18,
+          "controls": 2,
+          "updates": 0,
+          "window_seconds": [
+            6.739258931949735,
+            6.537535538198426
+          ],
+          "peak_cuda_allocated_bytes": 657986560,
+          "receipt": "build/grasp_train_ready_r2/tripod-full-512-pose/native_result.json",
+          "sha256": "ab7753b7fa073528be08d35921f045c31364cec1d2b79e8ab82da43cff3e5881",
+          "physical_gpu": 3
+        }
+      },
+      "power": {
+        "2": {
+          "scene_sha256": "081018119e60ff42f46083425836a62565996c35e54f7e4117b11103c7bacb48",
+          "episode_windows": 480,
+          "recipe_sha256": "beccff2c225a59692d447d72597c0210fb763abe811ad896ceac12b03fb315fd",
+          "exit_code": 0,
+          "sdk_step": 18,
+          "controls": 2,
+          "updates": 0,
+          "window_seconds": [
+            0.563020195113495,
+            0.29628451610915363
+          ],
+          "peak_cuda_allocated_bytes": 135896064,
+          "receipt": "build/grasp_train_ready_r2/power-full-2-pose/native_result.json",
+          "sha256": "a5c5dfea126e6ad572a22eadcaa78709f9ad90939810c819fc078f7cd058c8a9",
+          "physical_gpu": 1,
+          "selected_reset_verified": true
+        },
+        "128": {
+          "scene_sha256": "081018119e60ff42f46083425836a62565996c35e54f7e4117b11103c7bacb48",
+          "episode_windows": 480,
+          "recipe_sha256": "605f65ad6d75cd469adc3a123f2a9d2b9296aa8483a10a74574729189e49e1d9",
+          "exit_code": 0,
+          "sdk_step": 18,
+          "controls": 2,
+          "updates": 0,
+          "window_seconds": [
+            0.5898303729481995,
+            0.38491075905039907
+          ],
+          "peak_cuda_allocated_bytes": 213688832,
+          "receipt": "build/grasp_train_ready_r2/power-full-128-pose/native_result.json",
+          "sha256": "eb6feda6e4c74645c0bc741de8f58f01243ee36214cc79e90d3f581ec2cedc99",
+          "physical_gpu": 1
+        },
+        "512": {
+          "scene_sha256": "081018119e60ff42f46083425836a62565996c35e54f7e4117b11103c7bacb48",
+          "episode_windows": 480,
+          "recipe_sha256": "d3819b75f2283e4f0503d1beb2e47c1cf0aeb61112eeb3aeba2e4eef8b45cf36",
+          "exit_code": 0,
+          "sdk_step": 18,
+          "controls": 2,
+          "updates": 0,
+          "window_seconds": [
+            0.8624053499661386,
+            0.6962659910786897
+          ],
+          "peak_cuda_allocated_bytes": 551585792,
+          "receipt": "build/grasp_train_ready_r2/power-full-512-pose/native_result.json",
+          "sha256": "5109fccfe2c2e2adaf8370f570a61564ed9f8969aa84b71916a4873ce783cce1",
+          "physical_gpu": 1
+        }
+      }
+    },
+    "isolated_constraint": {
+      "event": -40,
+      "terminal_lane": "restored to its original seed with zero submitted reaction; counted in shared SDK/rod budget until the window ends",
+      "true_reset": "window boundary only",
+      "source_failure": "whole run"
+    },
+    "tripod_seed_parent_failure_sha256": "50e038d21677d46542864952544b88d2df52c84877f7a9d4977d87ecd0e6e4c0",
+    "rollout_windows": 32,
+    "episode_windows": 480,
+    "normal_load_support_slots": [
+      "table",
+      "support_0",
+      "support_1"
+    ],
+    "budget_and_limits": {
+      "max_reaction_n": 30,
+      "net_lift_m": 0.03,
+      "hold_s": 5.0,
+      "max_slip_m": 0.0005,
+      "pad_penetration_m": 0.00015,
+      "palm_penetration_m": 0.00025,
+      "table_clearance_m": 0.0021
+    },
+    "training": {
+      "pinch": {
+        "environments": 512,
+        "physical_gpu": 2,
+        "physical_gpu_uuid": "GPU-6eb7f853-e7ad-f3eb-44ab-031a95d52d3a",
+        "completed_updates": 1,
+        "objective": "bounded_live_ppo_smoke",
+        "qualified_grasp": false,
+        "iterations": [
+          {
+            "update": 1,
+            "sdk_step": 258,
+            "seconds": 57.64753419300541,
+            "post_kl": 0.0014425748959183693,
+            "torch_peak_allocated_bytes": 2484334080,
+            "checkpoint_sha256": "3a18815c1b7d7aa796adbd77ad0c3711e489a56ac2b6ef8fd5748b9a849ab2d7",
+            "grasp_metrics": {
+              "return": -0.02105956860604337,
+              "contact_rate": 0.0,
+              "opposed_rate": 0.0,
+              "detached_lift_m": 0.0,
+              "hold_s": 0.0,
+              "successes": 0.0,
+              "constraint_failures": 0.0,
+              "last_detached_lift_m": 0.0
+            }
+          }
+        ],
+        "exit_code": null,
+        "ongoing_at_review": true,
+        "worker_pid": 1523328
+      },
+      "tripod": {
+        "environments": 512,
+        "physical_gpu": 3,
+        "physical_gpu_uuid": "GPU-03eb5f13-5201-0823-0d3f-719b88f00946",
+        "completed_updates": 2,
+        "objective": "bounded_live_ppo_smoke",
+        "qualified_grasp": false,
+        "iterations": [
+          {
+            "update": 1,
+            "sdk_step": 258,
+            "seconds": 250.36834529903717,
+            "post_kl": 0.0012088652001693845,
+            "torch_peak_allocated_bytes": 2486885376,
+            "checkpoint_sha256": "8c276dac359c3ade7a6371bc0b6f2f3d5c87710f3df539e676638cf75e94a7da",
+            "grasp_metrics": {
+              "return": -0.9853679862330665,
+              "contact_rate": 0.0,
+              "opposed_rate": 0.0,
+              "detached_lift_m": 0.0,
+              "hold_s": 0.0,
+              "successes": 0.0,
+              "constraint_failures": 398.0,
+              "last_detached_lift_m": 0.0
+            }
+          },
+          {
+            "update": 2,
+            "sdk_step": 514,
+            "seconds": 288.28294463804923,
+            "post_kl": 0.0009864924941211939,
+            "torch_peak_allocated_bytes": 2488732672,
+            "checkpoint_sha256": "1afd3ed433ca89b76f5d7c62079130bbf9c2c96a57a6dc872a2515483053f4ce",
+            "grasp_metrics": {
+              "return": -1.2786557127198843,
+              "contact_rate": 0.0,
+              "opposed_rate": 0.0,
+              "detached_lift_m": 0.0,
+              "hold_s": 0.0,
+              "successes": 0.0,
+              "constraint_failures": 517.0,
+              "last_detached_lift_m": 0.0
+            }
+          }
+        ],
+        "exit_code": 0,
+        "native_readiness_receipt_sha256": "de5a90d82839c26f1ecad7159e828a513d9516ef8fa10b93ab981e95d0a3c03b",
+        "result": "runs/tripod-ppo512-full/native_result.json",
+        "selected_resets": 915,
+        "best_sha256": "8c276dac359c3ade7a6371bc0b6f2f3d5c87710f3df539e676638cf75e94a7da"
+      },
+      "power": {
+        "environments": 512,
+        "physical_gpu": 1,
+        "physical_gpu_uuid": "GPU-1d290889-01ad-85ec-f69d-bfe9e1762c5e",
+        "completed_updates": 2,
+        "objective": "bounded_live_ppo_smoke",
+        "qualified_grasp": false,
+        "iterations": [
+          {
+            "update": 1,
+            "sdk_step": 258,
+            "seconds": 20.543731081997976,
+            "post_kl": 0.001319392817094922,
+            "torch_peak_allocated_bytes": 2572922368,
+            "checkpoint_sha256": "e9fca9ca3731b99ff28be24fd4ed30d803c8364789fe9d6a8a5a2aaf0797e9d2",
+            "grasp_metrics": {
+              "return": -0.006666498158008392,
+              "contact_rate": 0.0,
+              "opposed_rate": 0.0,
+              "detached_lift_m": 0.0,
+              "hold_s": 0.0,
+              "successes": 0.0,
+              "constraint_failures": 0.0,
+              "last_detached_lift_m": 0.0
+            }
+          },
+          {
+            "update": 2,
+            "sdk_step": 514,
+            "seconds": 21.12954639783129,
+            "post_kl": 0.0009609207045286894,
+            "torch_peak_allocated_bytes": 2575252480,
+            "checkpoint_sha256": "11067c68af726b32039de58f6d3d75edfa9f54bcf756d66e9d59f8784b2e9efa",
+            "grasp_metrics": {
+              "return": -0.005504189166523696,
+              "contact_rate": 0.0,
+              "opposed_rate": 0.0,
+              "detached_lift_m": 0.0,
+              "hold_s": 0.0,
+              "successes": 0.0,
+              "constraint_failures": 0.0,
+              "last_detached_lift_m": 0.0
+            }
+          }
+        ],
+        "exit_code": 0,
+        "native_readiness_receipt_sha256": "ef0ae85d98278250cf31aa98de7ed3d5e60c2b139e4d249d75a8fc2d74d82f9e",
+        "result": "runs/power-ppo512-full/native_result.json",
+        "selected_resets": 0,
+        "best_sha256": "e9fca9ca3731b99ff28be24fd4ed30d803c8364789fe9d6a8a5a2aaf0797e9d2"
+      }
+    },
+    "maximum_rollout_episode_time_s": 1.0666666666666667
   }
 }
