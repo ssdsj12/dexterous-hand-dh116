@@ -1,3 +1,5 @@
+Teacher and Student now share one model-free two-Articulation/flat-CUDA physical runtime, independent CUDA geometry and eager-only execution. Source-frozen N2 hand contact/Reset and N128 probes exit naturally0; warm128-lane window0.293s. CPU603 pass/15 CUDA skips. Two real128x32 PPO updates are running separately; .2s/window,6–8s/update and grasp success remain unproven. [Report](docs/superpowers/reports/2026-11-24-dh116-shared-runtime-lifecycle-native.md)
+
 Shared tensor full-24D control now combines numerical validation without changing physical predicates. CPU84 pass/2 CUDA skips; actual two-lane contact/reaction replay and selected Reset exit naturally0. Independent CUDA geometry and Teacher/Student runtime native proof remain separate. [Report](docs/superpowers/reports/2026-11-24-dh116-tensor-control-fusion.md)
 
 Full tensor native foundations now include owned flat CUDA contacts, two regex Articulations, device observations/reward/rollout and original PPO. Native component proofs pass; integrated coupled throughput and the 6–8s target remain unverified. [Report](docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md)

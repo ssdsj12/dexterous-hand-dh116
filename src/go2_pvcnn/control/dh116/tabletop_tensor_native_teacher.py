@@ -1,13 +1,15 @@
 """New flat-source identity around the unchanged shared Teacher network/protocol."""
 from pathlib import Path
+from .tabletop_runtime_execution import EagerRuntimePolicy, validate_runtime_execution
 from .tabletop_shared_native_teacher import SharedNativeTeacher
 from .tabletop_native_teacher_model import initialize_native_network,INPUT_KEYS
 from .tabletop_tensor_backend_profile import TensorBackendProfile
 from .tabletop_native_teacher_profile import digest
 from .tabletop_training_reward import TrainingReward,SMOKE
 
-class TensorNativeTeacher(SharedNativeTeacher):
+class TensorNativeTeacher(EagerRuntimePolicy, SharedNativeTeacher):
     def __init__(self,config,*,backend_profile,num_envs,reward_config):
+        validate_runtime_execution(config=config)
         if type(backend_profile) is not TensorBackendProfile:
             raise ValueError("explicit independently verified flat CUDA profile required")
         backend_profile.verify()

@@ -39,6 +39,7 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
     from scripts.diagnose_dh116_teacher_initialization import write_new
     from go2_pvcnn.control.dh116.tabletop_regex_task_setup import prepare_regex_task
     from go2_pvcnn.control.dh116.tabletop_tensor_collector import NativeTensorCollector
+    from go2_pvcnn.control.dh116.tabletop_cuda_geometry import geometry_measurement_identity
     from go2_pvcnn.control.dh116.tabletop_tensor_rod_owner import TensorRodOwner
     batch,seed,_,bindings,initial = prepare_regex_task(sim,owners,trace,project,prepared,archive,lanes,seed_height=height)
     names = tuple(row["name"] for row in archive.mesh_plan["entries"])
@@ -99,52 +100,35 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
         raise ValueError("incomplete actual bounded run")
     return dict(throughput_probe_only=probe,updates=updates,controls=total,environments=len(lanes),
         sdk_step=end,iterations=iterations,window_seconds=window_seconds,window_phases=window_phases,sdk_initialization_steps=2,physics_hz=480,control_hz=60,
-        rod_substeps=12,articulations=2,action_size=24,run_uuid=run_uuid,reset_ids=runtime.resets,reset_checks=collector.reset_proofs,
+        rod_substeps=12,articulations=2,action_size=24,run_uuid=run_uuid,
+        geometry_backend=getattr(collector.geometry,"backend",None),
+        geometry_measurement=geometry_measurement_identity(collector.geometry),
+        actual_measurement_backend=geometry_measurement_identity(collector.geometry)["actual_measurement_backend"],
+        measurement_scope="bounded_diagnostic", measurement_native_evidence=args.measurement_native_evidence,
+        native_readback_mode=getattr(batch,"readback_mode","raw"),
+        source_cache_metadata=batch.readback_metadata() if hasattr(batch,"readback_metadata") else None,readback_audit=batch.readback_audit() if hasattr(batch,"readback_audit") else None,
+        reset_ids=runtime.resets,reset_checks=collector.reset_proofs,
         peak_cuda_allocated_bytes=torch.cuda.max_memory_allocated(),teacher_admission=False,grasp_qualified=False)
 
 
 def save_snapshot(path,trainer,args,profile,seed):
-    from copy import deepcopy
-    from dataclasses import asdict
-    import torch
-    from go2_pvcnn.control.dh116.tabletop_deformable_privileged_checkpoint import _rng_state,_decode_rng
-    from go2_pvcnn.control.dh116.tabletop_privileged_checkpoint import _clean,_cpu_tree,_finite_tree,_validate_adam,_validate_rng
-    from go2_pvcnn.control.dh116.tabletop_shared_teacher_checkpoint import verify_roundtrip
-    from go2_pvcnn.control.dh116.tabletop_stereo_contract import file_sha256
-    from tempfile import NamedTemporaryFile
-    _clean(trainer,"clear")
-    rng=_rng_state()
-    rng["cuda"]=torch.cuda.get_rng_state_all() if trainer.device.type=="cuda" else []
-    packet=dict(schema="dh116-tensor-native-checkpoint-v1",model=trainer.model.model_identity,
-        receipt_sha256=args.receipt_sha256,backend_profile_sha256=profile.digest,seed_sha256=seed["sha256"],
-        policy_seed=args.policy_seed,ppo_config=asdict(trainer.config),policy=_cpu_tree(trainer.model.state_dict()),
-        optimizer=_cpu_tree(trainer.optimizer.state_dict()),rng=rng,policy_version=trainer.policy_version,
-        counters=deepcopy(trainer.counters),physical_state_saved=False,restart_requires_verified_reset=True)
-    packet["driver_source_sha256"]={p.name:file_sha256(p) for p in (
-        Path(__file__),ROOT/"src/go2_pvcnn/control/dh116/tabletop_tensor_collector.py")}
-    _finite_tree(packet)
-    with NamedTemporaryFile(dir=path.parent) as stream:
-        torch.save(packet,stream)
-        stream.flush()
-        os.fsync(stream.fileno())
-        saved=torch.load(stream.name,map_location="cpu",weights_only=True)
-        _validate_adam(saved["optimizer"],trainer.model,trainer.config,saved["counters"]["updates"])
-        saved_rng=saved["rng"]
-        if (not torch.equal(saved_rng["torch"],rng["torch"]) or saved_rng["python"]!=rng["python"]
-                or not torch.equal(saved_rng["numpy"][1],rng["numpy"][1])
-                or saved_rng["numpy"][0]!=rng["numpy"][0] or saved_rng["numpy"][2:]!=rng["numpy"][2:]
-                or len(saved_rng["cuda"])!=len(rng["cuda"])
-                or any(not torch.equal(a,b) for a,b in zip(saved_rng["cuda"],rng["cuda"],strict=True))):
-            raise ValueError("serialized checkpoint changed RNG state")
-        decoded=_decode_rng(dict(saved["rng"],cuda=[]))
-        _validate_rng(dict(decoded,cuda=saved["rng"]["cuda"]))
-        restored=type(trainer)(deepcopy(trainer.model),trainer.config,rollout_steps=32,num_envs=trainer.num_envs,device=trainer.device)
-        restored.model.load_state_dict(saved["policy"])
-        restored.optimizer.load_state_dict(saved["optimizer"])
-        restored.counters,restored.policy_version=saved["counters"],saved["policy_version"]
-        verify_roundtrip(trainer,restored)
-        os.link(stream.name,path)
-    return file_sha256(path)
+    """Use the separately verified v2 optimizer/RNG restart format."""
+    from go2_pvcnn.control.dh116.tabletop_native_teacher_profile import digest
+    from go2_pvcnn.control.dh116.tabletop_tensor_checkpoint import save_checkpoint
+    recipe=digest(dict(schema="dh116-tensor-native-ppo-recipe-v2",
+        model=trainer.model.model_identity,rollout_steps=trainer.rollout_steps,
+        num_envs=trainer.num_envs,receipt_sha256=args.receipt_sha256,
+        profile_sha256=profile.digest,seed_sha256=seed["sha256"],policy_seed=args.policy_seed,
+        physics_hz=480,control_hz=60,solver_substeps=12,action_size=24,
+        geometry_backend=os.environ.get("DH116_TENSOR_GEOMETRY_BACKEND","eager"),
+        readback_backend=os.environ.get("DH116_NATIVE_READBACK_BACKEND","raw"),
+        geometry_measurement=__import__("go2_pvcnn.control.dh116.tabletop_cuda_geometry",
+            fromlist=["CudaGeometryProfile"]).CudaGeometryProfile.load().identity()
+            if os.environ.get("DH116_TENSOR_GEOMETRY_BACKEND")=="cuda_cabi" else None))
+    result=save_checkpoint(path,trainer,recipe_sha256=recipe,
+        receipt_sha256=args.receipt_sha256,backend_profile=profile,
+        seed_sha256=seed["sha256"],policy_seed=args.policy_seed)
+    return result["sha256"]
 
 
 def worker(args, end):
@@ -170,7 +154,7 @@ def worker(args, end):
         if _gpu_memory(args.gpu)>512:
             raise RuntimeError("physical GPU already occupied")
         _run(ROOT,archive,args.gpu,args.num_envs,args.output,coupled=True,max_sdk_step=end,
-             author_and_exercise=partial(train,args=args,reset=reset,profile=profile,height=height),owned_names=OWNED_NAMES)
+             author_and_exercise=partial(train,args=args,reset=reset,profile=profile,height=height),owned_names=OWNED_NAMES,runtime_source_audit=True)
 
 
 def main():
@@ -187,11 +171,36 @@ def main():
     parser.add_argument("--height-candidate",type=Path)
     parser.add_argument("--height-candidate-sha256")
     parser.add_argument("--policy-seed",type=int,default=20261123)
+    parser.add_argument("--measurement-native-receipt",type=Path,action="append",default=[],
+        help="pinned outer.json; repeat for N2 contact and N128 throughput diagnostics")
+    parser.add_argument("--measurement-native-receipt-sha256",action="append",default=[])
     group=parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--updates",type=int)
     group.add_argument("--probe-control-windows",type=int,choices=(2,))
     parser.add_argument("--worker",action="store_true",help=argparse.SUPPRESS)
     args=parser.parse_args()
+    if args.updates and os.environ.get("DH116_NATIVE_READBACK_AUDIT")=="1":
+        parser.error("cache/raw oracle audit is N2 diagnostic only and cannot collect PPO")
+    from go2_pvcnn.control.dh116.tabletop_runtime_execution import validate_runtime_execution
+    try:
+        validate_runtime_execution()
+    except ValueError as exc:
+        parser.error(str(exc))
+    if len(args.measurement_native_receipt)!=len(args.measurement_native_receipt_sha256):
+        parser.error("measurement native receipt paths and SHA256 values must be paired")
+    args.measurement_native_evidence=None
+    measurement_mode=os.environ.get("DH116_TENSOR_GEOMETRY_BACKEND","eager")
+    if args.updates and measurement_mode=="cuda_cabi" and not args.measurement_native_receipt:
+        parser.error("CUDA geometry requires verified native lifecycle evidence before PPO; use bounded diagnostics only")
+    if args.measurement_native_receipt:
+        if measurement_mode!="cuda_cabi":
+            parser.error("measurement native receipts require cuda_cabi mode")
+        from go2_pvcnn.control.dh116.tabletop_cuda_geometry import verify_measurement_native_receipts
+        try:
+            args.measurement_native_evidence=verify_measurement_native_receipts(
+                list(zip(args.measurement_native_receipt,args.measurement_native_receipt_sha256)),style=args.grasp)
+        except (ValueError,KeyError,TypeError,OSError) as exc:
+            parser.error("invalid measurement native evidence: "+str(exc))
     if args.grasp=="tripod":
         parser.error("Tripod native support/route guard adapter is unavailable")
     if bool(args.height_candidate)!=bool(args.height_candidate_sha256):

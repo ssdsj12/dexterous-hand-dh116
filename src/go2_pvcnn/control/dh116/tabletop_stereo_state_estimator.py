@@ -114,7 +114,10 @@ class StereoStateEstimator(nn.Module):
         return result
 
 
-class StereoStudentActor(nn.Module):
+from .tabletop_runtime_execution import EagerRuntimePolicy
+
+
+class StereoStudentActor(EagerRuntimePolicy, nn.Module):
     """Unbounded mu24 and latent std; use existing saved-latent Gaussian math."""
     def __init__(self,estimator=None,*,embed_dim=128,action_contract_sha256=None,image_processing_batch_size=None,
                  input_mode='latent',task_state_config=None):

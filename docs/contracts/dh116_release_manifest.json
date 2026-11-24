@@ -36379,7 +36379,30 @@
       "cpu_passed": 84,
       "cpu_skipped": 2,
       "teacher_admission": false,
-      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-control-fusion.md"
+      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-control-fusion.md",
+      "publication": {
+        "state": "windows_publication_verified",
+        "source_commit": "84e2ec543ab1af2739b76229443a2cf1df043cd4",
+        "source_tree": "d70e6a6f8539f6f8ddfc12da8b1112be80fdcee8",
+        "files_verified": 10,
+        "pr2_draft": true,
+        "pr2_merged": false
+      }
+    },
+    {
+      "package": "runtime.shared-cabi-eager-lifecycle-v1",
+      "branch": "11-17",
+      "status": "tested_ready_for_windows_publication",
+      "cpu": {
+        "passed": 603,
+        "skipped": 15,
+        "failed": 0
+      },
+      "native_n2_exit": 0,
+      "native_n128_probe_exit": 0,
+      "native_ppo_updates": 0,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-runtime-lifecycle-native.md",
+      "teacher_admission": false
     }
   ]
 }

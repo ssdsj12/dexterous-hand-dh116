@@ -10,6 +10,7 @@ from test_native_teacher_context import backend_profile
 from test_dh116_device_ppo import teacher_data
 from test_tensor_training_reward import start, config, row, batch
 from go2_pvcnn.control.dh116 import tabletop_tensor_collector as collector
+from go2_pvcnn.control.dh116 import tabletop_tensor_physics_runtime as physics
 from go2_pvcnn.control.dh116.tabletop_device_ppo import DeviceDeformablePPOTrainer
 from go2_pvcnn.control.dh116.tabletop_privileged_ppo import PPOConfig
 
@@ -27,7 +28,7 @@ def test_raw_exact_fallback_both_sides_shared_batch(monkeypatch):
     def checked(p,s):
         calls.append(len(p))
         return oracle(p,s)
-    monkeypatch.setattr(collector,"collision_clearance",checked)
+    monkeypatch.setattr(physics,"collision_clearance",checked)
     actual=guard(poses)
     torch.testing.assert_close(actual,torch.tensor(oracle(poses.numpy(),guard.shapes)[0]),rtol=0,atol=0)
     assert calls==[2]
@@ -43,6 +44,10 @@ def test_substep_aborts_before_next_sdk_or_records_pre_reset_value(teacher_data,
     c=collector.NativeTensorCollector.__new__(collector.NativeTensorCollector)
     c.probe_dir=None
     c.n,c.controls,c.runtime=2,0,SimpleNamespace(physics_step=0)
+    c.ids,c.device=(0,1),torch.device("cpu")
+    c.sim=SimpleNamespace(current_time_step_index=0)
+    c.ctrl=SimpleNamespace(pending=None)
+    c._initialize_window_state()
     c.ages=torch.zeros(2,dtype=torch.long)
     c.reward,_,prior=start(config(),n=2)
     c.last=batch(prior)[1]
@@ -50,13 +55,15 @@ def test_substep_aborts_before_next_sdk_or_records_pre_reset_value(teacher_data,
     c.trainer=DeviceDeformablePPOTrainer(c.model,PPOConfig(),rollout_steps=32,num_envs=2)
     c.observation=lambda: obs
     submitted=[]
-    c.source=SimpleNamespace(set_previous_request=lambda actions,token:submitted.append((actions.clone(),token)))
+    c.source=SimpleNamespace(set_previous_request=lambda actions,token:submitted.append((actions.clone(),token)),
+        _boundary=lambda:SimpleNamespace(sdk_step=c.runtime.physics_step))
     def step(actions,end):
         c.runtime.physics_step+=1
         k=c.runtime.physics_step
+        c.sim.current_time_step_index=k
         c.last=batch([row(config(),i,k,failure=inject_failure and i==1 and k==3) for i in range(2)])[1]
         return c.reward.observe(c.last)
-    c.sdk=step
+    c._sdk_impl=step
     reset=[]
     c.reset=reset.append
     if inject_failure:
@@ -104,4 +111,17 @@ def test_flat_teacher_optimizer_rng_checkpoint_roundtrip(tmp_path,backend_profil
     assert len(digest)==64 and torch.equal(torch.get_rng_state(),state)
     payload=torch.load(path,weights_only=True)
     assert payload["counters"]["updates"]==1
-    assert payload["model"]["checkpoint_namespace"]=="tensor_native_teacher_pinch_v1"
+    assert payload.get("version")=="dh116-tensor-native-checkpoint-v2"
+    assert payload["identity"]["model"]["checkpoint_namespace"]=="tensor_native_teacher_pinch_v1"
+
+@pytest.mark.parametrize("mode", ["--updates", "--probe-control-windows"])
+def test_failed_compiled_lifecycle_cannot_start_physics(tmp_path, mode):
+    import os,subprocess,sys
+    args=[sys.executable,"-B","-m","scripts.train_dh116_tensor_native_teacher",
+        "--grasp","pinch","--num-envs","128","--gpu","3","--receipt","unopened.json",
+        "--receipt-sha256","a"*64,"--output",str(tmp_path/"forbidden"),mode,"2"]
+    result=subprocess.run(args,env=dict(os.environ,CUDA_VISIBLE_DEVICES="",DH116_TENSOR_GEOMETRY_BACKEND="compiled"),
+        text=True,stdout=subprocess.PIPE,stderr=subprocess.STDOUT)
+    assert result.returncode==2
+    assert "compiled runtime is disabled" in result.stdout
+    assert not (tmp_path/"forbidden").exists()

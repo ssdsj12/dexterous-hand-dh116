@@ -52635,14 +52635,16 @@
       "branch": "11-17",
       "title": "Nonzero actual hand-reaction ownership and coupled reset",
       "executor": "gated",
-      "status": "pending",
+      "status": "passed",
       "dependencies": [
         "teacher.full-tensor-native-collector-v1"
       ],
       "teacher_admission": false,
       "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-native-collector.md",
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
-      "reason": "N2 probe contained only table contacts; hand forces zero, not qualified"
+      "reason": null,
+      "scope": "current-source model-free shared runtime,N2,524 handpairs/14 actual applications,Reset210→211,436 cache oracles,natural0",
+      "receipt_sha256": "ced355f07006ad0d9a95e702c2d03e9e69002a60f75c63d6fb7788a6c9d82bcb"
     },
     "teacher.full-tensor-128-throughput-v1": {
       "branch": "11-17",
@@ -52662,7 +52664,7 @@
     "runtime.tensor-control-fusion-v1": {
       "branch": "11-17",
       "title": "Shared full-24D tensor control numerical fusion",
-      "executor": "cpu",
+      "executor": "pytest",
       "status": "passed",
       "dependencies": [
         "teacher.full-tensor-software-v1"
@@ -52675,6 +52677,42 @@
       "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
       "scope": "84 CPU pass,2 CUDA skips; earlier147 CUDA oracle pass; real218SDK contact cohort0 exit; no grasp admission",
       "teacher_admission": false
+    },
+    "runtime.shared-cabi-eager-lifecycle-v1": {
+      "branch": "11-17",
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-runtime-lifecycle-native.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "title": "Teacher/Student shared flat CUDA physical guard and eager-only lifecycle",
+      "executor": "pytest",
+      "status": "passed",
+      "dependencies": [
+        "runtime.tensor-control-fusion-v1"
+      ],
+      "tests": [
+        "tests/test_dh116_tensor_physics_runtime.py",
+        "tests/test_dh116_runtime_timeline.py",
+        "tests/test_dh116_runtime_source_audit.py",
+        "tests/test_dh116_runtime_execution.py",
+        "tests/test_dh116_cuda_geometry.py"
+      ],
+      "scope": "603CPU/15CUDA-skips, actual N2+N128 native gate,natural0; Student camera and grasp not qualified"
+    },
+    "teacher.shared-cabi-128-update-v1": {
+      "branch": "11-17",
+      "teacher_admission": false,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-runtime-lifecycle-native.md",
+      "readiness": "docs/contracts/dh116_teacher_ppo32_readiness_v1.json",
+      "title": "Real128lane32window two PPO updates",
+      "executor": "gated",
+      "status": "pending",
+      "dependencies": [
+        "runtime.shared-cabi-eager-lifecycle-v1"
+      ],
+      "output": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/tensor-common-ppo2-128-gpu3-xc6n1p7x",
+      "planned_updates": 2,
+      "native_ppo_updates": 0,
+      "execution_state": "running"
     }
   },
   "execution_target": {

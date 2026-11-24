@@ -12,7 +12,7 @@ VERSION = "dh116-fault-safe-lifecycle-v3"
 
 
 def run_lifecycle(app, *, make_sim, acquire, synchronize, clear_sim, stop,
-                  manager_is_none, freeze, output, cleanup, stage_observer=None):
+                  manager_is_none, freeze, output, cleanup, stage_observer=None, before_close_guard=None):
     """Record every cleanup boundary and close once, then rethrow text-only faults.
 
     CPU callback success grants no native, grasp, process-exit or Teacher proof.
@@ -159,8 +159,10 @@ def run_lifecycle(app, *, make_sim, acquire, synchronize, clear_sim, stop,
         "ownership_before_close", ownership_readback, "owned resource release false or unknown before close")
     close_frozen = attempt("freeze_before_close", frozen) is True
     attempt("observe_before_close", lambda: observe("before_close_check"))
+    runtime_released = (checked("runtime_before_close", before_close_guard,
+        "pre-close runtime release false or unknown") if before_close_guard is not None else True)
     normal = bool(
-        safe_to_update and stages["post_stop_update"]["returned"] and
+        runtime_released and safe_to_update and stages["post_stop_update"]["returned"] and
         manager_at_close and released_at_close and close_frozen and not cleanup_has_errors())
     mode = "normal" if normal else "fault"
     before_name = "before_app_close.json" if normal else "fault_before_app_close.json"

@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import importlib
 import math
+import os
 from pathlib import Path
 import re
 import stat
@@ -289,6 +290,15 @@ class RegexArticulationBatch:
         self.root_suffixes = tuple(root_suffixes)
         self.scenes = tuple(scenes)
         self.sides = {}
+        self.readback_mode = os.environ.get("DH116_NATIVE_READBACK_BACKEND", "raw")
+        if self.readback_mode not in ("raw", "official_cache"):
+            raise ValueError("explicit raw or official_cache readback backend required")
+        # Batch -> reader -> side is acyclic. Do not attach a reader to its side.
+        self._cached_readers = {}
+        self._readback_audit_enabled = os.environ.get("DH116_NATIVE_READBACK_AUDIT", "0") == "1"
+        if self._readback_audit_enabled and (self.readback_mode != "official_cache" or len(self.env_ids) != 2):
+            raise ValueError("native cache oracle audit requires explicit official_cache N2 diagnostic")
+        self._readback_audits = []
 
     def bind(self):
         """Resolve row identity once after the caller's single SDK reset."""
@@ -301,7 +311,43 @@ class RegexArticulationBatch:
         return self
 
     def read(self, env_ids=None):
-        return {side: self.sides[side].read(env_ids) for side in SIDES}
+        if self.readback_mode == "raw":
+            return {side: self.sides[side].read(env_ids) for side in SIDES}
+        if not self._cached_readers:
+            from .tabletop_regex_cached_readback import CachedSideReadback
+            self._cached_readers = {side: CachedSideReadback(self.sides[side]) for side in SIDES}
+        result = {}
+        for side in SIDES:
+            before = self.sides[side].read(env_ids) if self._readback_audit_enabled else None
+            result[side] = self._cached_readers[side].read(env_ids)
+            if self._readback_audit_enabled:
+                after = self.sides[side].read(env_ids)
+                mismatches = []
+                for key, value in result[side].items():
+                    if any(value.shape != raw[key].shape or value.dtype != raw[key].dtype
+                           or not torch.equal(value.contiguous().view(torch.uint8),
+                                              raw[key].contiguous().view(torch.uint8))
+                           for raw in (before, after)):
+                        mismatches.append(key)
+                self._readback_audits.append(dict(side=side, fields=list(result[side]), mismatches=mismatches))
+                if mismatches:
+                    raise ValueError("official cache/raw SDK frame mismatch: " + side + ":" + ",".join(mismatches))
+        return result
+
+    def readback_audit(self):
+        return dict(enabled=self._readback_audit_enabled, diagnostic_only=True,
+                    side_snapshots=len(self._readback_audits),
+                    mismatches=[row for row in self._readback_audits if row["mismatches"]],
+                    extra_raw_reads_per_side_snapshot=2 if self._readback_audit_enabled else 0)
+
+    def invalidate_readback(self, *, reason):
+        """Fresh official acquisition after this owner's zero-step state writes."""
+        for reader in self._cached_readers.values():
+            reader.invalidate(reason=reason)
+
+    def readback_metadata(self):
+        return dict(mode=self.readback_mode,
+                    sides={side:reader.metadata() for side,reader in self._cached_readers.items()})
 
     def write_data_to_sim(self):
         """One SDK write per side; called once before the shared physics step."""

@@ -1,0 +1,131 @@
+{
+  "version": "dh116-full-vertex-fp64-cuda-measurement-v6-full-cabi-pad-nan-routing-guard",
+  "sm": 89,
+  "precision": "FP64",
+  "full_vertices": true,
+  "support_normals": 64,
+  "fast_math": false,
+  "fmad": false,
+  "binary_path": "/mnt/mydisk/xk/candidates/dh116_cuda_hull_measurement_20261124_v6/build/libdh116_hull_support.so",
+  "binary_sha256": "57baa26f73b2973bee46d3e27faa021cb061e37ea1fb4ac366db3a0b7280942a",
+  "nvcc_version": "nvcc: NVIDIA (R) Cuda compiler driver\nCopyright (c) 2005-2025 NVIDIA Corporation\nBuilt on Wed_Jan_15_19:20:09_PST_2025\nCuda compilation tools, release 12.8, V12.8.61\nBuild cuda_12.8.r12.8/compiler.35404655_0\n",
+  "build_command": [
+    "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flexible-f1-20261112-883RS4/sdk/bin/nvcc",
+    "-O3",
+    "-Xptxas=-v",
+    "-std=c++17",
+    "--fmad=false",
+    "--prec-div=true",
+    "--prec-sqrt=true",
+    "-arch=sm_89",
+    "-Xcompiler=-fPIC",
+    "-shared",
+    "/mnt/mydisk/xk/candidates/dh116_cuda_hull_measurement_20261124_v6/hull_support.cu",
+    "/mnt/mydisk/xk/candidates/dh116_cuda_hull_measurement_20261124_v6/pad_support.cu",
+    "-L/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flexible-f1-20261112-883RS4/sdk/lib64",
+    "-Xlinker=-rpath",
+    "-Xlinker=/home/xk/.local/share/dh116-autonomous-3c80166/evidence/flexible-f1-20261112-883RS4/sdk/lib64",
+    "-o",
+    "/mnt/mydisk/xk/candidates/dh116_cuda_hull_measurement_20261124_v6/build/libdh116_hull_support.so"
+  ],
+  "schema": "dh116-cuda-geometry-candidate-v1",
+  "mode": "cuda_cabi",
+  "native_ready": false,
+  "teacher_admission": false,
+  "private_candidate": {
+    "contract_path": "/mnt/mydisk/xk/candidates/dh116_cuda_hull_measurement_20261124_v6/contracts.json",
+    "contract_sha256": "4ebd8371d6a9e5e77fda91c2738ff431a2699559d61c835a661775a7cfc3cc0c",
+    "source_sha256": {
+      "build_candidate.py": "8dcf2fac23efaf5bf7c5d29e4f65b2dfff79d810b6c471a5c9d066f76f47557b",
+      "candidate_geometry.py": "e8922571cff664c69bba2a42fcd2bd320c9360c1ae984faee5f8ddc96dba1bed",
+      "hull_support.cu": "aa976f334fc9c6b8db06eb6e52298c9af447a0d95d1fe07266ec3a27650cc45b",
+      "hull_support.py": "74a79948096a802f755c8ffeef151868eee8fae45beefd2fa45772e71b6f60f7",
+      "pad_support.cu": "0a9d1b3eb777fa636c305103d1ac1ec2c1efc88840e9c968f629a42d4812e910",
+      "pad_support.py": "87f9310b1d921ea28fdcc16cb185f129396f84438643730ddab9cc518d0db3ef",
+      "PLAN.md": "c03adb9af2565c1ae9bf40c39e7044799b921f9c6877ebdbb68b2d60787825c7",
+      "README.md": "f00b42669cb0cc5dd991033d4959e87b56d91dccedbcfefcdbd89535ea4243a3",
+      "stress_pad.py": "626e9f1357c92b211a6cd8fec95340b404876a7cc1760070d1b0f2a400e25da6",
+      "test_candidate.py": "3286e80952585f02fa6c7d486b5e2eaaf5cecbfad28fe9c4338fcee27ccb6911",
+      "test_pad_candidate.py": "8a4bc91c63bdf5ada7e1a9260552271bce6740f476dd2e3b8e9645e6fb7ce9aa",
+      "test_review_regressions.py": "65728d3d4e81185ac5d48a89ebe1d40f5b7785fb48c6345d6d0dfc53d53f0f19",
+      "validate_benchmark.py": "ff323dc3edcdfe917350c4e98b8bbc0694bda890f8c6762a5c043d010d48b00a"
+    },
+    "evidence_sha256": {
+      "synthetic_test.log": "e03e09f37caae70e7324d768285fb32e1c82f7138fed686a77e61ced8de94702",
+      "pad_stress.json": "1a0ec088b4c3f792403149a9da80743f7ca79acb1be627b7ccefa1cf2defcde1",
+      "validation_benchmark.json": "f773eb797595bedc34c76ba924e54bb6d5e5490c9061ea7aa251664f21d1b460",
+      "review_regression.json": "1a12d964393bb62d3609636a3eec2177e4818a6c8eca2583521660e4ae099071",
+      "review_red.log": "cca753d68ed6edd13dff19be9b978aac90149c917f746f6048a42780e353ac82",
+      "review_green.log": "fbbbb20120870a4c88d111088550cb2f0245764a7ac4be088e78b721170c4554"
+    },
+    "oracle_source_sha256": "05f0b4fc854301ab1609e6cab56db9c7e2d5f05951798425d543b66082960426"
+  },
+  "prior_v5": {
+    "contract_path": "/mnt/mydisk/xk/candidates/dh116_cuda_hull_measurement_20261124_v5/contracts.json",
+    "contract_sha256": "b0f2233289020b6312a389ea379aa089febc34d8e5becf6152a56a28997d2de9",
+    "source_sha256": {
+      "build_candidate.py": "04fa1dabd6de541ad73af77bccb5337906692d9bd9b4ffc7ea38301c3aa3b7fc",
+      "candidate_geometry.py": "2326060412d4588dfa97b680b4c772cd32e73ae3008aa90e27c16bfbfa098277",
+      "hull_support.cu": "aa976f334fc9c6b8db06eb6e52298c9af447a0d95d1fe07266ec3a27650cc45b",
+      "hull_support.py": "74a79948096a802f755c8ffeef151868eee8fae45beefd2fa45772e71b6f60f7",
+      "pad_support.cu": "ba7459692703b212ba6386930ff2fa27234469078d743109b869939a88432f83",
+      "pad_support.py": "87f9310b1d921ea28fdcc16cb185f129396f84438643730ddab9cc518d0db3ef",
+      "PLAN.md": "c03adb9af2565c1ae9bf40c39e7044799b921f9c6877ebdbb68b2d60787825c7",
+      "README.md": "41267a702c9b4dd0d7f469c4242f11cd15a1875148bba83cc56d0a4e82c13108",
+      "stress_pad.py": "626e9f1357c92b211a6cd8fec95340b404876a7cc1760070d1b0f2a400e25da6",
+      "test_candidate.py": "3286e80952585f02fa6c7d486b5e2eaaf5cecbfad28fe9c4338fcee27ccb6911",
+      "test_pad_candidate.py": "8a4bc91c63bdf5ada7e1a9260552271bce6740f476dd2e3b8e9645e6fb7ce9aa",
+      "validate_benchmark.py": "ff323dc3edcdfe917350c4e98b8bbc0694bda890f8c6762a5c043d010d48b00a"
+    },
+    "evidence_sha256": {
+      "synthetic_test.log": "c4337bc77be3ba9c1896a5f60477ae0cb31e14d479f9e2e3561855b7efaded85",
+      "pad_stress.json": "1a0ec088b4c3f792403149a9da80743f7ca79acb1be627b7ccefa1cf2defcde1",
+      "validation_benchmark.json": "1078b3f04212d535fe38294776db3f531535f1434ffacb143f14d9039b55ccfe"
+    },
+    "oracle_source_sha256": "05f0b4fc854301ab1609e6cab56db9c7e2d5f05951798425d543b66082960426"
+  },
+  "repo_source_sha256": {
+    "src/go2_pvcnn/control/dh116/tabletop_cuda_geometry.py": "348316f345495084fe6c54ae4f95181ec7c33dcab3576c35202719b92360dd7b",
+    "src/go2_pvcnn/control/dh116/tabletop_tensor_geometry.py": "8a97b1f56b700d59129e6ca73dfcc491685717ba1e023e5a7f4751166020397f",
+    "scripts/build_dh116_cuda_geometry_candidate.py": "0cb1d7dc4bca627723f2250cd5999168166e2c7f1fd02a60364df85e7e73b10b",
+    "src/go2_pvcnn/control/dh116/cuda_measurements/__init__.py": "b89589b6974442131f9ae8312899b2d2d2a4bb0f72cd2532bb8f7ba6437f89ab",
+    "src/go2_pvcnn/control/dh116/cuda_measurements/hull_support.cu": "aa976f334fc9c6b8db06eb6e52298c9af447a0d95d1fe07266ec3a27650cc45b",
+    "src/go2_pvcnn/control/dh116/cuda_measurements/hull_support.py": "74a79948096a802f755c8ffeef151868eee8fae45beefd2fa45772e71b6f60f7",
+    "src/go2_pvcnn/control/dh116/cuda_measurements/pad_support.cu": "0a9d1b3eb777fa636c305103d1ac1ec2c1efc88840e9c968f629a42d4812e910",
+    "src/go2_pvcnn/control/dh116/cuda_measurements/pad_support.py": "87f9310b1d921ea28fdcc16cb185f129396f84438643730ddab9cc518d0db3ef",
+    "src/go2_pvcnn/control/dh116/tabletop_runtime_source_audit.py": "2a945966a86c186eaa754eb1fa6003b52b6332a856984f92fdbf0ff26b96175b"
+  },
+  "historical_measurement_verification": {
+    "unit_tests": 19,
+    "original_unit_tests": 13,
+    "review_regression_tests": 6,
+    "fp32_domain_subcases": 72,
+    "pad_stress_cases": 196,
+    "pad_stress_max_error": 1.3322676295501878e-15,
+    "capture_cases": 16,
+    "capture_max_error": 1.7763568394002505e-15,
+    "total_original_vertices": 28893,
+    "hulls": 44,
+    "boolean_masks_equal": true,
+    "absolute_tolerance": 1e-12,
+    "current_stream": true,
+    "owned_repeat_frame": true
+  },
+  "integration_status": "production Pinch measurements; bounded diagnostics only; native receipt gate required before PPO",
+  "scope": "bounded_diagnostic",
+  "actual_measurement_backend": "cuda_cabi",
+  "power_sdf_geometry_integrated": false,
+  "tripod_route_guard_integrated": false,
+  "binary_rebuilt_for_integration": false,
+  "no_isaac_launched_for_integration": true,
+  "runtime_graph_compilation": false,
+  "compiled_backend_status": "disabled for all consumers; explicit configuration rejected",
+  "source_preservation_evidence": {
+    "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/cuda-no-compile-cleanup-20261124-ye8_5ag0/guard-preservation.json",
+    "sha256": "97a964efd578acd3434b5e6317a594c2a66f1bc6a185023167e01c473a67a07a"
+  },
+  "rejected_compilation_archive": {
+    "path": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/cuda-no-compile-cleanup-20261124-ye8_5ag0/archive_manifest.json",
+    "sha256": "d972ff4f3ca291e6f819be258c59708813e8a0cfdd6bccd005e71a187606bf42"
+  }
+}

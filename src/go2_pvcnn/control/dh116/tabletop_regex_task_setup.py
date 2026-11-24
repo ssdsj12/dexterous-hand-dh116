@@ -162,6 +162,7 @@ def restore_regex_seed(sim, batch, initial, *, env_ids=None, active_effort_limit
             joint_pos=initial["seed_q"].index_select(0, ids)[:, index],
             joint_vel=initial["seed_qd"].index_select(0, ids)[:, index],
             active_effort_limit_nm=active_effort_limit_nm)
+    batch.invalidate_readback(reason="original zero-step selected Reset state writes")
     sim.physics_sim_view.update_articulations_kinematic()
     batch.update(DT)
     if sim.current_time_step_index != before:

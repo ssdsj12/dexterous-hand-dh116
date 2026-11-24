@@ -284,47 +284,8 @@ def _acquire(sim, owners, trace, *, attempt, config, lease, resume=None):
 
 
 
-def _run_lifecycle_with_stat_cache(app, *, lifecycle, cache_release, read_sim,
-                                   read_completed_sdk_step, max_sdk_step, **kwargs):
-    """Release the source-bound cache before owned GC on acquisition exit.
+from .tabletop_runtime_lifecycle import run_lifecycle_with_stat_cache as _run_lifecycle_with_stat_cache
 
-    Earlier make_sim/watch failures do not enter run_owned_call and remain
-    failures of the original lifecycle. No native release or exit is inferred.
-    """
-    from scripts import dh116_pinch_acquisition_v2 as owned
-    from scripts.probe_dh116_physx_lifetime_frame_v2 import bindings
-
-    if type(max_sdk_step) is not int or max_sdk_step<2:
-        raise ValueError("frozen worker SDK bound required")
-    original=owned.run_owned_call
-    called=False
-
-    def before_collect():
-        nonlocal called
-        if called:
-            raise RuntimeError("worker stat-cache release is once only")
-        called=True
-        simulation=None
-        try:
-            simulation=read_sim()
-            if simulation is None:
-                raise ValueError("live worker SDK clock owner required")
-            step=simulation.current_time_step_index
-            end=read_completed_sdk_step()
-            if (type(step) is not int or not 2<=step<=max_sdk_step
-                    or end is not None and (type(end) is not int or end!=step)):
-                raise ValueError("actual SDK clock differs from frozen/completed worker budget")
-            cache_release(simulation,expected_sdk_step=step)
-        finally:
-            simulation=None
-
-    def run_owned(operation, **options):
-        if "before_collect" in options:
-            raise ValueError("worker owns the source-bound pre-GC callback")
-        return original(operation,before_collect=before_collect,**options)
-
-    with bindings((owned,"run_owned_call",run_owned)):
-        return lifecycle(app,**kwargs)
 
 def _run_isaac(attempt, config, lease, *, resume=None):
     from scripts import diagnose_dh116_teacher_initialization as native

@@ -8,6 +8,7 @@ from dataclasses import fields
 import torch
 from torch import nn
 
+from .tabletop_runtime_execution import EagerRuntimePolicy, validate_runtime_execution
 from .tabletop_stereo_observation import StereoHistoryBatch
 from .tabletop_stereo_state_estimator import StereoStateEstimator, StereoStudentActor
 from .tabletop_stereo_contract import action_sha256, require_sha
@@ -17,6 +18,7 @@ INPUT_KEYS = tuple(field.name for field in fields(StereoHistoryBatch))
 
 
 def normalize_network_config(config=None):
+    validate_runtime_execution(config=config)
     value = deepcopy(config or {})
     if not isinstance(value, dict):
         raise ValueError('network config dictionary required')
@@ -106,7 +108,7 @@ def _history(value):
     raise TypeError('StereoHistoryBatch or exact sensor dictionary required; privileged input forbidden')
 
 
-class StereoAsymmetricPolicy(nn.Module):
+class StereoAsymmetricPolicy(EagerRuntimePolicy, nn.Module):
     def __init__(self, network_config=None):
         super().__init__()
         self.network_config = normalize_network_config(network_config)
@@ -132,6 +134,7 @@ class StereoAsymmetricPolicy(nn.Module):
 
 def make_student_trainer(config, num_envs, device='cpu', rollout_steps=None):
     from .tabletop_privileged_ppo import PPOConfig, PPOTrainer
+    validate_runtime_execution(config=config)
     if not isinstance(config, dict) or not isinstance(config.get('network', {}), dict):
         raise ValueError('explicit independent Student configuration required')
     if config.get('critic_observation_size', 371) != 371 or config.get('action_size', 24) != 24:
@@ -153,6 +156,7 @@ def make_student_trainer(config, num_envs, device='cpu', rollout_steps=None):
     trainer = PPOTrainer(model, PPOConfig(**config.get('ppo', {})), rollout_steps=steps, num_envs=num_envs,
         device=device,actor_storage=actor_storage,
         max_visual_batch=max_visual_batch if actor_storage is not None else None)
+    validate_runtime_execution(model=trainer.model)
     trainer.rollout_storage_mode=storage_mode
     trainer.student_config = deepcopy(config)
     trainer.auxiliary_bc = None

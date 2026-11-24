@@ -12,6 +12,7 @@ is explicitly NOT implemented here; its original guard must still run.
 from copy import deepcopy
 from dataclasses import dataclass
 import math
+import os
 
 import numpy as np
 import torch
@@ -72,7 +73,7 @@ def _rotation_xyzw(poses):
         2*(x*z-y*w), 2*(y*z+x*w), 1-2*(x*x+y*y)), -1).reshape(*q.shape[:-1], 3, 3)
 
 
-def _sample_grid_float64(values, origin, spacing, local):
+def _sample_grid_float64(values, origin, spacing, local, grid_shape=None):
     """Original ordered trilinear math, with fixed-shape masked corner reads.
 
     Invalid nodes read an inert index zero and are replaced with NaN. There is
@@ -81,7 +82,7 @@ def _sample_grid_float64(values, origin, spacing, local):
     """
     inv = 1/spacing
     u = (local-origin)*inv
-    shape = u.new_tensor(values.shape)
+    shape = u.new_tensor(values.shape) if grid_shape is None else grid_shape
     valid = ((u >= 0) & (u < shape-1)).all(-1)
     index = torch.where(valid[..., None], u, 0).to(torch.int64)
     safe_local = torch.where(valid[..., None], local, origin)
@@ -110,12 +111,21 @@ class TensorGeometry:
     The construction/startup owner is responsible for establishing the original
     inventory and source identity. from_policy_geometry preserves its complete
     inventory and locked bindings without loading assets or acquiring an SDK.
+
+    The base backend is the original eager oracle. Runtime graph compilation
+    is disabled. The shared make_tensor_geometry factory can select independent
+    CUDA measurements while inheriting this capture and all of its guards.
     """
 
     def __init__(self, shapes, pads=(), *, device, bindings=None, body_names=None,
-                 sdf_callable=None, pose_matrix=None, transform=None):
+                 sdf_callable=None, pose_matrix=None, transform=None, backend=None):
         from scripts.audit_dh116_pinch_initial_pose import pose_matrix as original_matrix, transform as original_transform
         from scripts.prepare_dh116_pinch_closure_margin import sample_contact
+        self.backend = os.environ.get("DH116_TENSOR_GEOMETRY_BACKEND", "eager") if backend is None else backend
+        if self.backend == "compiled":
+            raise ValueError("compiled tensor geometry backend is disabled; use eager or the shared cuda_cabi factory")
+        if self.backend != "eager":
+            raise ValueError("base tensor geometry backend must be eager; use the shared factory for cuda_cabi")
         self.device = torch.empty(0, device=device).device
         self._sdf = sample_contact if sdf_callable is None else sdf_callable
         self._pose_matrix = original_matrix if pose_matrix is None else pose_matrix
@@ -184,7 +194,7 @@ class TensorGeometry:
         self._normals = torch.tensor(normals, dtype=torch.float64, device=self.device)
 
     @classmethod
-    def from_policy_geometry(cls, owner, body_names, *, device):
+    def from_policy_geometry(cls, owner, body_names, *, device, backend=None):
         """Copy every source/cooked vertex and every REQUIRED_PADS locked grid.
 
         This helper does not validate an exchange's live SDK identity; that stays
@@ -203,7 +213,7 @@ class TensorGeometry:
                 pads.append((side, names[side].index(name), name, owner._grids[label][name]))
                 bindings[side, name] = deepcopy(owner.sources[label]["sdf_binding"][name])
         result = cls(shapes, pads, device=device, bindings=bindings, body_names=names,
-                     sdf_callable=owner._sdf, pose_matrix=owner._pose_matrix, transform=owner._transform)
+                     sdf_callable=owner._sdf, pose_matrix=owner._pose_matrix, transform=owner._transform, backend=backend)
         result.sources = deepcopy(owner.sources)
         return result
 
@@ -226,6 +236,9 @@ class TensorGeometry:
         return torch.maximum((low[1]-high[0]).amax(1), (low[0]-high[1]).amax(1))
 
     def _metrics(self, p, nodes, radii, rotations):
+        return self._metrics_eager(p, nodes, radii, rotations)
+
+    def _metrics_eager(self, p, nodes, radii, rotations):
         rod_high = (nodes @ self._normals.T).amax(1)
         minimum, maximum, lower = [], [], []
         # Static source/chunk loops, independent of lane count. Every vertex is
@@ -244,6 +257,9 @@ class TensorGeometry:
         return torch.stack(minimum, 1), torch.stack(maximum, 1), torch.stack(lower, 1)
 
     def _pad_metrics(self, p, nodes, radii, rotations, thresholds):
+        return self._pad_metrics_eager(p, nodes, radii, rotations, thresholds)
+
+    def _pad_metrics_eager(self, p, nodes, radii, rotations, thresholds):
         gaps, norms, validities, fallback = [], [], [], []
         for (side, link, _, _, values, origin, spacing), rounding in zip(self._pads, self._pad_roundoff):
             local = (nodes-p[:, side, link, None, :3]) @ rotations[:, side, link]

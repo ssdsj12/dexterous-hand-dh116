@@ -2297,7 +2297,7 @@
     }
   },
   "full_tensor_native_ppo": {
-    "status": "n2_native_arithmetic_and_selected_reset_verified_128_throughput_pending",
+    "status": "shared_cabi_runtime_native_verified_128_updates_running",
     "scope": "new flat CUDA candidate and two regex Articulations; no full-chain throughput claim",
     "cpu": {
       "passed": 214,
@@ -2351,21 +2351,31 @@
     "full_coupled_n2_parity": {
       "arithmetic_and_reset": true,
       "natural_exit_code": 0,
-      "sdk_steps": 18,
+      "sdk_steps": 218,
       "updates": 0,
-      "real_hand_contact_pairs": 0,
-      "nonzero_hand_reaction_qualified": false,
-      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-native-collector.md"
+      "real_hand_contact_pairs": 524,
+      "nonzero_hand_reaction_qualified": true,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-native-collector.md",
+      "nonzero_applied_steps": 14,
+      "native_ppo_updates": 0,
+      "receipt_sha256": "ced355f07006ad0d9a95e702c2d03e9e69002a60f75c63d6fb7788a6c9d82bcb",
+      "raw_cache_side_snapshots": 436,
+      "source_freeze_verified": true,
+      "local_timeline_released": true,
+      "grasp_qualified": false
     },
     "native128_tensor_updates": 0,
     "three_grasp_tensor_training": false,
     "teacher_admission": false,
     "report": "docs/superpowers/reports/2026-11-24-dh116-full-tensor-foundations.md",
     "cpu_regression": {
-      "passed": 214,
-      "skipped": 4,
-      "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/full-tensor-final-cpu-v4.log",
-      "sha256": "e7fb7fdc0eb57122291c2a7826e4c03c4172aa6a43f1a2cb363b71266ba0d428"
+      "passed": 603,
+      "skipped": 15,
+      "failed": 0,
+      "seconds": 96.42,
+      "files": 40,
+      "log": "/home/xk/.local/share/dh116-autonomous-3c80166/evidence/teacher-collision-ordered-fk-20261119/shared-runtime-final-cpu.log",
+      "sha256": "9e3c66dab808fe289b704dc1277859486627a133f2f50aa4f158e9345b1063fa"
     },
     "review_corrections": [
       "FP64 original 30N guard before SDK cast",
@@ -2425,6 +2435,76 @@
       "thresholds_changed": false,
       "teacher_admission": false,
       "report": "docs/superpowers/reports/2026-11-24-dh116-tensor-control-fusion.md"
+    },
+    "shared_runtime": {
+      "status": "n2_and_n128_current_source_native_verified",
+      "camera_enabled": false,
+      "student_native_training_verified": false,
+      "torch_compile": false,
+      "common_physics_class": "NativeTensorPhysicsRuntime",
+      "capture_hook_default": "off",
+      "source_freeze_required": true,
+      "report": "docs/superpowers/reports/2026-11-24-dh116-shared-runtime-lifecycle-native.md",
+      "natural_exit_code": 0
+    },
+    "cuda_geometry": {
+      "backend": "cuda_cabi",
+      "binary_sha256": "57baa26f73b2973bee46d3e27faa021cb061e37ea1fb4ac366db3a0b7280942a",
+      "manifest_sha256": "0b50ff3be1b6d0d05084173e8505d68e581765d4db3f0035b53bee387a69fc31",
+      "torch_compile": false,
+      "native_n2_receipt_sha256": "ced355f07006ad0d9a95e702c2d03e9e69002a60f75c63d6fb7788a6c9d82bcb",
+      "native_n128_receipt_sha256": "19808ae7aa3295f48a74de5e65de57182e82ba782702868535aaf588642061c8",
+      "native_evidence_gate_passed": true,
+      "teacher_admission": false
+    },
+    "latest_native128_throughput": {
+      "window_seconds": [
+        0.4959245091304183,
+        0.29345822893083096
+      ],
+      "window_phases": [
+        {
+          "observation_policy_sample": 0.17261280003003776,
+          "reward_window_begin": 0.006952039897441864,
+          "project_reaction_submit": 0.07708534016273916,
+          "physx_step": 0.06776157394051552,
+          "sdk_readback": 0.008777458919212222,
+          "raw_source_guard_mesh_submit": 0.018198416102677584,
+          "rod_flat_export_reduce": 0.03162848390638828,
+          "geometry_r0_and_post_guards": 0.09689664677716792,
+          "value_and_reward_settlement": 0.015350800938904285,
+          "window_reset": 3.8906000554561615e-07
+        },
+        {
+          "observation_policy_sample": 0.01835083798505366,
+          "reward_window_begin": 0.006383019033819437,
+          "project_reaction_submit": 0.047937959199771285,
+          "physx_step": 0.06563877803273499,
+          "sdk_readback": 0.008598911808803678,
+          "raw_source_guard_mesh_submit": 0.017706817016005516,
+          "rod_flat_export_reduce": 0.024771560914814472,
+          "geometry_r0_and_post_guards": 0.08830571197904646,
+          "value_and_reward_settlement": 0.015161254908889532,
+          "window_reset": 3.441236913204193e-07
+        }
+      ],
+      "peak_sampled_gpu_mib": 3044,
+      "peak_torch_allocated_bytes": 146683392,
+      "natural_exit_code": 0,
+      "total_cold_process_seconds": 420.27087762905285,
+      "cold_authoring_interval_seconds": 371.139719,
+      "updates": 0,
+      "source_frozen": true,
+      "local_timeline_released": true,
+      "receipt_sha256": "19808ae7aa3295f48a74de5e65de57182e82ba782702868535aaf588642061c8",
+      "target_met": false
+    },
+    "cuda_checkpoint_continuation": {
+      "passed": 1,
+      "physical_gpu": 2,
+      "seconds": 6.4,
+      "physical_resume": false,
+      "log_sha256": "72537e5897cc384771c7d982f64cd43391907c4099949bed36101f4382c31779"
     }
   }
 }

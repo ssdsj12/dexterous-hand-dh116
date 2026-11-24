@@ -361,3 +361,25 @@ def test_both_final_outputs_unwritable_rethrow_all_causes_without_extra_cleanup(
     assert f.events.count("stop") == f.events.count("close") == 1
     assert "update" not in f.events
     assert all(ref() is None for ref in f.refs.values())
+
+
+@pytest.mark.parametrize("release_ok", [True, False])
+def test_optional_shared_before_close_guard_runs_after_stop_update_and_before_close(
+        tmp_path, monkeypatch, release_ok):
+    module = api()
+    f = fixture(tmp_path, monkeypatch)
+    def guard():
+        assert f.events.index("stop") < f.events.index("update")
+        assert "close" not in f.events
+        f.events.append("timeline_release")
+        return release_ok
+    f.kwargs["before_close_guard"] = guard
+    if release_ok:
+        result = module.run_lifecycle(f.app, **f.kwargs)
+        assert result["close_mode"] == "normal"
+    else:
+        with pytest.raises(RuntimeError, match="pre-close runtime release"):
+            module.run_lifecycle(f.app, **f.kwargs)
+        assert read(tmp_path, "result.json")["close_mode"] == "fault"
+    assert f.events.count("timeline_release") == f.events.count("close") == 1
+    assert f.events.index("timeline_release") < f.events.index("close")

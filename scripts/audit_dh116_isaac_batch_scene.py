@@ -308,7 +308,7 @@ def _exercise(sim, scenes, seed, prepared, output, gpu, write_new, *, rod_spec=N
 
 
 def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, extra_exercise=None,
-         author_and_exercise=None, owned_names=None):
+         author_and_exercise=None, owned_names=None, runtime_source_audit=False):
     from scripts.prepare_dh116_dual_pinch_interval import assert_clean_import_boundary
     assert_clean_import_boundary()
     from isaaclab.app import AppLauncher
@@ -326,8 +326,8 @@ def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, e
         from isaacsim.core.simulation_manager import SimulationManager
         import omni.timeline
         import torch
-        from go2_pvcnn.control.dh116.tabletop_native_teacher_actual_provider import _run_lifecycle_with_stat_cache
-        from go2_pvcnn.control.dh116.tabletop_preview_launcher import commit_preview_stop
+        from go2_pvcnn.control.dh116.tabletop_runtime_lifecycle import (
+            TimelineStopOwner, run_lifecycle_with_stat_cache)
         from go2_pvcnn.control.dh116.tabletop_simulation_owner_cleanup import (
             clear_known_simulation_instance, simulation_source_contract)
         from go2_pvcnn.control.dh116.tabletop_stat_cache_release import stat_cache_source_contract
@@ -361,6 +361,8 @@ def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, e
         def acquire(sim, owners, trace, cleanup):
             nonlocal completed_step
             from go2_pvcnn.control.dh116.tabletop_dual_hand_scene_preparation import prepare_scene
+            if source_audit is not None:
+                source_audit.check_startup()
             prepared = prepare_scene(project)
             lanes = scene_lanes(num_envs, prepared["table"]["size_m"])
             if author_and_exercise is not None:
@@ -382,13 +384,37 @@ def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, e
         def read_sim():
             return sim_reference() if sim_reference is not None else None
 
-        def stop():
-            def read_clock():
+        def read_clock():
+            simulation = None
+            try:
                 simulation = read_sim()
                 return clock(simulation) if simulation is not None else None
-            result = commit_preview_stop(omni.timeline.get_timeline_interface(),
-                                         freeze=freeze, read_clock=read_clock)
-            write_new(output / "stop_commit.json", result)
+            finally:
+                simulation = None
+
+        from go2_pvcnn.control.dh116.tabletop_runtime_source_audit import SourceFreezeAudit
+        source_audit = (SourceFreezeAudit(project=project,attempt=output.parent/"attempt.json",output=output)
+            if runtime_source_audit else None)
+        timeline_owner = TimelineStopOwner(acquire=omni.timeline.get_timeline_interface,
+            freeze=freeze, read_clock=read_clock, output=output)
+
+        def stop():
+            write_new(output / "stop_commit.json", timeline_owner.stop())
+
+        def release_before_close():
+            errors = []
+            callbacks = ((source_audit.before_close,) if source_audit is not None else ()) + (timeline_owner.before_close,)
+            for callback in callbacks:
+                try:
+                    if callback() is not True:
+                        errors.append("runtime pre-close audit returned unknown")
+                except BaseException as error:
+                    errors.append(str(error))
+                finally:
+                    callback = None
+            if errors:
+                raise RuntimeError("; ".join(errors)) from None
+            return True
 
         names = (tuple(owned_names) if owned_names is not None else
                  tuple(f"{i}_{side}_{suffix}" for i in range(num_envs)
@@ -399,14 +425,15 @@ def _run(project, archive, gpu, num_envs, output, *, coupled, max_sdk_step=10, e
                       (lifecycle_bindings, "snapshot_weakrefs", batch_snapshot),
                       (lifetime_trace, "snapshot_weakrefs", batch_snapshot)):
             entered = True
-            return _run_lifecycle_with_stat_cache(SimpleNamespace(update=app.update,
+            return run_lifecycle_with_stat_cache(SimpleNamespace(update=app.update,
                 close=lambda: app.close(wait_for_replicator=False)),
                 lifecycle=run_lifecycle, cache_release=cache, read_sim=read_sim,
                 read_completed_sdk_step=lambda: completed_step, max_sdk_step=max_sdk_step,
                 make_sim=make_sim, acquire=acquire, synchronize=lambda: torch.cuda.synchronize(0),
                 clear_sim=lambda sim: clear_known_simulation_instance(sim, contract=clear_contract),
                 stop=stop, manager_is_none=lambda: SimulationManager.get_physics_sim_view() is None,
-                freeze=freeze, output=output, cleanup="explicit")
+                freeze=freeze, output=output, cleanup="explicit",
+                before_close_guard=release_before_close)
     finally:
         if not entered:
             app.close(wait_for_replicator=False)
