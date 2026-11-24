@@ -2,6 +2,11 @@
   "profile": "approach_wiring_smoke_v1",
   "profile_version": 1,
   "enable_full_grasp": true,
+  "full_grasp_ppo": {
+    "gae_lambda": 0.97,
+    "epochs": 3,
+    "minibatches": 4
+  },
   "schema_sha256": "5c31eda15b12d7c364e541c8cf032e4d052dfb2faa1a284bff89fb0da5263655",
   "design_document_sha256": "a6a04d7dab20048d22b152762eb07018c3269cd63bfad77ed2b11799d7ed97d9",
   "weight_status": "design_approved_native_unverified",

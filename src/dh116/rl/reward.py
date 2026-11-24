@@ -246,7 +246,7 @@ def _profile_spec(profile):
     slip_cost = 0.25 if profile == train_rewar__CURRICULUM else 1.0 if profile in (train_rewar__FULL, train_rewar__GOAL_FULL) else None
     costs = {'command_rate': 0.05, 'time': 0.1, 'slip': slip_cost, 'velocity': 0.0 if full else None}
     events = {'trusted_constraint_failure': -40.0, 'prohibited_support': -50.0 if full else None, 'success': 100.0 if full else None}
-    ppo = dict(gae_lambda=0.97 if long_rollout else 0.95, rollout_steps=256 if long_rollout else 32, learning_rate=0.0001, epochs=3 if long_rollout else 1, minibatches=4 if long_rollout else 1, clip=0.2, entropy=0.005, value=0.5, max_grad_norm=0.5, target_kl=0.02, kl_backtrack_steps=3)
+    ppo = dict(gae_lambda=0.97 if full else 0.95, rollout_steps=256 if long_rollout else 32, learning_rate=0.0001, epochs=3 if full else 1, minibatches=4 if full else 1, clip=0.2, entropy=0.005, value=0.5, max_grad_norm=0.5, target_kl=0.02, kl_backtrack_steps=3)
     return (weights, costs, events, ppo)
 
 def _config_mapping(value, expected, name):
@@ -342,6 +342,9 @@ def load_config(path, *, ppo_gamma=None, full_grasp=False):
             raise ValueError('current grasp configuration must explicitly enable full reward')
         profile = train_rewar__GOAL_FULL
         weights, costs, events, expected_ppo = _profile_spec(profile)
+        overrides = {name: expected_ppo[name] for name in ('gae_lambda', 'epochs', 'minibatches')}
+        _config_mapping(data.get('full_grasp_ppo'), overrides, 'full_grasp_ppo')
+        ppo = {**ppo, **overrides}
         _config_ppo(ppo, expected_ppo)
         raw += b'\0' + profile.encode()
     slip_max = 2.0 * costs['slip'] if profile in _FULL_PROFILES else 0.0

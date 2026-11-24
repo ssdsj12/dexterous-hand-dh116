@@ -88,7 +88,13 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
     if probe and len(lanes) == 2 and getattr(args, 'retain_probe_frames', False):
         collector.arm_probe(output)
     rollout_steps = collector.trainer.rollout_steps
-    total = 2 if probe else args.updates * rollout_steps
+    if args.resume is not None:
+        from dh116.rl.device import load_checkpoint
+        restored = load_checkpoint(args.resume, collector.trainer, expected_sha256=args.resume_sha256,
+                                   **_checkpoint_context(collector.trainer, args, profile, seed))
+        if restored['counters']['updates'] != args.completed_updates:
+            raise ValueError('restart checkpoint update count changed')
+    total = 2 if probe else (args.updates - args.completed_updates) * rollout_steps
     iterations = []
     window_seconds = []
     window_phases = []
@@ -153,14 +159,17 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
     return dict(throughput_probe_only=probe, updates=updates, controls=total, environments=len(lanes), sdk_step=end, iterations=iterations, window_seconds=window_seconds, window_phases=window_phases, sdk_initialization_steps=2, physics_hz=480, control_hz=60, rod_substeps=12, articulations=2, action_size=24, run_uuid=run_uuid, geometry_backend=getattr(collector.geometry, 'backend', None), geometry_measurement=geometry_measurement_identity(collector.geometry), actual_measurement_backend=geometry_measurement_identity(collector.geometry)['actual_measurement_backend'], measurement_scope='bounded_diagnostic', measurement_native_evidence=args.measurement_native_evidence, scene_construction=getattr(batch, 'construction_metadata', None), native_readback_mode=getattr(batch, 'readback_mode', 'raw'), source_cache_metadata=batch.readback_metadata() if hasattr(batch, 'readback_metadata') else None, readback_audit=batch.readback_audit() if hasattr(batch, 'readback_audit') else None, reset_ids=runtime.resets, reset_checks=collector.reset_proofs, peak_cuda_allocated_bytes=torch.cuda.max_memory_allocated(), teacher_admission=False, grasp_qualified=False)
 from dh116.env.contracts import require_aligned
 from dh116.rl.student_data import _validate_state
-from dh116.physics.runtime import collision_clearance
+
+def _checkpoint_context(trainer, args, profile, seed):
+    from dh116.env.contracts import runti_io__digest as digest
+    recipe = digest(dict(schema='dh116-tensor-native-ppo-recipe-v2', model=trainer.model.model_identity, rollout_steps=trainer.rollout_steps, episode_windows=getattr(args, 'episode_windows', 32), num_envs=trainer.num_envs, receipt_sha256=args.receipt_sha256, profile_sha256=profile.digest, seed_sha256=seed['sha256'], policy_seed=args.policy_seed, physics_hz=480, control_hz=60, solver_substeps=12, action_size=24, native_recipe_sha256=args.native_recipe_sha256, geometry_backend=os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager'), readback_backend=os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'raw'), geometry_measurement=__import__('dh116.physics.geometry', fromlist=['CudaGeometryProfile']).CudaGeometryProfile.load().identity() if os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND') == 'cuda_cabi' else None))
+    return dict(recipe_sha256=recipe, receipt_sha256=args.receipt_sha256, backend_profile=profile,
+                seed_sha256=seed['sha256'], policy_seed=args.policy_seed)
+
 
 def save_snapshot(path, trainer, args, profile, seed):
-    """Use the separately verified v2 optimizer/RNG restart format."""
-    from dh116.env.contracts import runti_io__digest as digest
     from dh116.rl.device import save_checkpoint
-    recipe = digest(dict(schema='dh116-tensor-native-ppo-recipe-v2', model=trainer.model.model_identity, rollout_steps=trainer.rollout_steps, episode_windows=getattr(args, 'episode_windows', 32), num_envs=trainer.num_envs, receipt_sha256=args.receipt_sha256, profile_sha256=profile.digest, seed_sha256=seed['sha256'], policy_seed=args.policy_seed, physics_hz=480, control_hz=60, solver_substeps=12, action_size=24, geometry_backend=os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager'), readback_backend=os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'raw'), geometry_measurement=__import__('dh116.physics.geometry', fromlist=['CudaGeometryProfile']).CudaGeometryProfile.load().identity() if os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND') == 'cuda_cabi' else None))
-    result = save_checkpoint(path, trainer, recipe_sha256=recipe, receipt_sha256=args.receipt_sha256, backend_profile=profile, seed_sha256=seed['sha256'], policy_seed=args.policy_seed)
+    result = save_checkpoint(path, trainer, **_checkpoint_context(trainer, args, profile, seed))
     return result['sha256']
 from dh116.rl.student_data import DAggerDataset
 from dh116.rl.student_data import tensor_state_sha256
@@ -213,6 +222,8 @@ def train_teacher_main(argv=None):
     parser.add_argument('--full-grasp', action='store_true', help='supported scene with full grasp, Lift and Hold reward')
     parser.add_argument('--output', type=teach_train__Path, required=True)
     parser.add_argument('--policy-seed', type=int, default=20261123)
+    parser.add_argument('--resume', type=teach_train__Path, help='resume to --updates after a fresh physical Reset')
+    parser.add_argument('--resume-sha256', help='expected SHA256 of the existing restart checkpoint')
     parser.add_argument('--checkpoint-interval', type=int, default=20)
     parser.add_argument('--retain-probe-frames', action='store_true')
     group = parser.add_mutually_exclusive_group(required=True)
@@ -250,6 +261,18 @@ def train_teacher_main(argv=None):
         full=args.full_grasp, envs=args.num_envs, episode_windows=args.episode_windows, build=args.scene_build_mode,
         readback=os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'raw'),
         geometry=os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager')))
+    args.native_recipe_sha256 = recipe_sha
+    args.completed_updates = 0
+    if (args.resume is None) != (args.resume_sha256 is None) or (args.resume is not None and args.updates is None):
+        parser.error('--resume and --resume-sha256 require --updates')
+    if args.resume is not None:
+        import torch
+        raw = checked_file(args.resume, args.resume_sha256)
+        import io
+        packet = torch.load(io.BytesIO(raw), map_location='cpu', weights_only=True)
+        args.completed_updates = packet.get('counters', {}).get('updates')
+        if type(args.completed_updates) is not int or not 0 < args.completed_updates < args.updates:
+            parser.error('checkpoint update count must be below the total --updates target')
     if args.updates is not None:
         if args.updates < 2:
             parser.error('at least two updates required')
@@ -262,7 +285,10 @@ def train_teacher_main(argv=None):
                 and row.get('controls') == 2 and row.get('updates') == 0
                 for row in args.measurement_native_evidence):
             parser.error('full training requires the same-source, same-size native probe receipt')
-    total = args.probe_control_windows or args.updates * 32
+    from dh116.rl.reward import load_config
+    reward = load_config(teach_train__ROOT / 'configs/training' / f'reward_{args.grasp}.json',
+                         full_grasp=args.full_grasp)
+    total = args.probe_control_windows or (args.updates - args.completed_updates) * reward.ppo['rollout_steps']
     end = 2 + 8 * total
     if args.worker:
         worker(args, end)
@@ -271,7 +297,7 @@ def train_teacher_main(argv=None):
     output.mkdir(parents=True, exist_ok=False)
     native = output / 'native'
     native.mkdir()
-    write_new(output / 'attempt.json', dict(schema='dh116-production-native-attempt-v1', source_sha256=inventory, grasp=args.grasp, num_envs=args.num_envs, controls=total, sdk_steps=end, ppo_updates=args.updates or 0, scene_build_mode=args.scene_build_mode, scene_sha256=args.receipt_sha256, episode_windows=args.episode_windows, outer_timeout_s=args.outer_timeout_s, full_grasp=args.full_grasp, recipe_sha256=recipe_sha))
+    write_new(output / 'attempt.json', dict(schema='dh116-production-native-attempt-v1', source_sha256=inventory, grasp=args.grasp, num_envs=args.num_envs, controls=total, sdk_steps=end, ppo_updates=args.updates or 0, completed_updates_at_start=args.completed_updates, resumed_checkpoint_sha256=args.resume_sha256, scene_build_mode=args.scene_build_mode, scene_sha256=args.receipt_sha256, episode_windows=args.episode_windows, outer_timeout_s=args.outer_timeout_s, full_grasp=args.full_grasp, recipe_sha256=recipe_sha))
     command = [sys.executable, str(teach_train__ROOT / 'scripts/train_teacher.py'), *(sys.argv[1:] if argv is None else argv), '--output', str(native), '--worker']
     from dh116.env.lifecycle import resolve_physical_gpu_uuid
     gpu_uuid = resolve_physical_gpu_uuid(args.gpu)
@@ -297,7 +323,7 @@ def train_teacher_main(argv=None):
     if close.get('app_close_returned') is not True or close.get('close_mode') != 'normal' or lifecycle.get('failure') is not None or (lifecycle.get('close_mode') != 'normal') or (lifecycle.get('lifetime_released_before_close') is not True) or (lifecycle.get('physics_steps') != end) or (actual.get('sdk_step') != end) or (actual.get('controls') != total) or (actual.get('updates') != (args.updates or 0)):
         raise ValueError('complete acquisition and verified natural close required')
     from dh116.physics.geometry import CudaGeometryProfile
-    write_new(output / 'native_result.json', dict(actual, grasp=args.grasp, exit_code=code, process_exit_verified=True, episode_windows=args.episode_windows, reward_mode='full' if args.full_grasp else 'smoke', scene_sha256=args.receipt_sha256, recipe_sha256=recipe_sha, geometry_manifest_sha256=CudaGeometryProfile.load().manifest_sha256, runtime_graph_compilation=False, close_mode='normal', teacher_admission=False))
+    write_new(output / 'native_result.json', dict(actual, grasp=args.grasp, completed_updates_at_start=args.completed_updates, resumed_checkpoint_sha256=args.resume_sha256, exit_code=code, process_exit_verified=True, episode_windows=args.episode_windows, reward_mode='full' if args.full_grasp else 'smoke', scene_sha256=args.receipt_sha256, recipe_sha256=recipe_sha, geometry_manifest_sha256=CudaGeometryProfile.load().manifest_sha256, runtime_graph_compilation=False, close_mode='normal', teacher_admission=False))
     return 0
 from dh116.rl.student_model import StereoAsymmetricPolicy
 from dh116.rl.student_model import StereoHistory

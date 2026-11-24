@@ -12,7 +12,6 @@ from types import MappingProxyType
 import uuid
 import numpy as np
 import torch
-from dh116.physics.geometry import collision_clearance
 from dh116.hand.kinematics import defor_wrist_proje__CLEARANCE_M as CLEARANCE_M
 from dh116.hand.kinematics import defor_wrist_proje__SOURCE as SOURCE
 from dh116.hand.kinematics import WRIST_ANGULAR
@@ -22,7 +21,7 @@ from dh116.hand.articulation import capture_regex_state
 from dh116.hand.articulation import restore_regex_seed
 from dh116.env.contracts import validate_runtime_execution
 from dh116.hand.safety import TensorControl
-from dh116.physics.geometry import DECISION_MARGIN_M, _rotation_xyzw
+from dh116.physics.geometry import _rotation_xyzw
 from dh116.physics.geometry import make_tensor_geometry
 from dh116.physics.geometry import TensorMeshBridge
 from dh116.rl.teacher import FULL_CONTEXT_MODE, FullTaskContext, TensorSourceOwner
@@ -268,15 +267,11 @@ class RawTableClearance:
             heights = (row[:, links] * vertices).sum(-1) + p[:, links, 2]
             clear.append(heights.amin(-1) - 0.3)
         clear = torch.stack(clear, -1)
-        near = ((clear - CLEARANCE_M).abs() <= DECISION_MARGIN_M).any(-1)
-        if bool(near.any()):
-            (exact, _) = collision_clearance(poses[near].detach().cpu().numpy(), self.shapes)
-            clear[near] = clear.new_tensor(exact)
         if bool((~torch.isfinite(clear)).any()) or (not isolate and bool((clear < CLEARANCE_M).any())):
             raise ValueError('original pre-rod raw source table clearance guard failed')
         return clear
 
-def mesh_reset(solver, bridge, state, ids, *, before=None):
+def mesh_reset(solver, bridge, state, ids, *, before=None, verify=True):
     """Cold native Reset ABI, with all three actual phase and velocity readbacks."""
     (positions, quaternions) = bridge.targets(state['link_pose_xyzw'])
     idx = list(ids)
@@ -284,6 +279,10 @@ def mesh_reset(solver, bridge, state, ids, *, before=None):
     q = quaternions[idx].cpu().numpy()
     clock = float(solver.time)
     solver.reset_env_mesh_poses(np.asarray(idx, dtype=np.int32), p, q)
+    if float(solver.time) != clock or solver.last_error:
+        raise ValueError('mesh reset advanced native time or failed')
+    if not verify:
+        return
     after = solver.mesh_state_snapshot()
     for phase in ('current', 'target', 'solver'):
         np.testing.assert_array_equal(after[phase + '_positions_world_m'][idx], p)
@@ -298,8 +297,6 @@ def mesh_reset(solver, bridge, state, ids, *, before=None):
                 (a, b) = (np.asarray(value)[peers], np.asarray(after[key])[peers])
                 if a.dtype != b.dtype or a.shape != b.shape or a.tobytes() != b.tobytes():
                     raise ValueError('peer native mesh Reset readback changed: ' + key)
-    if float(solver.time) != clock or solver.last_error:
-        raise ValueError('mesh reset advanced native time or failed')
 
 def require_substep_guard(failures, label):
     if bool(failures.any()):
@@ -522,6 +519,7 @@ class NativeTensorPhysicsRuntime:
             if not isinstance(token, str) or not token.strip():
                 raise ValueError('one producer-owned action batch token required')
             self.reward.begin(tuple(self.reward.schemas), request=actions, tokens=(token,) * self.n, policy_uids=policy_uids, physics_tick=self.last.physics_tick, solver_time_s=self.last.solver_time_s, remaining_substeps=end - self.runtime.physics_step)
+            self._parked = torch.zeros_like(self.reward._terminal)
             self._action_window = dict(actions=actions, action_version=actions._version, token=token, policy_uids=tuple(policy_uids), start_step=self.runtime.physics_step, end=end, recorded=False)
             if self._capture_cadence == 'window':
                 self._notify_capture('pre')
@@ -984,8 +982,9 @@ class NativeTensorPhysicsRuntime:
         measured = self.state
         guard = trans['constraint_failure'] | self.source_guards() | (self.clear < CLEARANCE_M).any(1)
         parked = halted | guard
-        if self.full_grasp and bool(parked.any()):
-            self._park(parked)
+        pre_park = (parked & ~self._parked).nonzero().flatten().tolist() if self.full_grasp else []
+        if pre_park:
+            self._park(pre_park)
         self.bridge.submit(self.runtime.solver, self.state['link_pose_xyzw'])
         mark('raw_source_guard_mesh_submit')
         capture = self.runtime.advance(physics_step=sdk)
@@ -1009,9 +1008,13 @@ class NativeTensorPhysicsRuntime:
         guard |= self._geometry_bad & ~parked
         self.last = self.frame(post, distance, capture=capture, constraint=guard, suppress_contact=parked if self.full_grasp else None)
         ready = self.reward.observe(self.last)
-        if self.full_grasp and bool(self.reward._terminal.any()):
-            self._park(self.reward._terminal, clear_controller=True)
-            self.nodes, self.velocity = self.rod_state()
+        if self.full_grasp:
+            post_park = (self.reward._terminal & ~self._parked).nonzero().flatten().tolist()
+            if post_park:
+                self._park(post_park)
+                self.nodes, self.velocity = self.rod_state()
+            if pre_park or post_park:
+                self.ctrl.invalidate(pre_park + post_park)
         mark('geometry_r0_and_post_guards')
         if evidence is not None:
             evidence.update(post=post, state_post=self.state, nodes_post=self.nodes, velocity_post=self.velocity, post_clearance=self.clear, capture=capture, post_frame=self.last, geometry=None if self.geometry is None else self.geometry.result)
@@ -1019,18 +1022,16 @@ class NativeTensorPhysicsRuntime:
             mark('n2_cold_parity_evidence')
         return ready
 
-    def _park(self, mask, *, clear_controller=False):
+    def _park(self, ids):
         # Quarantine reads/writes select only failed lanes. The shared SDK and
         # solver still advance, so parked work is counted in the physical budget.
         # No parked state becomes a policy transition after terminal settlement.
-        ids = mask.nonzero().flatten().tolist()
         self.state = restore_regex_seed(self.sim, self.batch, self.initial, env_ids=ids,
                                         active_effort_limit_nm=self.effort)
         self.runtime.park_rods(ids)
-        mesh_reset(self.runtime.solver, self.bridge, self.state, ids)
+        mesh_reset(self.runtime.solver, self.bridge, self.state, ids, verify=self.prove_peer_reset)
         self.clear[ids] = self.raw_clearance(self.state['link_pose_wxyz'][ids])
-        if clear_controller:
-            self.ctrl.invalidate(ids)
+        self._parked[ids] = True
 
     def peer_state(self, peers):
         """Cold probe only. Keep exact byte patterns including signed zero and NaNs."""
@@ -1070,7 +1071,7 @@ class NativeTensorPhysicsRuntime:
         sdk = self.runtime.physics_step
         self.state = restore_regex_seed(self.sim, self.batch, self.initial, env_ids=list(ids), active_effort_limit_nm=self.effort)
         self.runtime.reset_lanes(ids, episode_uids=tuple((uuid.uuid4().hex for _ in ids)))
-        mesh_reset(self.runtime.solver, self.bridge, self.state, ids, before=mesh)
+        mesh_reset(self.runtime.solver, self.bridge, self.state, ids, before=mesh, verify=not self.full_grasp or self.prove_peer_reset)
         self.ctrl.invalidate(list(ids))
         self._reset_refs(ids)
         if peers:

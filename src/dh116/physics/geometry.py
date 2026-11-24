@@ -10,7 +10,7 @@ import hashlib as polyl_suppo_certi__hashlib
 from copy import deepcopy as tenso_geome__deepcopy
 from copy import deepcopy as tenso_mesh_bridg__deepcopy
 DISTAL_PAD_LINKS = ('finger14_link', 'finger23_link', 'finger33_link', 'finger43_link', 'finger53_link')
-from scipy.spatial import ConvexHull
+from scipy.spatial import ConvexHull, QhullError
 
 def normalized_convex(points):
     """Cook a well-scaled hull, then restore identical geometry by mesh scale."""
@@ -499,6 +499,35 @@ class TensorGeometry:
         normals = tenso_geome__np.stack((tenso_geome__np.cos(a), tenso_geome__np.zeros(64), tenso_geome__np.sin(a)), 1)
         normals /= tenso_geome__np.linalg.norm(normals, axis=1)[:, None] + 1e-12
         self._normals = tenso_geome__torch.tensor(normals, dtype=tenso_geome__torch.float64, device=self.device)
+        if self.device.type == 'cuda':
+            self._convex = []
+            self._shape_buckets = []
+            self._pad_float = [tuple(t.float() for t in pad[4:7]) for pad in self._pads]
+            axes = torch.eye(3, dtype=torch.float64, device=self.device)
+            self._support_axes = torch.cat((self._normals, axes, -axes))
+            buckets = {}
+            for column, (side, link, _, vertices, points) in enumerate(self._shapes):
+                try:
+                    hull = ConvexHull(vertices)
+                except QhullError:
+                    faces = points[:0]
+                    triangles = torch.empty((0, 3), dtype=torch.long, device=self.device)
+                else:
+                    faces = torch.tensor(hull.equations[:, :3], device=self.device)
+                    triangles = torch.tensor(hull.simplices, dtype=torch.long, device=self.device)
+                edges = triangles[:, [0, 1, 1, 2, 2, 0]].reshape(-1, 2)
+                edges = edges.sort(-1).values.unique(dim=0)
+                self._convex.append((faces, triangles, edges))
+                buckets.setdefault((len(points), len(faces)), []).append(column)
+            self._shape_side = torch.tensor([row[0] for row in self._shapes], device=self.device)
+            self._shape_link = torch.tensor([row[1] for row in self._shapes], device=self.device)
+            for columns in buckets.values():
+                points = torch.stack([self._shapes[c][4] for c in columns])
+                faces = torch.stack([self._convex[c][0] for c in columns])
+                directions = torch.cat((faces, -faces), dim=1)
+                directions = directions / (directions.norm(dim=-1, keepdim=True) * (1 + 1e-12))
+                projection = (points @ directions.transpose(1, 2)).amin(1)
+                self._shape_buckets.append((torch.tensor(columns, device=self.device), points, directions, projection))
 
     @classmethod
     def from_materialized_geometry(cls, geometry, grids, sources, body_names, *, required_pads, device, backend=None):
@@ -664,6 +693,68 @@ class TensorGeometry:
         support_flags[rows, columns] = ~certified
         return support_flags
 
+    def _cuda_segment_support(self, p, rotations, nodes, radii, lower, support_flags):
+        # Match the original certificate directions, including each of the
+        # forty segment-centre directions tested against all adjacent segments.
+        for columns, vertices, faces, face_min in self._shape_buckets:
+            rows, local = support_flags[:, columns].nonzero().unbind(1)
+            for rows, local in zip(rows.split(256), local.split(256)):
+                if not len(rows):
+                    continue
+                col = columns[local]
+                side, link = self._shape_side[col], self._shape_link[col]
+                rot = rotations[rows, side, link]
+                points = vertices[local]
+                rod = (nodes[rows] - p[rows, side, link, None, :3]) @ rot
+                delta = points.mean(1)[:, None] - (rod[:, :-1] + rod[:, 1:]) / 2
+                lengths = delta.norm(dim=-1, keepdim=True)
+                center = torch.where(lengths > 1e-15, delta / (lengths * (1 + 1e-12)), 0)
+                fixed = self._support_axes @ rot
+                axes = torch.cat((fixed, center), dim=1)
+                shape_min = torch.cat(((points @ axes.transpose(1, 2)).amin(1), face_min[local]), 1)
+                directions = torch.cat((axes, faces[local]), 1)
+                proj = rod @ directions.transpose(1, 2)
+                bound = (shape_min[:, None] - torch.maximum(proj[:, :-1], proj[:, 1:])).amax(-1)
+                rounding = 128 * torch.finfo(torch.float64).eps * (points.abs().amax((1, 2)) + rod.abs().amax((1, 2)) + 1)
+                bound = (bound.amin(-1) - rounding).clamp_min(0) - radii[rows] - tenso_geome__NUMERIC_GUARD
+                legacy = (shape_min[:, :64] - proj[:, :, :64].amax(1)).amax(1).clamp_min(0)
+                legacy = legacy - radii[rows] - tenso_geome__NUMERIC_GUARD
+                lower[rows, col] = torch.where(legacy >= 0, legacy, torch.maximum(legacy, bound))
+
+    def _cuda_extrema_recheck(self, p, rotations, flags, minimum, maximum):
+        # The source matrix uses a normalized quaternion. Keep the raw
+        # quaternion reserved for the independent Tripod/support predicates.
+        for columns, vertices, _, _ in self._shape_buckets:
+            rows, local = flags[:, columns].nonzero().unbind(1)
+            if not len(rows):
+                continue
+            col = columns[local]
+            side, link = self._shape_side[col], self._shape_link[col]
+            world = vertices[local] @ rotations[rows, side, link].transpose(1, 2)
+            world += p[rows, side, link, None, :3]
+            minimum[rows, col], maximum[rows, col] = world.amin(1), world.amax(1)
+
+    def _cuda_pad_recheck(self, p, rotations, nodes, radii, flags, gaps, norms, valid, negative, contact):
+        # Re-evaluate routed rows with the legacy lattice/dtype as well as
+        # the main C ABI's FP64 result. Never extrapolate outside the lattice.
+        for column, (side, link, *_) in enumerate(self._pads):
+            rows = flags[:, column].nonzero().flatten()
+            if not len(rows):
+                continue
+            values, origin, spacing = self._pad_float[column]
+            offset = nodes[rows].float() - p[rows, side, link, None, :3].float()
+            rotation = rotations[rows, side, link].float()
+            local = (offset[..., 0:1] * rotation[:, None, 0]
+                     + offset[..., 1:2] * rotation[:, None, 1]
+                     + offset[..., 2:3] * rotation[:, None, 2])
+            phi, gradient, inside = _sample_grid_float64(values, origin, spacing, local)
+            gap = phi - radii[rows, None].float()
+            norm = gradient.square().sum(-1).sqrt()
+            gaps[rows, column], norms[rows, column] = gap.double(), norm.double()
+            valid[rows, column] = inside
+            negative[rows, column] = inside & (gap < 0)
+            contact[rows, column] = inside & (gap < 0) & (norm > 0)
+
     def _fallback(self, p, nodes, radii, minimum, maximum, lower, separation, table_flags, support_flags, separation_flags, sdf_flags, gaps, norms, valid, negative, contact):
         rows = table_flags.any(1) | support_flags.any(1) | separation_flags | sdf_flags.any(1)
         ids = rows.nonzero().flatten()
@@ -769,9 +860,18 @@ class TensorGeometry:
             sdf_flags &= active[:, None]
             support_flags = self._certify_clear_segments(minimum, maximum, n, radii, lower, support_flags)
         fallback_rows = table_flags.any(1) | support_flags.any(1) | separation_flags | sdf_flags.any(1)
-        if bool(invalid | fallback_rows.any()):
-            if bool(invalid):
-                raise ValueError('complete finite unit native poses/material41 and positive radius required')
+        if bool(invalid):
+            raise ValueError('complete finite unit native poses/material41 and positive radius required')
+        if self.device.type == 'cuda' and active is not None:
+            extrema_flags = table_flags | separation_flags[:, None]
+            if bool(extrema_flags.any()):
+                self._cuda_extrema_recheck(p, rotations, extrema_flags, minimum, maximum)
+                separation = self._separation(minimum, maximum)
+            if bool(support_flags.any()):
+                self._cuda_segment_support(p, rotations, n, radii, lower, support_flags)
+            if bool(sdf_flags.any()):
+                self._cuda_pad_recheck(p, rotations, n, radii, sdf_flags, gaps, norms, valid, negative, contact)
+        elif bool(fallback_rows.any()):
             self._fallback(p, n, radii, minimum, maximum, lower, separation, table_flags, support_flags, separation_flags, sdf_flags, gaps, norms, valid, negative, contact)
         table = minimum[..., 2] - 0.3
         table_failure = table < CLEARANCE_M
@@ -1083,11 +1183,64 @@ _TRIPOD_NON_TARGET_LIMIT_M = .00025
 _TRIPOD_PAD_PENETRATION_M = .00015
 
 
+def _point_edge_delta(point, head, edge):
+    norm = edge.square().sum(-1)
+    t = (((point - head) * edge).sum(-1) / torch.where(norm > 0, norm, 1)).clamp(0, 1)
+    return point - (head + t[..., None] * edge)
+
+
+def _point_face_delta(point, face):
+    head = face[..., 0, :]
+    u, v = face[..., 1, :] - head, face[..., 2, :] - head
+    delta = point - head
+    normal = torch.linalg.cross(u, v)
+    d = normal.square().sum(-1)
+    regular = d > 1e-20 * u.square().sum(-1) * v.square().sum(-1)
+    denom = torch.where(regular, d, 1)
+    s = (torch.linalg.cross(delta, v) * normal).sum(-1) / denom
+    t = (torch.linalg.cross(u, delta) * normal).sum(-1) / denom
+    height = (delta * normal).sum(-1) / denom
+    return height[..., None] * normal, regular & (s >= 0) & (t >= 0) & (s + t <= 1)
+
+
+def _group_distance_lower(vertices, triangles, edges, group):
+    # The closest separated features are vertex/face or edge/edge.
+    # Boundary projections also cover vertices and a degenerate node triangle.
+    head = vertices[:, edges[:, 0], None]
+    arm = vertices[:, edges[:, 1], None] - head
+    start = group[:, None]
+    axis = group.roll(-1, dims=1)[:, None] - start
+    delta = head - start
+    normal = torch.linalg.cross(arm, axis)
+    d = normal.square().sum(-1)
+    regular = d > 1e-20 * arm.square().sum(-1) * axis.square().sum(-1)
+    denom = torch.where(regular, d, 1)
+    s = (torch.linalg.cross(axis, delta) * normal).sum(-1) / denom
+    t = (torch.linalg.cross(arm, delta) * normal).sum(-1) / denom
+    interior = delta + s[..., None] * arm - t[..., None] * axis
+    admissible = regular & (s >= 0) & (s <= 1) & (t >= 0) & (t <= 1)
+    vertex_face, vertex_inside = _point_face_delta(vertices, group[:, None])
+    node_face, node_inside = _point_face_delta(group[:, None], vertices[:, triangles][:, :, None])
+    vectors = torch.cat((vertex_face, -node_face.flatten(1, 2),
+                         interior.flatten(1, 2), _point_edge_delta(vertices[:, :, None], start, axis).flatten(1, 2),
+                         -_point_edge_delta(start, head, arm).flatten(1, 2)), 1)
+    norms = vectors.square().sum(-1)
+    checked = torch.cat((vertex_inside, node_inside.flatten(1), admissible.flatten(1)), 1)
+    norms[:, :checked.shape[1]].masked_fill_(~checked, torch.inf)
+    index = norms.argmin(-1)
+    closest = vectors[torch.arange(len(vertices), device=vertices.device), index]
+    length = closest.norm(dim=-1)
+    direction = closest / torch.where(length > 0, length * (1 + 1e-12), 1)[:, None]
+    support = (vertices @ direction[..., None]).squeeze(-1).amin(-1)
+    support -= (group @ direction[..., None]).squeeze(-1).amax(-1)
+    return support - _DISTANCE_ROUNDING_M
+
+
 class TripodSupportGuard:
     """Use every original convex vertex and both translated Tripod supports.
 
-    Run conservative device bounds first. Near or unresolved bounds use the
-    original raw-quaternion CPU transforms, box SAT and full-envelope proof.
+    Run conservative device bounds first. Resolve uncertain bounds on device
+    during training and retain the original CPU proof for reference captures.
     A capture is valid only for its measured frame and Reset epoch.
     """
 
@@ -1120,6 +1273,7 @@ class TripodSupportGuard:
         self._extent = max(float(np.abs(vertices).max()) for _, _, vertices, _, _ in self._shapes)
         self._normals_cpu = _tripod_normals()
         self._normals = torch.tensor(self._normals_cpu, dtype=torch.float64, device=self.device)
+        self._coarse_normals = self._normals.view(25, 72, 3)[::4, ::6].reshape(-1, 3)
         self._groups = torch.arange(0, 40, 2, device=self.device)[:, None] + torch.arange(3, device=self.device)
         self._thresholds = self._normals.new_tensor([
             -_TRIPOD_PAD_PENETRATION_M if target else _TRIPOD_NON_TARGET_LIMIT_M
@@ -1149,7 +1303,7 @@ class TripodSupportGuard:
         self.geometry.validate_metadata()
         return self.result
 
-    def _fallback_flags(self, poses, rod, low, high, active, box_low, box_high):
+    def _fallback_flags(self, poses, rod, low, high, active, box_low, box_high, *, coarse=False):
         # The shared extrema use a normalized quaternion. Expand the box
         # by the full bound on the raw transform used by the exact oracle.
         q_sq = poses[:, self._side, self._link, 3:].square().sum(-1)
@@ -1170,11 +1324,14 @@ class TripodSupportGuard:
         if not bool(torch.isfinite(support_gap).all() & torch.isfinite(axis_gap).all()):
             raise ValueError('nonfinite Tripod raw convex lower bound')
         if bool(rod_near.any()):
-            upper = (rod @ self._normals.T)[:, self._groups].amax(2) + _TRIPOD_ROD_RADIUS_M
+            normals = self._coarse_normals if coarse else self._normals
+            projected = rod @ normals.T
+            upper = torch.maximum(torch.maximum(projected[:, 0:40:2], projected[:, 1:41:2]),
+                                  projected[:, 2:41:2]) + _TRIPOD_ROD_RADIUS_M
             for columns, vertices in self._vertex_buckets:
                 rows, local_ids = rod_near[:, columns].nonzero().unbind(1)
                 # Bound transient FP64 projection memory even for the palm hull.
-                width = max(1, (128 << 20) // (8 * len(self._normals) * (vertices.shape[1] + 20)))
+                width = max(1, (128 << 20) // (8 * len(normals) * (vertices.shape[1] + 20)))
                 for rows_part, local_part in zip(rows.split(width), local_ids.split(width)):
                     if not len(rows_part):
                         continue
@@ -1184,12 +1341,89 @@ class TripodSupportGuard:
                     xyz = pose[:, None, 3:6].expand_as(points)
                     cross = 2 * torch.linalg.cross(xyz, points, dim=-1)
                     world = points + pose[:, None, 6:7] * cross + torch.linalg.cross(xyz, cross, dim=-1) + pose[:, None, :3]
-                    plane_low = (world @ self._normals.T).amin(1)
+                    plane_low = (world @ normals.T).amin(1)
                     gap = (plane_low[:, None] - upper[rows_part]).amax(-1).amin(-1)
                     if not bool(torch.isfinite(gap).all()):
                         raise ValueError('nonfinite Tripod directional support bound')
                     rod_near[rows_part, col] = gap <= threshold[rows_part, col]
         return support_near & active[:, None], rod_near
+
+    def _cuda_failures(self, poses, rod, support_near, rod_near, box_low, box_high, failures):
+        axes = torch.eye(3, dtype=poses.dtype, device=poses.device)
+        near = support_near | rod_near
+        for column in near.any(0).nonzero().flatten().tolist():
+            side, link, _, vertices, target = self._shapes[column]
+            rows = (near[:, column] & ~failures).nonzero().flatten()
+            for batch in rows.split(128):
+                if not len(batch):
+                    continue
+                pose = poses[batch, side, link]
+                faces, triangles, edges = self.geometry._convex[column]
+                if not len(faces):
+                    raise ValueError('Tripod guard requires nondegenerate convex hulls')
+                xyz = pose[:, None, 3:6].expand(len(batch), len(vertices), 3)
+                cross = 2 * torch.linalg.cross(xyz, vertices.expand_as(xyz))
+                points = vertices + pose[:, None, 6:7] * cross + torch.linalg.cross(xyz, cross)
+                world = points + pose[:, None, :3]
+                supports = support_near[batch, column]
+                if bool(supports.any()):
+                    # The raw quaternion transform can differ from a rotation.
+                    # Compute each face/edge axis from the actual transformed vertices.
+                    polygons = points[:, triangles]
+                    normals = torch.linalg.cross(polygons[:, :, 1] - polygons[:, :, 0],
+                                                polygons[:, :, 2] - polygons[:, :, 0])
+                    edges_world = points[:, edges[:, 1]] - points[:, edges[:, 0]]
+                    cross_axes = torch.linalg.cross(edges_world[:, :, None], axes[None, None]).flatten(1, 2)
+                    basis = torch.cat((axes.expand(len(batch), -1, -1), normals, cross_axes), 1)
+                    lengths = basis.norm(dim=-1, keepdim=True)
+                    # Legacy box_relation filters unnormalized edges, and unit face normals.
+                    face_slice = slice(3, 3 + len(faces))
+                    unit = basis / torch.where(lengths > 0, lengths, 1)
+                    keep = lengths.squeeze(-1) > 1e-12
+                    keep[:, face_slice] = normals.square().sum(-1) > 0
+                    low, high = box_low[batch], box_high[batch]
+                    center, half = (low + high) / 2, (high - low) / 2
+                    proj = (world[:, None] - center[:, :, None]) @ unit.transpose(1, 2)[:, None]
+                    radius = half @ unit.abs().transpose(1, 2)
+                    gaps = torch.maximum(proj.amin(2) - radius, -radius - proj.amax(2))
+                    sat_gap = gaps.masked_fill(~keep[:, None], -torch.inf).amax(-1)
+                    aabb_gap = torch.maximum(low - world.amax(1)[:, None],
+                                             world.amin(1)[:, None] - high).clamp_min(0).norm(dim=-1)
+                    bound = torch.where(aabb_gap > 0, aabb_gap, sat_gap)
+                    failures[batch] |= supports & (bound <= _TRIPOD_SUPPORT_LIMIT_M).any(-1)
+                check = rod_near[batch, column] & ~failures[batch]
+                if not bool(check.any()):
+                    continue
+                active, points = batch[check], points[check]
+                local_rod = rod[active] - poses[active, side, link, None, :3]
+                # A single real hull vertex/rod-node pair supplies a feasible
+                # upper witness. Below the original threshold, no direction
+                # can certify that group, so do not allocate its full projection.
+                limit = (_TRIPOD_ROD_RADIUS_M - _TRIPOD_PAD_PENETRATION_M if target
+                         else _TRIPOD_ROD_RADIUS_M + _TRIPOD_NON_TARGET_LIMIT_M)
+                square_gap = (points[:, :, None] - local_rod[:, None]).square().sum(-1)
+                unsafe = square_gap.amin((1, 2)) < (limit - _DISTANCE_ROUNDING_M) ** 2
+                if bool(unsafe.any()):
+                    failures[active[unsafe]] = True
+                    active, points, local_rod = active[~unsafe], points[~unsafe], local_rod[~unsafe]
+                if not len(active):
+                    continue
+                plane_low = (points @ self._normals.T).amin(1)
+                projected = local_rod @ self._normals.T
+                plane_high = torch.maximum(torch.maximum(projected[:, 0:40:2], projected[:, 1:41:2]),
+                                           projected[:, 2:41:2])
+                lower = (plane_low[:, None] - plane_high).amax(-1) - _TRIPOD_ROD_RADIUS_M
+                if not target:
+                    failures[active] |= lower.amin(-1) <= _TRIPOD_NON_TARGET_LIMIT_M
+                    continue
+                row, group = (lower - _DISTANCE_ROUNDING_M < -_TRIPOD_PAD_PENETRATION_M).nonzero().unbind(1)
+                for i, j in zip(row.split(128), group.split(128)):
+                    if not len(i):
+                        continue
+                    nodes = rod[active[i, None], self._groups[j]] - poses[active[i], side, link, None, :3]
+                    bound = _group_distance_lower(points[i], triangles, edges, nodes)
+                    failed = bound - _TRIPOD_ROD_RADIUS_M < -_TRIPOD_PAD_PENETRATION_M
+                    failures[active[i[failed]]] = True
 
     def _exact_failures(self, poses, rod, support_near, rod_near, selected, box_low, box_high):
         cpu_poses = poses.index_select(0, selected).cpu().numpy()
@@ -1239,6 +1473,7 @@ class TripodSupportGuard:
         poses, rod = poses_xyzw.detach().double(), nodes.detach().double()
         if frame is None or bool(((poses[..., 3:].norm(dim=-1) - 1).abs() > 1e-5).any()):
             raise ValueError('native unit-tolerance raw quaternion and frame required')
+        tensor_guard = self.device.type == 'cuda' and active is not None
         if active is None:
             active = torch.ones(count, dtype=torch.bool, device=self.device)
         elif active.shape != (count,) or active.device != self.device or active.dtype != torch.bool:
@@ -1251,12 +1486,15 @@ class TripodSupportGuard:
                     or not torch.equal(poses, measurement.poses) or not torch.equal(rod, measurement.nodes)):
                 raise ValueError('same-frame measured Tripod hull bounds required')
             low, high = measurement.minimum, measurement.maximum
-        support_near, rod_near = self._fallback_flags(poses, rod, low, high, active, box_low, box_high)
+        support_near, rod_near = self._fallback_flags(poses, rod, low, high, active, box_low, box_high, coarse=tensor_guard)
         failures = torch.zeros(count, dtype=torch.bool, device=self.device)
-        selected = (support_near | rod_near).any(1).nonzero().flatten()
-        if len(selected):
-            failures[selected] = failures.new_tensor(
-                self._exact_failures(poses, rod, support_near, rod_near, selected, box_low, box_high))
+        if tensor_guard:
+            self._cuda_failures(poses, rod, support_near, rod_near, box_low, box_high, failures)
+        else:
+            selected = (support_near | rod_near).any(1).nonzero().flatten()
+            if len(selected):
+                failures[selected] = failures.new_tensor(
+                    self._exact_failures(poses, rod, support_near, rod_near, selected, box_low, box_high))
         self.frame, self.result = tenso_geome__deepcopy(frame), failures
         return failures
 
