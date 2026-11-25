@@ -119,6 +119,9 @@ def test_goal_full_recipe_preserves_hold_standard_and_a_32_window_rollout():
         engine = TensorTrainingReward(config, num_envs=2, device='cpu')
         assert engine.full and config.finger_goal.grasp == grasp
         assert config.ppo['rollout_steps'] == 32
+        assert config.ppo['target_kl'] == 0.02
+        assert config.ppo['learning_rate'] == (3e-5 if grasp == 'power' else 1e-4)
+        assert load_config(ROOT / f'configs/training/reward_{grasp}.json').ppo['learning_rate'] == 1e-4
         assert config.events['trusted_constraint_failure'] == -40
         assert dict(config.success) == {'net_lift_m': 0.03, 'hold_s': 5.0, 'max_slip_m': 0.0005}
 

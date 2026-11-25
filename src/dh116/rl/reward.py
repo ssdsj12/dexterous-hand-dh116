@@ -249,7 +249,7 @@ class RewardConfig:
     def gamma(self):
         return self.ppo['gamma']
 
-def _profile_spec(profile):
+def _profile_spec(profile, *, grasp=None):
     full = profile in _FULL_PROFILES
     long_rollout = full and profile != train_rewar__GOAL_FULL
     weights = {'distance': 2.0, 'contact': 2.0, 'persistence': 0.5, 'geometry': 1.0, 'lift': 4.0, 'hold': 4.0} if full else {'distance': 2.0}
@@ -261,6 +261,8 @@ def _profile_spec(profile):
     costs = {'command_rate': 0.05, 'time': 0.1, 'slip': slip_cost, 'velocity': 0.0 if full else None}
     events = {'trusted_constraint_failure': -40.0, 'prohibited_support': -50.0 if full else None, 'success': 100.0 if full else None}
     ppo = dict(gae_lambda=0.97 if full else 0.95, rollout_steps=256 if long_rollout else 32, learning_rate=0.0001, epochs=3 if full else 1, minibatches=4 if full else 1, clip=0.2, entropy=0.005, value=0.5, max_grad_norm=0.5, target_kl=0.02, kl_backtrack_steps=3)
+    if profile == train_rewar__GOAL_FULL and grasp == 'power':
+        ppo['learning_rate'] = 3e-5
     return (weights, costs, events, ppo)
 
 def _config_mapping(value, expected, name):
@@ -302,7 +304,8 @@ def _validate_reward_config(config):
         raise ValueError('finger goal requires a declared goal-conditioned profile')
     if config.profile == train_rewar__GOAL_FULL and config.finger_goal is None:
         raise ValueError('complete grasp reward requires its grasp-specific reference')
-    (weights, costs, events, ppo) = _profile_spec(config.profile)
+    grasp = config.finger_goal.grasp if config.finger_goal is not None else None
+    (weights, costs, events, ppo) = _profile_spec(config.profile, grasp=grasp)
     _config_mapping(config.weights, weights, 'weights')
     _config_mapping(config.costs, costs, 'costs')
     _config_mapping(config.events, events, 'events')
@@ -345,7 +348,9 @@ def load_config(path, *, ppo_gamma=None, full_grasp=False):
     deadline = data.get('finite_task_deadline')
     if type(deadline) is not dict or set(deadline) != {'enabled', 'remaining_s'} or deadline['enabled'] is not False or (deadline['remaining_s'] is not None):
         raise ValueError('first profiles disable finite task deadline; external caps are truncations')
-    (weights, costs, events, expected_ppo) = _profile_spec(profile)
+    goal = load_finger_goal(data['finger_goal']) if 'finger_goal' in data else None
+    grasp = goal.grasp if goal is not None else None
+    (weights, costs, events, expected_ppo) = _profile_spec(profile, grasp=grasp)
     ppo = data.get('ppo')
     gamma = _config_ppo(ppo, expected_ppo)
     if ppo_gamma is not None and (not _finite(ppo_gamma) or ppo_gamma != gamma):
@@ -357,8 +362,10 @@ def load_config(path, *, ppo_gamma=None, full_grasp=False):
         if profile != train_rewar__SMOKE or data.get('enable_full_grasp') is not True:
             raise ValueError('current grasp configuration must explicitly enable full reward')
         profile = train_rewar__GOAL_FULL
-        weights, costs, events, expected_ppo = _profile_spec(profile)
+        weights, costs, events, expected_ppo = _profile_spec(profile, grasp=grasp)
         overrides = {name: expected_ppo[name] for name in ('gae_lambda', 'epochs', 'minibatches')}
+        if expected_ppo['learning_rate'] != ppo['learning_rate']:
+            overrides['learning_rate'] = expected_ppo['learning_rate']
         _config_mapping(data.get('full_grasp_ppo'), overrides, 'full_grasp_ppo')
         ppo = {**ppo, **overrides}
         _config_ppo(ppo, expected_ppo)
@@ -370,7 +377,6 @@ def load_config(path, *, ppo_gamma=None, full_grasp=False):
     bound = maximum / (CONTROL_HZ * (1.0 - gamma))
     if abs(events['trusted_constraint_failure']) < bound:
         raise ValueError('failure penalty does not cover discounted cost bound; recompute approved bounds')
-    goal = load_finger_goal(data['finger_goal']) if 'finger_goal' in data else None
     result = RewardConfig(profile, 1, ppo, weights, costs, events, hashlib.sha256(raw).hexdigest(), train_rewar__SCHEMA_SHA256, maximum, bound, success, goal)
     _validate_reward_config(result)
     object.__setattr__(result, '_source_path', str(source_path))

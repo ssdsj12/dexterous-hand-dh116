@@ -453,7 +453,7 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
         loss_sum = torch.zeros(3, dtype=torch.float64, device=self.device)
         kl_sum = 0.0
         accepted_updates = optimized_samples = 0
-        stop_reason = early_stop_kl = None
+        stop_reason = early_stop_kl = first_step_sampled_kl = None
         for _ in range(self.config.epochs):
             for indices in torch.randperm(total, device=self.device).tensor_split(minibatch_count):
                 self.optimizer.zero_grad(set_to_none=True)
@@ -467,6 +467,8 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
                 if not math.isfinite(approx_kl):
                     stop_reason = 'nonfinite_kl'
                     break
+                if accepted_updates == 1:
+                    first_step_sampled_kl = approx_kl
                 if target_kl is not None and approx_kl > target_kl:
                     stop_reason = 'target_kl'
                     early_stop_kl = approx_kl
@@ -498,6 +500,7 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
             minibatch_updates=accepted_updates, policy_version=self.policy_version,
             target_kl=target_kl, early_stopped=stop_reason is not None,
             stop_reason=stop_reason, early_stop_kl=early_stop_kl,
+            first_step_sampled_kl=first_step_sampled_kl,
         )
 
     def update(self):

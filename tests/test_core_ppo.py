@@ -78,7 +78,7 @@ def test_fast_update_stops_before_the_minibatch_that_exceeds_sampled_kl(monkeypa
         log_ratio = squashed_log_prob(batch['latent_actions'][rejected], mu, std) - batch['old_log_prob'][rejected]
         expected_kl = (log_ratio.expm1() - log_ratio).mean().item()
     assert metrics['early_stop_kl'] == pytest.approx(expected_kl)
-    assert metrics['early_stop_kl'] > config.target_kl
+    assert metrics['first_step_sampled_kl'] == metrics['early_stop_kl'] > config.target_kl
 
 def test_fast_update_discards_nonfinite_gradient_without_stepping_adam(monkeypatch):
     model, obs, *_ = teacher_data(monkeypatch)

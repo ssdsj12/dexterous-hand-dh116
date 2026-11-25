@@ -1,5 +1,12 @@
 # Changelog
 
+## Power PPO learning rate comparison — 2026-11-25
+
+- Lower only the Power full-grasp PPO learning rate from 0.0001 to 0.00003. Log the sampled KL measured on the next minibatch after the first optimizer step, using the existing evaluation.
+- Compare two native 512-environment, 16-update runs with the same scene, reset seed and policy seed. Both exit naturally. Median first-step sampled KL drops from 0.061435 to 0.000589. The lower rate applies all 12 minibatches across three epochs in 13.10 s per update at the median. The baseline applied one minibatch per update and took 13.34 s at the median.
+- The lower learning rate resolves early stopping in this comparison. Both Power runs report zero measured bilateral support and zero qualifying Lift. The preceding opposed-pad reward comparison also finishes with zero qualifying Lift in all three grasps.
+- Pass 228 CPU tests, 15 tests in the CUDA session and a two-window native Power probe at 512 environments.
+
 ## Opposed pad approach shaping — 2026-11-25
 
 - Estimate near-surface approach directions from the original trilinear pad and palm grids, on the correct material and world half. Use the existing grasp-specific opposition geometry to distinguish equally close, same-facing and opposed pads. Near-surface guidance decays to zero one rod radius away from the surface.
