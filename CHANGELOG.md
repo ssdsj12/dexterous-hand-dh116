@@ -1,5 +1,11 @@
 # Changelog
 
+## Teacher PPO KL acceptance and checkpoint selection
+
+- Verify post-step exact KL on the full rollout before keeping an Adam step. Restore policy, optimizer and RNG on rejection, with the configured learning-rate backtracking.
+- Keep restart checkpoints separate from the scored checkpoints. Rank each saved best policy on the completed rollout it collected.
+- Admit source-bound Teacher checkpoints at each supported training size into the two-environment stereo replay. Log opposition separately from bilateral support and include the grasp progress bonus.
+
 ## 2048-environment Teacher grasp training — 2026-11-25
 
 - Score newly achieved per-episode grasp progress using measured contact, support transfer, detached lift and continuous hold. Remove the time-proportional reward for maintaining a stationary grasp on the supports.

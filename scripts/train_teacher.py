@@ -23,11 +23,11 @@ from dh116.env.contracts import (
     source_file,
     write_new,
 )
-from dh116.rl.training import train_teacher_main
+from dh116.rl.training import TEACHER_ENV_COUNTS, train_teacher_main
 
 _EPISODE_WINDOWS = 600
 _PREVIEW_LANES = 2
-_CHECKPOINT_LANES = (2, 512, 1024)
+_CHECKPOINT_LANES = TEACHER_ENV_COUNTS
 _ACTOR_MODULES = ('actor', 'actor_rod', 'actor_context', 'actor_head')
 _CAMERA_CONFIG = PROJECT_ROOT / 'configs/cameras/student_stereo.json'
 _GEOMETRY_BACKEND = 'cuda_cabi'
@@ -53,7 +53,7 @@ def freeze_replay_actor(model, policy, checkpoint_model):
         raise ValueError('checkpoint model identity and policy metadata differ')
     checkpoint_lanes = checkpoint_model.get('parent_num_envs')
     if type(checkpoint_lanes) is not int or checkpoint_lanes not in _CHECKPOINT_LANES:
-        raise ValueError('frozen Teacher checkpoint must declare 2, 512 or 1024 parent environments')
+        raise ValueError(f'frozen Teacher checkpoint must declare a supported size {_CHECKPOINT_LANES}')
     if unbatched_identity(checkpoint_model, checkpoint_lanes) != unbatched_identity(model.model_identity, _PREVIEW_LANES):
         raise ValueError('checkpoint and live Teacher model identities differ')
     prefixes = tuple(name + '.' for name in _ACTOR_MODULES)
@@ -92,7 +92,7 @@ def _checkpoint(args, scene_sha256, profile):
             or type(checkpoint_lanes) is not int or checkpoint_lanes not in _CHECKPOINT_LANES
             or identity['model']['parent_num_envs'] != checkpoint_lanes
             or identity['receipt_sha256'] != scene_sha256 or identity['model']['grasp'] != args.grasp):
-        raise ValueError('updated 2-, 512- or 1024-lane Teacher checkpoint for this supported scene required')
+        raise ValueError(f'updated Teacher checkpoint with size {_CHECKPOINT_LANES} for this scene required')
     expected = {name: file_sha256(source_file(name)) for name in (*_SOURCES, 'rl/training.py')}
     if identity['source_sha256'] != expected or identity['backend_profile'] != asdict(profile):
         raise ValueError('frozen Teacher execution sources or backend differ from the current runtime')

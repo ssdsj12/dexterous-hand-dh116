@@ -114,6 +114,51 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
                 if probe:
                     raise RuntimeError('probe must not update a policy')
                 torch.cuda.synchronize()
+                rollout_finished = teach_train__perf_counter()
+                scored_version = collector.trainer.policy_version
+                record = dict(scored_policy_version=scored_version, sdk_step=runtime.physics_step,
+                              rollout_seconds=rollout_finished - rollout_start,
+                              window_seconds=window_seconds[-rollout_steps:],
+                              window_phases=window_phases[-rollout_steps:])
+                if rollout_stats:
+                    summary = torch.stack(rollout_stats).cpu()
+                    names = ('return', 'contact_rate', 'bilateral_support_rate', 'detached_lift_m', 'hold_s', 'successes', 'constraint_failures')
+                    record['grasp_metrics'] = dict(zip(names, torch.cat((
+                        summary[:, :3].mean(0), summary[:, 3:5].amax(0), summary[:, 5:7].sum(0)
+                    )).tolist()))
+                    reason_names = (*GOAL_TERMINATIONS, 'prohibited_support', 'success', 'timeout',
+                                    'other_constraint_failure')
+                    reason_start = 13
+                    reason_end = reason_start + len(reason_names)
+                    samples = float(summary[:, -1].sum())
+                    record['grasp_metrics'].update(
+                        termination_counts=dict(zip(reason_names,
+                                                    summary[:, reason_start:reason_end].sum(0).long().tolist(), strict=True)),
+                        soft_cost_mean_per_second=dict(zip(GOAL_SOFT_COSTS,
+                                                           (summary[:, reason_end:-1].sum(0) / samples).tolist(),
+                                                           strict=True)),
+                        last_detached_lift_m=float(summary[-1, 3]),
+                        opposed_rate=float(summary[:, 11].mean()),
+                        grasp_progress_reward_mean=float(summary[:, 12].mean()),
+                        arrival_rate=float(summary[:, 7].mean()),
+                        light_contact_progress=float(summary[:, 8].mean()),
+                        prelift_potential=float(summary[:, 9].amax()),
+                        supported_median_lift_m=float(summary[:, 10].amax()),
+                    )
+                    grasp_metrics = record['grasp_metrics']
+                    score = tuple(grasp_metrics[name] for name in (
+                        'successes', 'hold_s', 'detached_lift_m', 'bilateral_support_rate', 'contact_rate',
+                    ))
+                else:
+                    score = (float(reward),)
+                if scored_version > 0 and (best is None or score > best):
+                    pending_best = output / '.next_best.pt'
+                    record['best_checkpoint_sha256'] = save_snapshot(
+                        pending_best, collector.trainer, args, profile, seed, evaluated_rollout=True)
+                    os.replace(pending_best, output / 'best.pt')
+                    record['best_policy_version'] = scored_version
+                    best = score
+
                 start = teach_train__perf_counter()
                 metrics = collector.trainer.update()
                 torch.cuda.synchronize()
@@ -121,45 +166,14 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
                 if metrics['minibatch_updates'] <= 0:
                     raise RuntimeError('PPO rejected every minibatch')
                 update = collector.trainer.counters['updates']
-                record = dict(update=update, sdk_step=runtime.physics_step, metrics=metrics, rollout_seconds=start - rollout_start, optimizer_seconds=finish - start, window_seconds=window_seconds[-rollout_steps:], window_phases=window_phases[-rollout_steps:])
-                if rollout_stats:
-                    summary = torch.stack(rollout_stats).cpu()
-                    names = ('return', 'contact_rate', 'opposed_rate', 'detached_lift_m', 'hold_s', 'successes', 'constraint_failures')
-                    record['grasp_metrics'] = dict(zip(names, torch.cat((
-                        summary[:, :3].mean(0), summary[:, 3:5].amax(0), summary[:, 5:7].sum(0)
-                    )).tolist()))
-                    reason_start = 11
-                    reason_end = reason_start + len(GOAL_TERMINATIONS) + 3
-                    samples = float(summary[:, -1].sum())
-                    record['grasp_metrics'].update(
-                        termination_counts=dict(zip((*GOAL_TERMINATIONS, 'prohibited_support', 'success', 'timeout'),
-                                                    summary[:, reason_start:reason_end].sum(0).long().tolist(), strict=True)),
-                        soft_cost_mean_per_second=dict(zip(GOAL_SOFT_COSTS,
-                                                           (summary[:, reason_end:-1].sum(0) / samples).tolist(),
-                                                           strict=True)),
-                        last_detached_lift_m=float(summary[-1, 3]),
-                        bilateral_support_rate=record['grasp_metrics']['opposed_rate'],
-                        arrival_rate=float(summary[:, 7].mean()),
-                        light_contact_progress=float(summary[:, 8].mean()),
-                        prelift_potential=float(summary[:, 9].amax()),
-                        supported_median_lift_m=float(summary[:, 10].amax()),
-                    )
-                    score = (float(summary[:, 5].sum()), float(summary[:, 4].max()),
-                             float(summary[:, 3].max()), float(summary[:, 2].mean()))
-                else:
-                    score = (float(reward),)
-                new_best = best is None or score > best
+                record.update(update=update, metrics=metrics, optimizer_seconds=finish - start)
                 periodic = update % args.checkpoint_interval == 0
-                if new_best or periodic or update == args.updates:
+                if update == 1 or periodic or update == args.updates:
                     path = output / '.next_checkpoint.pt'
                     record['checkpoint_sha256'] = save_snapshot(path, collector.trainer, args, profile, seed)
                     os.replace(path, output / 'latest.pt')
                     if periodic:
                         os.link(output / 'latest.pt', output / f'checkpoint_{update:04d}.pt')
-                    if new_best:
-                        os.link(output / 'latest.pt', output / '.next_best.pt')
-                        os.replace(output / '.next_best.pt', output / 'best.pt')
-                        best = score
                 record['peak_cuda_allocated_bytes'] = torch.cuda.max_memory_allocated()
                 record['iteration_seconds'] = teach_train__perf_counter() - rollout_start
                 print('DH116_PPO_UPDATE', teach_train__json.dumps(record, allow_nan=False), flush=True)
@@ -203,9 +217,10 @@ def _checkpoint_context(trainer, args, profile, seed):
                 seed_sha256=seed['sha256'], policy_seed=args.policy_seed)
 
 
-def save_snapshot(path, trainer, args, profile, seed):
+def save_snapshot(path, trainer, args, profile, seed, *, evaluated_rollout=False):
     from dh116.rl.device import save_checkpoint
-    result = save_checkpoint(path, trainer, **_checkpoint_context(trainer, args, profile, seed))
+    result = save_checkpoint(path, trainer, evaluated_rollout=evaluated_rollout,
+                             **_checkpoint_context(trainer, args, profile, seed))
     return result['sha256']
 from dh116.rl.student_data import DAggerDataset
 from dh116.rl.student_data import tensor_state_sha256
@@ -247,10 +262,13 @@ from dh116.rl.student_model import StereoHistoryBatch as StereoHistoryBatch
 from dh116.rl.student_model import SensorBatch
 from dh116.physics.runtime import require_substep_guard
 
+TEACHER_ENV_COUNTS = (2, 128, 512, 1024, 2048)
+
+
 def train_teacher_main(argv=None):
     parser = teach_train__argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--grasp', choices=('pinch', 'tripod', 'power'), required=True)
-    parser.add_argument('--num-envs', type=int, choices=(2, 128, 512, 1024, 2048), required=True)
+    parser.add_argument('--num-envs', type=int, choices=TEACHER_ENV_COUNTS, required=True)
     parser.add_argument('--gpu', type=int, required=True)
     parser.add_argument('--scene-build-mode', choices=('reference', 'clone', 'replicated'), default=None)
     parser.add_argument('--outer-timeout-s', type=int, default=900)
@@ -424,15 +442,20 @@ class NativeTensorCollector(NativeTensorPhysicsRuntime):
             lift = packet.terms['lift']['raw'].masked_fill(~detached, 0)
             supported = v['bilateral_support'] & v['off_table'] & ~v['no_external_support'] & ~v['prohibited_support']
             supported_height = (v['median_z'] - packet.post_context['reset_median_z_m']).masked_fill(~supported, 0)
+            reasons = packet.reason_masks
+            named_constraint = tenso_colle__torch.stack([reasons[name] for name in GOAL_TERMINATIONS]).any(0)
+            other_constraint = (packet.event == -40) & ~named_constraint
             self.training_stats = tenso_colle__torch.stack((
                 packet.reward.mean(), contacted.double().mean(), v['bilateral_support'].double().mean(),
                 lift.clamp_min(0).amax(), packet.post_context['hold_s'].amax(),
                 (packet.event == 100).sum().double(), (packet.event == -40).sum().double(),
                 self.reward._arrived.double().mean(), packet.terms['load_progress']['raw'].mean(),
                 packet.terms['prelift']['contribution'].amax(), supported_height.clamp_min(0).amax(),
-                *(packet.reason_masks[name].sum().double()
+                (v['opposed_left'] & v['opposed_right']).double().mean(),
+                packet.event_terms['grasp_progress']['contribution'].mean(),
+                *(reasons[name].sum().double()
                   for name in (*GOAL_TERMINATIONS, 'prohibited_support', 'success')),
-                packet.truncated.sum().double(),
+                packet.truncated.sum().double(), other_constraint.sum().double(),
                 *(packet.substep_terms[name]['contribution'].nan_to_num().sum() * 480
                   for name in GOAL_SOFT_COSTS),
                 packet.substeps.sum().double(),

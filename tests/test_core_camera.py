@@ -220,7 +220,7 @@ def test_student_replay_carrier_retains_native_camera_clock_and_sensor_fields():
         cameras.student_rgb_frame(packet, raw['proprio'])
 
 
-@pytest.mark.parametrize('checkpoint_lanes', [2, 512, 1024])
+@pytest.mark.parametrize('checkpoint_lanes', [2, 512, 1024, 2048])
 def test_replay_rebinds_only_actor_batch_and_rejects_another_action_contract(checkpoint_lanes):
     from dh116.env.contracts import action_sha256, runti_io__digest
     from scripts import train_teacher

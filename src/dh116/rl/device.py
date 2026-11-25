@@ -377,7 +377,7 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
         return total.double() / len(indices)
 
     def _optimizer_step(self, batch):
-        if not self.config.kl_backtrack_steps:
+        if not self.config.kl_backtrack_steps and (not self._fast_update or self.config.target_kl is None):
             self.optimizer.step()
             self.project_noise()
             return (self.config.lr, [])
@@ -451,8 +451,8 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
         target_kl = self.config.target_kl
         minibatch_count = min(total, self.config.minibatches)
         loss_sum = torch.zeros(3, dtype=torch.float64, device=self.device)
-        kl_sum = 0.0
-        accepted_updates = optimized_samples = 0
+        accepted_updates = optimized_samples = kl_backtracks = 0
+        kl = first_accepted_kl = candidate_kl_max = None
         stop_reason = early_stop_kl = first_step_sampled_kl = None
         for _ in range(self.config.epochs):
             for indices in torch.randperm(total, device=self.device).tensor_split(minibatch_count):
@@ -462,17 +462,11 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
                     stop_reason = 'nonfinite_policy'
                     break
                 _, _, log_ratio, entropy = policy
-                frozen_log_ratio = log_ratio.detach()
-                approx_kl = float((frozen_log_ratio.expm1() - frozen_log_ratio).mean().clamp_min(0))
-                if not math.isfinite(approx_kl):
-                    stop_reason = 'nonfinite_kl'
-                    break
                 if accepted_updates == 1:
-                    first_step_sampled_kl = approx_kl
-                if target_kl is not None and approx_kl > target_kl:
-                    stop_reason = 'target_kl'
-                    early_stop_kl = approx_kl
-                    break
+                    ratio = log_ratio.detach()
+                    approx_kl = float((ratio.expm1() - ratio).mean().clamp_min(0))
+                    if math.isfinite(approx_kl):
+                        first_step_sampled_kl = approx_kl
                 loss, losses = self._minibatch_losses(batch, indices, returns, advantage, log_ratio.exp(), entropy)
                 if not bool(torch.isfinite(loss)):
                     stop_reason = 'nonfinite_loss'
@@ -482,10 +476,22 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
                 if not bool(torch.isfinite(grad_norm)):
                     stop_reason = 'nonfinite_gradient'
                     break
-                self.optimizer.step()
-                self.project_noise()
+                accepted_lr, attempts = self._optimizer_step(batch)
+                if attempts:
+                    last_attempt_kl = float(attempts[-1]['exact_full_rollout_kl'])
+                    highest_attempt_kl = max(float(row['exact_full_rollout_kl']) for row in attempts)
+                    candidate_kl_max = (highest_attempt_kl if candidate_kl_max is None
+                                        else max(candidate_kl_max, highest_attempt_kl))
+                    kl_backtracks += len(attempts) - int(accepted_lr is not None)
+                if accepted_lr is None:
+                    stop_reason = 'target_kl'
+                    early_stop_kl = last_attempt_kl
+                    break
+                if attempts:
+                    kl = last_attempt_kl
+                    if accepted_updates == 0:
+                        first_accepted_kl = kl
                 loss_sum += torch.stack(losses).detach().double()
-                kl_sum += approx_kl
                 accepted_updates += 1
                 optimized_samples += len(indices)
             if stop_reason is not None:
@@ -495,8 +501,9 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
         policy_loss, value_loss, entropy = (loss_sum / accepted_updates).tolist() if accepted_updates else (None, None, None)
         return dict(
             policy_loss=policy_loss, value_loss=value_loss, entropy=entropy,
-            kl=kl_sum / accepted_updates if accepted_updates else None,
-            ppo_update_mode='sampled_kl', samples=total, optimized_samples=optimized_samples,
+            kl=kl, first_accepted_kl=first_accepted_kl, candidate_kl_max=candidate_kl_max,
+            kl_backtracks=kl_backtracks,
+            ppo_update_mode='exact_kl_backtrack', samples=total, optimized_samples=optimized_samples,
             minibatch_updates=accepted_updates, policy_version=self.policy_version,
             target_kl=target_kl, early_stopped=stop_reason is not None,
             stop_reason=stop_reason, early_stop_kl=early_stop_kl,
@@ -586,7 +593,7 @@ def identity(trainer, *, recipe_sha256, receipt_sha256, backend_profile, seed_sh
             raise ValueError('tensor model dependency source SHA differs: ' + name)
     sources = {name: tenso_check__file_sha256(source_file(name)) for name in _SOURCES}
     sources['rl/training.py'] = tenso_check__file_sha256(source_file('rl/training.py'))
-    return dict(version=tenso_check__VERSION, model=model, recipe_sha256=recipe_sha256, receipt_sha256=receipt_sha256, seed_sha256=seed_sha256, policy_seed=policy_seed, backend_profile=asdict(backend_profile), ppo_config=asdict(trainer.config), ppo_update_mode='sampled_kl' if trainer._fast_update else 'audited', rollout_steps=trainer.rollout_steps, num_envs=trainer.num_envs, device_type=trainer.device.type, cuda_rng_devices=tenso_check__torch.cuda.device_count() if tenso_check__torch.cuda.is_initialized() else 0, source_sha256=sources, torch_version=str(tenso_check__torch.__version__), history_reset='clear', physical_state_saved=False, restart_requires_verified_reset=True, teacher_admission=False, grasp_qualified=False)
+    return dict(version=tenso_check__VERSION, model=model, recipe_sha256=recipe_sha256, receipt_sha256=receipt_sha256, seed_sha256=seed_sha256, policy_seed=policy_seed, backend_profile=asdict(backend_profile), ppo_config=asdict(trainer.config), ppo_update_mode='exact_kl_backtrack' if trainer._fast_update else 'audited', rollout_steps=trainer.rollout_steps, num_envs=trainer.num_envs, device_type=trainer.device.type, cuda_rng_devices=tenso_check__torch.cuda.device_count() if tenso_check__torch.cuda.is_initialized() else 0, source_sha256=sources, torch_version=str(tenso_check__torch.__version__), history_reset='clear', physical_state_saved=False, restart_requires_verified_reset=True, teacher_admission=False, grasp_qualified=False)
 
 def _same_tree(left, right):
     if isinstance(left, tenso_check__torch.Tensor):
@@ -654,9 +661,13 @@ def _validate(packet, trainer, expected_identity):
 def _report(path, packet):
     return dict(path=str(path), sha256=tenso_check__file_sha256(path), version=tenso_check__VERSION, identity=tenso_check__deepcopy(packet['identity']), counters=tenso_check__deepcopy(packet['counters']), policy_version=packet['policy_version'], physical_state_saved=False, restart_requires_verified_reset=True, teacher_admission=False, grasp_qualified=False)
 
-def save_checkpoint(path, trainer, **context):
-    """Publish an atomic exclusive snapshot without changing live state or RNG."""
-    tenso_check___clean(trainer, 'clear')
+def save_checkpoint(path, trainer, *, evaluated_rollout=False, **context):
+    """Save a clean restart or the policy that produced an owned, completed rollout."""
+    if evaluated_rollout:
+        if trainer._pending is not None or not trainer.rollout.full or trainer.policy_version < 1:
+            raise RuntimeError('best snapshot requires a completed rollout from an updated policy')
+    else:
+        tenso_check___clean(trainer, 'clear')
     path = tenso_check__Path(path)
     if path.exists():
         raise FileExistsError(path)

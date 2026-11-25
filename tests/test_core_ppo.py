@@ -47,38 +47,25 @@ def test_two_actual_updates_match_original_all_parameters_adam_gae_metrics_rng(m
 def trainer_for(model, *, fast_update=False):
     return DeviceDeformablePPOTrainer(deepcopy(model), PPOConfig(lr=0.0001, epochs=1, minibatches=1, target_kl=0.02, kl_backtrack_steps=3), rollout_steps=3, num_envs=2, fast_update=fast_update)
 
-def test_fast_update_stops_before_the_minibatch_that_exceeds_sampled_kl(monkeypatch):
-    from dh116.rl.ppo import squashed_log_prob
-
+def test_fast_update_rejects_oversized_adam_step_and_reports_accepted_kl(monkeypatch):
     model, obs, *_ = teacher_data(monkeypatch)
     config = PPOConfig(lr=0.001, epochs=2, minibatches=2, target_kl=0.001, kl_backtrack_steps=3)
     trainer = DeviceDeformablePPOTrainer(model, config, rollout_steps=3, num_envs=2, fast_update=True)
+    seed(35)
     collect(trainer, obs)
     batch = trainer.rollout.batch()
-    actor_rows, critic_rows = [], []
-    seed(35)
-    with (
-        model.actor.register_forward_pre_hook(lambda module, args: actor_rows.append(len(args[0]))),
-        model.critic.register_forward_pre_hook(lambda module, args: critic_rows.append(len(args[0]))),
-    ):
-        metrics = trainer.update()
+    metrics = trainer.update()
 
-    assert actor_rows == [3, 3] and critic_rows == [3]
-    assert metrics['early_stopped'] and metrics['stop_reason'] == 'target_kl'
-    assert metrics['minibatch_updates'] == 1 and metrics['optimized_samples'] == 3
-    assert 0 <= metrics['kl'] <= config.target_kl
-    assert {int(state['step']) for state in trainer.optimizer.state.values()} == {1}
+    actual_kl = trainer._minibatch_exact_kl(batch, torch.arange(len(batch['values']))).item()
+    assert actual_kl <= config.target_kl
+    assert metrics['kl'] == pytest.approx(actual_kl)
+    assert metrics['kl_backtracks'] > 0
+    assert 0 < metrics['minibatch_updates'] <= 4
+    assert metrics['optimized_samples'] == 3 * metrics['minibatch_updates']
+    assert {int(state['step']) for state in trainer.optimizer.state.values()} == {metrics['minibatch_updates']}
     assert trainer.policy_version == trainer.counters['updates'] == 1
     assert trainer.clean_boundary
 
-    rejected = torch.randperm(6, generator=torch.Generator().manual_seed(35)).tensor_split(2)[1]
-    with torch.no_grad():
-        mu = model.latent_mean({key: value[rejected] for key, value in batch['actor_obs'].items()})
-        std = model.log_std.exp().expand_as(mu)
-        log_ratio = squashed_log_prob(batch['latent_actions'][rejected], mu, std) - batch['old_log_prob'][rejected]
-        expected_kl = (log_ratio.expm1() - log_ratio).mean().item()
-    assert metrics['early_stop_kl'] == pytest.approx(expected_kl)
-    assert metrics['first_step_sampled_kl'] == metrics['early_stop_kl'] > config.target_kl
 
 def test_fast_update_discards_nonfinite_gradient_without_stepping_adam(monkeypatch):
     model, obs, *_ = teacher_data(monkeypatch)
@@ -236,6 +223,33 @@ def test_checkpoint_continues_next_actual_update_with_policy_adam_rng_and_new_se
     assert parameter_digest(restored.model) == parameter_digest(original.model)
     assert digest_tree(restored.optimizer.state_dict()) == digest_tree(original.optimizer.state_dict())
     assert digest_tree(rng()) == expected_rng and restored.policy_version == 2 and (restored.counters == original.counters)
+
+def test_best_snapshot_preserves_the_policy_that_sampled_the_completed_rollout(tmp_path, monkeypatch):
+    from dh116.rl.device import save_checkpoint
+
+    model, obs, profile, *_ = teacher_data(monkeypatch)
+    trainer = trainer_for(model, fast_update=True)
+    seed(51)
+    collect(trainer, obs)
+    assert trainer.update()['minibatch_updates'] == 1
+    collect(trainer, obs)
+    before = parameter_digest(trainer.model)
+    before_adam = digest_tree(trainer.optimizer.state_dict())
+    path = tmp_path / 'best.pt'
+    with pytest.raises(RuntimeError, match='clean PPO'):
+        save_checkpoint(path, trainer, **checkpoint_context(profile))
+    report = save_checkpoint(path, trainer, evaluated_rollout=True, **checkpoint_context(profile))
+    assert trainer.rollout.full
+    assert trainer.update()['minibatch_updates'] == 1
+    assert trainer.policy_version == 2 and parameter_digest(trainer.model) != before
+    snapshot = torch.load(path, map_location='cpu', weights_only=True)
+    assert snapshot['policy_version'] == report['policy_version'] == 1
+    restored = trainer_for(model, fast_update=True)
+    from dh116.rl.device import load_checkpoint
+    load_checkpoint(path, restored, expected_sha256=report['sha256'], **checkpoint_context(profile))
+    assert parameter_digest(restored.model) == before
+    assert digest_tree(restored.optimizer.state_dict()) == before_adam
+
 
 def test_invalid_checkpoint_rejects_each_corruption_before_any_live_mutation(tmp_path, monkeypatch):
     import dh116.rl.device as cp
