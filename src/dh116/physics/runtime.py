@@ -106,21 +106,32 @@ class GraspContactReadout:
              for name in self.mesh_names], device=self.device,
         )
 
-    def _opposed(self, normals, available):
+    def _opposed(self, normals, lengths):
         cosine = normals @ normals.transpose(-1, -2)
-        pairs = available[..., :, None] & available[..., None, :]
-        opposed = (cosine <= self.MAX_OPPOSITION_COS) & pairs
+        available = lengths > 1e-12
+        opposed = (cosine <= self.MAX_OPPOSITION_COS) & available[..., :, None] & available[..., None, :]
+        fraction = (lengths / self.MIN_PAD_LOAD_N).clamp(0, 1).masked_fill(~available, 0)
+        angular = ((0.5 - cosine) / (0.5 - self.MAX_OPPOSITION_COS)).clamp(0, 1)
         if self.grasp == 'tripod':
             thumb, index, middle = normals.unbind(-2)
             axis = thumb - (index + middle) * 0.5
             length = axis.norm(dim=-1, keepdim=True)
             face = (normals * (axis / length.clamp_min(1e-12)).unsqueeze(-2)).sum(-1)
-            return (length.squeeze(-1) > 1e-12) & opposed[..., 0, 1] & opposed[..., 0, 2] & (
-                (face[..., 0] >= 0.2) & (face[..., 1:] <= -0.2).all(-1)
-            )
+            axis_valid = length.squeeze(-1) > 1e-12
+            hard = (axis_valid & opposed[..., 0, 1] & opposed[..., 0, 2]
+                    & (face[..., 0] >= 0.2) & (face[..., 1:] <= -0.2).all(-1))
+            face_margin = torch.minimum(face[..., 0], -face[..., 1:].amax(-1))
+            angular_pair = angular[..., 0, 1:].amin(-1)
+            quality = torch.minimum(angular_pair, ((face_margin + 0.2) / 0.4).clamp(0, 1))
+            return hard, quality * fraction.amin(-1) * axis_valid
         if self.grasp == 'power':
-            return opposed[..., :5, :5].any(dim=(-1, -2)) & opposed[..., 5, :5].any(dim=-1)
-        return opposed[..., 0, 1]
+            hard = opposed[..., :5, :5].any(dim=(-1, -2)) & opposed[..., 5, :5].any(dim=-1)
+            pair_load = torch.minimum(fraction[..., :, None], fraction[..., None, :])
+            score = angular * pair_load
+            fingers = score[..., :5, :5].amax(dim=(-1, -2))
+            palm = score[..., 5, :5].amax(-1)
+            return hard, torch.minimum((palm + fingers) * 0.5, fraction[..., 5])
+        return opposed[..., 0, 1], angular[..., 0, 1] * fraction.amin(-1)
 
     def __call__(self, packet, nodes):
         # Each pair has already been checked against the owned solver reductions,
@@ -169,15 +180,21 @@ class GraspContactReadout:
             lengths = pad_normals.norm(dim=-1)
             directions = pad_normals / lengths.clamp_min(1e-12)[..., None]
             loaded = pad_loads > self.MIN_PAD_LOAD_N
-            opposed = self._opposed(directions, lengths > 1e-12).all(1) & correct_side
+            opposed_steps, opposition_progress = self._opposed(directions, lengths)
+            opposed = opposed_steps.all(1) & correct_side
             effective.append(opposed & loaded.all(dim=(1, 2)) &
                              (pad_loads.sum(-1) > self.MIN_HAND_LOAD_N).all(1))
             result['coverage_' + side] = loaded.all(1).double().mean(-1) * correct_side
             pad_fraction = (pad_loads / self.MIN_PAD_LOAD_N).clamp(0, 1)
             weakest_pad = pad_fraction.amin(dim=-1).mean(1)
             pad_progress = 0.5 * (pad_fraction.mean(dim=(1, 2)) + weakest_pad)
-            hand_progress = (pad_loads.sum(-1) / self.MIN_HAND_LOAD_N).clamp(0, 1).mean(1)
-            result['load_progress_' + side] = 0.5 * (pad_progress + hand_progress) * correct_side
+            if self.grasp == 'power':
+                finger_progress = (pad_loads[..., :5].sum(-1) / self.MIN_HAND_LOAD_N).clamp(0, 1)
+                hand_progress = (finger_progress + pad_fraction[..., 5]).mean(1) * 0.5
+            else:
+                hand_progress = (pad_loads.sum(-1) / self.MIN_HAND_LOAD_N).clamp(0, 1).mean(1)
+            load_progress = 0.5 * (pad_progress + hand_progress)
+            result['load_progress_' + side] = 0.5 * (load_progress + opposition_progress.mean(1)) * correct_side
             result['opposed_' + side] = opposed
             node_load = loads.new_zeros(batch * 41)
             node_load.index_add_(0, env * 41 + node, normal_force * required_slot[mesh])
@@ -189,6 +206,8 @@ class GraspContactReadout:
         result['support_load_n'] = support_loads.amax(1)
         result['support_vertical_n'] = vertical[:, :, self.support_slots].clamp_min(0).sum(-1).amax(1)
         result['hand_vertical_n'] = vertical[:, :, self.hand_slots].sum(-1).amin(1) * correct_side
+        left_up, right_up = (vertical[:, :, slots].sum(-1) for slots in self.pad_slots)
+        result['balanced_hand_vertical_n'] = 2 * torch.minimum(left_up, right_up).amin(1) * correct_side
         result['non_target_normal_n'] = (loads[:, :, self.non_target_slots].amax((1, 2))
                                          if self.non_target_slots else loads.new_zeros(batch))
         return result
@@ -861,6 +880,8 @@ class NativeTensorPhysicsRuntime:
             contact = self.contact(capture, nodes)
             contact['support_unload'] = (1 - contact.pop('support_vertical_n') / self.rod_weight_n).clamp(0, 1)
             contact['hand_lift_load'] = (contact.pop('hand_vertical_n') / self.rod_weight_n).clamp(0, 1)
+            contact['balanced_hand_lift_load'] = (
+                contact.pop('balanced_hand_vertical_n') / self.rod_weight_n).clamp(0, 1)
             fields['soft_non_target_contact'] = ((contact.pop('non_target_normal_n') - 0.05) / 0.05).clamp(0, 1)
         fields.update({key: val for key, val in contact.items() if key not in ('contact_nodes', 'support_load_n')})
         if suppress_contact is not None:

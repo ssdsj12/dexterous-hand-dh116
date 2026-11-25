@@ -29,7 +29,8 @@ train_rewar__CONTACT = 'approach_contact_prelift_v1'
 train_rewar__SMOKE = 'approach_wiring_smoke_v1'
 train_rewar__FULL = 'flexible_train_r1_full'
 train_rewar__GOAL_FULL = 'flexible_train_goal_full_v3'
-GOAL_SHAPING_FIELDS = ('load_progress_left', 'load_progress_right', 'support_unload', 'hand_lift_load')
+GOAL_SHAPING_FIELDS = ('load_progress_left', 'load_progress_right', 'support_unload', 'hand_lift_load',
+                       'balanced_hand_lift_load')
 GOAL_TERMINATIONS = ('cable_fall', 'joint_dislocation', 'pad_backface')
 # Bounded costs per second of each unit-normalized measured excess.
 GOAL_SOFT_COSTS = {
@@ -768,7 +769,8 @@ class TensorTrainingReward:
                 clean = (v['off_table'] & ~v['prohibited_support']
                          & (v['soft_non_target_contact'] == 0) & (v['soft_reaction_force'] < 1))
                 recovery = (1 + net_lift).clamp(0, 1)
-                prelift = (weaker_hand * transfer * (0.5 + 0.5 * recovery)).masked_fill(~clean, 0)
+                balanced_transfer = torch.minimum(v['support_unload'], v['balanced_hand_lift_load'])
+                prelift = (weaker_hand * balanced_transfer * recovery).masked_fill(~clean, 0)
                 terms['prelift'] = self.config.weights['prelift'] * prelift
                 bilateral_progress = (left + right + 2 * weaker_hand) * 0.25
                 terms['load_progress'] = self.config.weights['load_progress'] * bilateral_progress

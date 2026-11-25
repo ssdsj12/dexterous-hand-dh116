@@ -1,5 +1,12 @@
 # Changelog
 
+## Measured opposition and bilateral lift reward — 2026-11-25
+
+- Use simultaneous load-weighted normal directions for continuous Pinch and Tripod opposition. Separate Power finger and palm opposition. Preserve the existing discrete contact checks.
+- Shape prelift from the weaker hand's signed upward load and actual support unloading. Ramp the height factor out below the reset height and give zero potential below −30 mm. Preserve the strict total-load lift signal and detached Lift/Hold/Slip qualification.
+- Finish the prior 512-environment PPO comparison for all three grasps with natural exit 0. None attains detached Lift. Tripod prelift reaches 1.248 without measured bilateral opposition.
+- Pass 226 CPU tests, 13 CUDA tests and naturally exiting 512-environment probes for the new reward.
+
 ## Support-to-hand lift transfer reward — 2026-11-25
 
 - Shape early progress using measured upward hand load, measured unloading of the supports and the less-loaded hand. Keep the lower of median and minimum rod displacement as the lift height.

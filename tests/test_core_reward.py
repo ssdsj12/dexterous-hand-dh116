@@ -130,7 +130,7 @@ def goal_full_setup(*, defer_checks=True, first_contact=1):
     reward = TensorTrainingReward(config, num_envs=2, device='cpu', defer_checks=defer_checks)
     units = {**train_rewar___FULL_UNITS, 'load_progress_left': 'dimensionless',
              'load_progress_right': 'dimensionless', 'support_unload': 'dimensionless',
-             'hand_lift_load': 'dimensionless', 'slip': 'm',
+             'hand_lift_load': 'dimensionless', 'balanced_hand_lift_load': 'dimensionless', 'slip': 'm',
              **dict.fromkeys(GOAL_SOFT_COSTS, 'dimensionless')}
     specs = (*((name, 'rad', 'fixture') for name in ERROR_FIELDS),
              ('distance', 'm', 'fixture'),
@@ -149,7 +149,8 @@ def goal_full_setup(*, defer_checks=True, first_contact=1):
         for name, unit in units.items():
             if name != 'slip':
                 dtype = (torch.float64 if unit == 'm' or name.startswith(('load_progress', 'coverage'))
-                         or name in (*GOAL_SOFT_COSTS, 'support_unload', 'hand_lift_load') else torch.bool)
+                         or name in (*GOAL_SOFT_COSTS, 'support_unload', 'hand_lift_load',
+                                     'balanced_hand_lift_load') else torch.bool)
                 fields[name] = torch.zeros(2, dtype=dtype)
         fields['load_progress_left'].fill_(touch)
         fields['load_progress_right'].fill_(touch)
@@ -158,6 +159,7 @@ def goal_full_setup(*, defer_checks=True, first_contact=1):
                 fields[name].fill_(1)
             fields['support_unload'].fill_(0.8)
             fields['hand_lift_load'].fill_(upward)
+            fields['balanced_hand_lift_load'].fill_(upward)
             fields['median_z'].fill_(median_z)
             fields['min_z'].fill_(min_z)
             fields['no_external_support'].fill_(detached)
@@ -179,7 +181,7 @@ def test_goal_full_rewards_light_contact_and_continuous_measured_lift(defer_chec
         dict(touch=.25), dict(touch=1., carried=True, min_z=.005),
         dict(touch=.55), dict(touch=1., carried=True, upward=.8, min_z=.005),
         dict(touch=1., carried=True, upward=.8, min_z=.005, detached=True),
-        dict(touch=.55), dict(touch=.55), dict(touch=.55), {},
+        dict(touch=.55), dict(touch=.55), dict(touch=.55), dict(touch=.55), dict(touch=.55), {},
     )
     packets = []
     for index, phase in enumerate(phases):
@@ -190,10 +192,11 @@ def test_goal_full_rewards_light_contact_and_continuous_measured_lift(defer_chec
             if index == 0:
                 measured.fields['load_progress_left'][0] = 0.50
                 measured.fields['load_progress_right'][0] = 0.0
-            if index in (2, 5, 6, 7):
+            if index in (2, 5, 6, 7, 8, 9):
                 measured.fields['hand_lift_load'].fill_(.8)
+                measured.fields['balanced_hand_lift_load'].fill_(0. if index == 9 else .8)
                 measured.fields['support_unload'].fill_(.8)
-                measured.fields['min_z'].fill_(-.019)
+                measured.fields['min_z'].fill_(-.037 if index == 8 else -.019)
                 measured.fields['median_z'].fill_(-.009)
                 measured.fields['off_table'].fill_(index != 6)
                 if index == 5:
@@ -206,7 +209,7 @@ def test_goal_full_rewards_light_contact_and_continuous_measured_lift(defer_chec
 
     progress = packets[0].terms['load_progress']['contribution']
     assert progress[1] > progress[0] > 0
-    for index in (0, 1, 5, 6, 7, 8):
+    for index in (0, 1, 5, 6, 7, 8, 9, 10):
         assert not packets[index].terms['prelift']['contribution'].any()
     transfer = packets[2].terms['prelift']['contribution']
     assert (transfer > 0).all()

@@ -1006,5 +1006,89 @@
       "very low unsupported catches may retain prelift potential",
       "weaker-hand normal load has no signed upward component"
     ]
+  },
+  "grasp_opposition_r7": {
+    "baseline_commit": "42edf65e93ae4501f8c24f2bc7802e51ddacf346",
+    "r6_completed_training": {
+      "pinch": {
+        "updates": 64,
+        "environments": 512,
+        "exit_code": 0,
+        "metrics_peak": {
+          "prelift_potential": 0.23138836355086068,
+          "bilateral_support_rate": 0.0,
+          "detached_lift_m": 0.0,
+          "hold_s": 0.0,
+          "successes": 0.0
+        },
+        "receipt_sha256": "9d1cb48821d9d8376198b115846d9e870cba75e229bd4d6d1a1b8cb4c81a16d0",
+        "latest_checkpoint_sha256": "9550693d5da0b419fc5d9db1f83602e4d85d07c738ec3daf058005e72899bea0"
+      },
+      "tripod": {
+        "updates": 32,
+        "environments": 512,
+        "exit_code": 0,
+        "metrics_peak": {
+          "prelift_potential": 1.247631553808848,
+          "bilateral_support_rate": 0.0,
+          "detached_lift_m": 0.0,
+          "hold_s": 0.0,
+          "successes": 0.0
+        },
+        "receipt_sha256": "dff49e2b2f1794a5df789c659fdc6f7ae6691f5924f74f34052918c2868335a5",
+        "latest_checkpoint_sha256": "b8969ffb0acade628e424f9cc2645f099f0f1e7e3712504ad083292446d1e21a"
+      },
+      "power": {
+        "updates": 16,
+        "environments": 512,
+        "exit_code": 0,
+        "metrics_peak": {
+          "prelift_potential": 0.0,
+          "bilateral_support_rate": 0.0,
+          "detached_lift_m": 0.0,
+          "hold_s": 0.0,
+          "successes": 0.0
+        },
+        "receipt_sha256": "c388208d9152a8053727867653fe71497a73712d407f0b6219cdbb5199afa977",
+        "latest_checkpoint_sha256": "1ac26d5cab7460ede8dbf0201dade431f2a3145a88ca68701972cad6db721965"
+      }
+    },
+    "r7_contact": {
+      "tests": {
+        "cpu_passed": 226,
+        "cpu_skipped": 12,
+        "cuda_passed": 13
+      },
+      "runtime_source_sha256": {
+        "src/dh116/physics/runtime.py": "a345b6c5d4ea0efaf5277c9fad2f0d5d320d5471bdfe6a4a61494dafa4223b2f",
+        "src/dh116/rl/reward.py": "ec8dab23a3b86703d55fa699a52a6bd710ec5cc8463eeb6be348ec3eb0a36950"
+      },
+      "probes": {
+        "environments": 512,
+        "controls": 2,
+        "updates": 0,
+        "by_grasp": {
+          "pinch": {
+            "recipe_sha256": "b55f4d90d7bc6122ad967c84384dbd5188f6f13e34d289bbe40e86dce795798a",
+            "receipt_sha256": "94946dd6d0c277b1d8bbed15c4cad19d0255c6abf9823de82788150a2442ff19",
+            "exit_code": 0
+          },
+          "tripod": {
+            "recipe_sha256": "65d7fe33f7950babc4e54543506e3f263b8ade0bfc2f161a2c934583c8f14d81",
+            "receipt_sha256": "51567be0c3bbd0f6fda29303ba22ecb2ad88c278bf7a6c28059fd9853e865c51",
+            "exit_code": 0
+          },
+          "power": {
+            "recipe_sha256": "0f80cb40853378c905d085d846e27d6481f3ca15b52ca83d9879b8d7f15a86e2",
+            "receipt_sha256": "82a6548dc30084733534a115d78d86f87a75c70b9d85a7d02a151718c4ac68f1",
+            "exit_code": 0
+          }
+        }
+      }
+    },
+    "qualification": {
+      "teacher": false,
+      "grasp": false
+    }
   }
 }

@@ -228,6 +228,7 @@ def test_flat_reward_readout_separates_light_contact_from_vertical_carry():
     assert result['no_external_support'].tolist() == [False, True, False]
     torch.testing.assert_close(result['support_vertical_n'], nodes.new_tensor([0, 0, 0.12]))
     torch.testing.assert_close(result['hand_vertical_n'], nodes.new_tensor([0, 0, 0.06]))
+    torch.testing.assert_close(result['balanced_hand_vertical_n'], nodes.new_tensor([0, 0, 0.04]))
     nodes[0, 8, 1] = 0.15  # A left material node displaced into the right world half.
     assert readout(packet, nodes)['load_progress_left'][0] == 0
 
@@ -250,6 +251,54 @@ def test_grasp_contact_progress_prefers_load_shared_across_required_pads():
 
     assert result['load_progress_left'][1] > result['load_progress_left'][0] > 0
     assert not result['bilateral_support'].any()
+
+
+def test_pinch_opposition_progress_uses_loaded_contact_directions():
+    from dh116.physics.runtime import GraspContactReadout
+
+    names = ('left.finger14_link', 'left.finger23_link',
+             'right.finger14_link', 'right.finger23_link', 'table', 'support_0', 'support_1')
+    directions = torch.tensor(((1., 0., 0.), (0., 1., 0.), (-1., 0., 0.)), dtype=torch.float64)
+    keys = torch.tensor([(env, step, node, slot) for env in range(3) for step in range(12)
+                         for node, slot in ((8, 0), (8, 1), (32, 2), (32, 3))])
+    normals = directions[keys[:, 0]].clone()
+    normals[keys[:, 3] % 2 == 0] = directions[0]
+    vectors = torch.zeros(len(keys), 12, dtype=normals.dtype)
+    vectors[:, 3:6] = normals
+    vectors[:, 6:9] = normals * .16
+    nodes = torch.zeros(3, 41, 3, dtype=normals.dtype)
+    nodes[..., 1] = torch.linspace(-.25, .25, 41)
+    readout = GraspContactReadout('pinch', names, device='cpu')
+    result = readout(dict(env_ids=keys[:, 0], indices=keys[:, 1:], vectors=vectors,
+                          normal_force=vectors.new_full((len(keys),), .16)), nodes)
+
+    parallel, partial, opposed = result['load_progress_left']
+    assert 0 < parallel < partial < opposed <= 1
+    assert result['bilateral_support'].tolist() == [False, False, True]
+
+
+def test_power_opposition_needs_a_loaded_palm_and_finger_face():
+    from dh116.physics.runtime import GraspContactReadout
+
+    pads = (*GraspContactReadout.PADS, 'base_link')
+    names = tuple(f'{side}.{pad}' for side in ('left', 'right') for pad in pads)
+    names += GraspContactReadout.SUPPORTS
+    cases = ((5,), (0, 1), (0, 5), tuple(range(6)))
+    keys = torch.tensor([(env, step, node, 6 * side + pad)
+                         for env, loaded in enumerate(cases) for step in range(12)
+                         for side, node in enumerate((8, 32)) for pad in loaded])
+    vectors = torch.zeros(len(keys), 12, dtype=torch.float64)
+    vectors[:, 3] = torch.where(keys[:, 3] % 6 % 2 == 0, 1., -1.)
+    vectors[:, 6] = vectors[:, 3] * .12
+    nodes = torch.zeros(len(cases), 41, 3, dtype=vectors.dtype)
+    nodes[..., 1] = torch.linspace(-.25, .25, 41)
+    readout = GraspContactReadout('power', names, device='cpu')
+    result = readout(dict(env_ids=keys[:, 0], indices=keys[:, 1:], vectors=vectors,
+                          normal_force=vectors.new_full((len(keys),), .12)), nodes)
+
+    palm_only, fingers_only, palm_and_finger, complete = result['load_progress_left']
+    assert max(palm_only, fingers_only) < palm_and_finger < complete <= 1
+    assert result['bilateral_support'].tolist() == [False, False, False, True]
 
 
 def test_quarantine_parks_only_the_failed_rod_without_opening_a_new_episode():
