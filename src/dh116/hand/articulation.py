@@ -142,8 +142,8 @@ def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, se
     from dh116.env.scene import spawn_parameters
     lanes = tuple(lanes)
     origins = regex_task_setup__np.asarray([origin for (_, origin) in lanes], dtype=regex_task_setup__np.float64)
-    if sim.current_time_step_index != 0 or not 2 <= len(lanes) <= 512 or origins.shape != (len(lanes), 3) or (not regex_task_setup__np.isfinite(origins).all()) or regex_task_setup__np.any(origins[:, 2] != 0) or (archive.style not in ('pinch', 'tripod', 'power')):
-        raise ValueError('fresh 480Hz Sim and 2..512 original physical lanes required')
+    if sim.current_time_step_index != 0 or not 2 <= len(lanes) <= 1024 or origins.shape != (len(lanes), 3) or (not regex_task_setup__np.isfinite(origins).all()) or regex_task_setup__np.any(origins[:, 2] != 0) or (archive.style not in ('pinch', 'tripod', 'power')):
+        raise ValueError('fresh 480Hz Sim and 2..1024 original physical lanes required')
     (args, layout, sources) = spawn_parameters(archive.scene_inputs, project)
     if archive.style == 'pinch' and archive.task is None:
         seed = _seed(archive.pair['reset_seed'])

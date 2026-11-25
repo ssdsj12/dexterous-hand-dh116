@@ -1,5 +1,12 @@
 # Changelog
 
+## 1024-environment native PPO — 2026-11-25
+
+- Support 1024 native rows through scene naming, batch articulation, contact capture, shared observations, Teacher training and frozen actor loading. Keep lane names ordered at four digits for the 1024-row scene.
+- Rebuild the SM89 ropesim extension with CUDA 12.8. Size the bounded contact buffer for 1024 lanes with 41 nodes, 17 meshes and 12 solver substeps. Flat contact indices and vectors match the legacy batched export exactly in the candidate CUDA build.
+- Pass 231 CPU tests and 15 tests in the CUDA session. Pinch, Tripod and Power each complete two native control windows with 1024 environments and exit naturally. The second windows take 0.56, 0.60 and 0.50 seconds respectively.
+- Launch 1024 updates per grasp with separate physical GPU locks and checkpoint directories. Retain the verified 64-update checkpoint from the cancelled 512-environment Power run.
+
 ## Power PPO learning rate comparison — 2026-11-25
 
 - Lower only the Power full-grasp PPO learning rate from 0.0001 to 0.00003. Log the sampled KL measured on the next minibatch after the first optimizer step, using the existing evaluation.

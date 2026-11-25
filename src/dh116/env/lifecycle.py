@@ -138,11 +138,12 @@ BOUNDARY_VERSION = 'dh116-pinch-import-boundary-v3'
 
 def scene_lanes(count, table_size):
     size = np.asarray(table_size, dtype=float)
-    if count not in (2, 32, 64, 128, 512) or size.shape != (3,) or (not np.isfinite(size).all()) or (size <= 0).any():
-        raise ValueError('2, 32, 64, 128 or 512 lanes and a positive original table size required')
+    if count not in (2, 32, 64, 128, 512, 1024) or size.shape != (3,) or (not np.isfinite(size).all()) or (size <= 0).any():
+        raise ValueError('2, 32, 64, 128, 512 or 1024 lanes and a positive original table size required')
     columns = nativ_sessi__math.ceil(nativ_sessi__math.sqrt(count))
     spacing = float(max(size[:2]) + 1.0)
-    return [(f'/World/DH116BatchAudit/lane_{i:03d}', (spacing * (i % columns), spacing * (i // columns), 0.0)) for i in range(count)]
+    width = max(3, len(str(count - 1)))
+    return [(f'/World/DH116BatchAudit/lane_{i:0{width}d}', (spacing * (i % columns), spacing * (i // columns), 0.0)) for i in range(count)]
 
 class TimelineStopOwner:
     """Own the temporary STOP wrapper only, never an articulation or CUDA view."""

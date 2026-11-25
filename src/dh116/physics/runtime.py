@@ -453,7 +453,7 @@ class NativeTensorPhysicsRuntime:
             reference_poses = roots.new_tensor(reference['root_pose_wxyz'])
             reference_stations = roots.new_tensor(reference['station_nodes'], dtype=torch.long)
         geometry_backend = os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND')
-        if geometry_backend is None and self.n == 512 and self.device.type == 'cuda':
+        if geometry_backend is None and self.n >= 512 and self.device.type == 'cuda':
             geometry_backend = os.environ.setdefault('DH116_TENSOR_GEOMETRY_BACKEND', 'cuda_cabi')
         if self.style in ('pinch', 'tripod'):
             original = pinch_geometry_inputs(archive.scene_inputs['geometry'])

@@ -338,23 +338,24 @@ def test_native_session_restores_arguments_and_closes_after_post_launch_import_f
     assert events == [('launch', ('teacher',)), ('close', {'wait_for_replicator': False})]
 
 
-def test_scene_lanes_place_512_environments_in_the_existing_namespace():
+@pytest.mark.parametrize(('count', 'columns', 'width'), [(512, 23, 3), (1024, 32, 4)])
+def test_scene_lanes_order_and_stage_paths(count, columns, width):
     from dh116.env.lifecycle import scene_lanes
 
-    lanes = scene_lanes(512, (1.5, 1.0, 0.1))
-    assert len(lanes) == 512
+    lanes = scene_lanes(count, (1.5, 1.0, 0.1))
+    assert len(lanes) == count
     assert all(
-        path == f'/World/DH116BatchAudit/lane_{i:03d}'
-        and origin == (2.5 * (i % 23), 2.5 * (i // 23), 0.0)
+        path == f'/World/DH116BatchAudit/lane_{i:0{width}d}'
+        and origin == (2.5 * (i % columns), 2.5 * (i // columns), 0.0)
         for i, (path, origin) in enumerate(lanes)
     )
     with pytest.raises(ValueError):
-        scene_lanes(513, (1.5, 1.0, 0.1))
+        scene_lanes(1025, (1.5, 1.0, 0.1))
 
 
-def test_512_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch):
+def test_1024_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch):
     from dh116.env import scene
-    from dh116.env.lifecycle import NativeOwners
+    from dh116.env.lifecycle import NativeOwners, scene_lanes
     from dh116.hand.articulation import prepare_regex_task
 
     class ReachedAuthoring(Exception):
@@ -366,7 +367,7 @@ def test_512_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch):
     monkeypatch.setattr(scene, 'spawn_parameters', stop_at_scene_inputs)
     sim = SimpleNamespace(current_time_step_index=0)
     archive = SimpleNamespace(style='pinch', scene_inputs={})
-    lanes = [(f'/World/DH116BatchAudit/lane_{i:03d}', (float(i), 0.0, 0.0)) for i in range(512)]
+    lanes = scene_lanes(1024, (1.5, 1.0, 0.1))
     with pytest.raises(ReachedAuthoring):
         prepare_regex_task(sim, NativeOwners(), None, tmp_path, {}, archive, lanes)
     with pytest.raises(ValueError, match='original physical lanes'):

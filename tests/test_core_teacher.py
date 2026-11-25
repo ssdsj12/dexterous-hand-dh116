@@ -292,6 +292,33 @@ def test_full_tensor_packet_requires_profile_and_row_matched_context(monkeypatch
         pack_shared_tensor_inputs(q, qd, **dict(kw, task_context=wrong))
 
 
+def test_full_teacher_packs_all_1024_source_rows(monkeypatch):
+    from dh116.rl.teacher import ContextIdentity
+
+    _, _, backend, cfg, (q, qd, kw) = teacher_data(monkeypatch)
+    values, valid = full_context_fixture(kw)
+    count = 1024
+    rows = torch.arange(count) % 2
+    source = replace(kw['source_identity'], parent_num_envs=count, env_rows=tuple(range(count)),
+                     episode_uids=tuple(f'ep{i}' for i in range(count)),
+                     rod_uids=tuple(f'rod{i}' for i in range(count)),
+                     reset_ids=(1,) * count, rod_ticks=(0,) * count)
+    identities = tuple(ContextIdentity(source.run_uuid, i, source.episode_uids[i], 1,
+                                       source.rod_uids[i], 0, 0, 0.0, 0.0) for i in range(count))
+    batched = {k: v[rows] if isinstance(v, torch.Tensor) else v for k, v in kw.items()}
+    reward = load_config(ROOT / 'configs/training/reward_pinch.json', full_grasp=True)
+    model = TensorNativeTeacher(cfg, backend_profile=backend, num_envs=count, reward_config=reward)
+    batched.update(source_identity=source, context_identities=identities,
+                   task_context=values[rows], task_context_valid=valid[rows],
+                   context_mode=model.context_mode)
+
+    packet = pack_shared_tensor_inputs(q[rows], qd[rows], **batched)
+    observations = packet.for_teacher(model, current_identity=packet.source)
+    assert observations['common371'].shape == (count, 371)
+    assert model.latent_mean(observations).shape == (count, 24)
+    assert observations['task_context_valid'][-2:, 8:10].tolist() == [[True, True], [False, False]]
+
+
 def test_full_teacher_uses_exact_goal_reward_profile(monkeypatch):
     smoke, smoke_inputs, backend, cfg, (q, qd, kw) = teacher_data(monkeypatch)
     reward = load_config(ROOT / 'configs/training/reward_pinch.json', ppo_gamma=0.995, full_grasp=True)
