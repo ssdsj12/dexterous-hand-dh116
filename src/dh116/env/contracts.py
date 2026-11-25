@@ -199,9 +199,28 @@ def runti_io__file_sha256(path):
 surfa_contr__ACTIVE = linea_coupl__ACTIVE
 LEGACY_OBSERVATION_VERSION = 'dh116-surface-sharing-lift-objective-v2'
 OBSERVATION_VERSION = 'dh116-surface-sharing-feedback-371-v1'
-ACTION_NAME = '24D_free_fingers_worldXYZ_intrinsicXYZ_surface_sharing_v1'
-surfa_contr__ACTION_CONTRACT = dict(version='dh116-surface-motion24-v1', size=24, joint_order=[hand + '.' + joint for hand in ('left', 'right') for joint in surfa_contr__ACTIVE], slices=dict(joint_velocity=[0, 12], world_translation_velocity=[12, 18], intrinsic_rotation_velocity=[18, 24]), hand_order=['left', 'right'], axis_order=['X', 'Y', 'Z'], joint_rate_rad_s=0.3, translation_rate_m_s=0.01, rotation_rate_rad_s=0.5, normalized_range=[-1.0, 1.0], wrist_vector_norm_limit=1.0, translation_frame='world;positive_Z_up', rotation='seed_wxyz_times_intrinsic_X_then_Y_then_Z', integration='existing_native_physics_dt;targets_integrated_at_each_substep', zero_action='retain_current_targets_subject_to_existing_joint_lead_and_table_safety_projection', guards='existing_joint_limits_lead_velocity_table_clearance;no_added_force_servo', force_action_dimensions=0)
-_FIELDS = (('support_n', 2, 10.0, 'N', 'accepted_pad_normal_plus_attributable_native_friction'), ('support_margin', 1, 1.0, 'weight_fraction', '(sum_signed_support-object_weight)/object_weight'), ('support_imbalance', 1, 1.0, 'ratio', 'absolute_bilateral_support_difference/sum_absolute_support'), ('paired', 2, 1.0, 'boolean', 'native_effective_opposed_pad_pair_per_hand'), ('ordinary_fraction', 1, 1.0, 'ratio', 'rejected_native_load/(accepted+rejected)'), ('pad_depth', 1, 0.0008, 'm', 'maximum_accepted_native_pad_depth'), ('anchor_drift', 1, 0.0005, 'm', 'native_fixed_anchor_drift'), ('slip_speed', 1, 0.01, 'm/s', 'rod_points_in_measured_wrists_velocity'), ('hold_duration', 1, 5.0, 's', 'last_completed_native_success_window'), ('window_good', 1, 1.0, 'boolean', 'last_completed_native_success_window'), ('pressure_limited', 2, 1.0, 'boolean', 'actual_existing_controller_pressure_limited_flags'), ('mimic_blocked', 2, 1.0, 'boolean', 'actual_existing_block_flags_with_severe_measured_mimic_error'), ('wrist_z_request', 2, 0.01, 'm/s', 'submitted_policy_action_14_17_times_existing_wrist_rate'), ('wrist_z_increment', 2, 0.001, 'm', 'measured_wrist_pose_end_minus_start'))
+ACTION_NAME = '24D_free_fingers_worldXYZ_intrinsicXYZ_surface_sharing_v2'
+surfa_contr__ACTION_CONTRACT = dict(
+    version='dh116-surface-motion24-v2',
+    size=24,
+    joint_order=[hand + '.' + joint for hand in ('left', 'right') for joint in surfa_contr__ACTIVE],
+    slices=dict(joint_velocity=[0, 12], world_translation_velocity=[12, 18],
+                intrinsic_rotation_velocity=[18, 24]),
+    hand_order=['left', 'right'],
+    axis_order=['X', 'Y', 'Z'],
+    joint_rate_rad_s=1.2,
+    translation_rate_m_s=0.05,
+    rotation_rate_rad_s=1.0,
+    normalized_range=[-1.0, 1.0],
+    wrist_vector_norm_limit=1.0,
+    translation_frame='world;positive_Z_up',
+    rotation='seed_wxyz_times_intrinsic_X_then_Y_then_Z',
+    integration='existing_native_physics_dt;targets_integrated_at_each_substep',
+    zero_action='retain_current_targets_subject_to_existing_joint_lead_and_table_safety_projection',
+    guards='existing_joint_limits_lead_velocity_table_clearance;no_added_force_servo',
+    force_action_dimensions=0,
+)
+_FIELDS = (('support_n', 2, 10.0, 'N', 'accepted_pad_normal_plus_attributable_native_friction'), ('support_margin', 1, 1.0, 'weight_fraction', '(sum_signed_support-object_weight)/object_weight'), ('support_imbalance', 1, 1.0, 'ratio', 'absolute_bilateral_support_difference/sum_absolute_support'), ('paired', 2, 1.0, 'boolean', 'native_effective_opposed_pad_pair_per_hand'), ('ordinary_fraction', 1, 1.0, 'ratio', 'rejected_native_load/(accepted+rejected)'), ('pad_depth', 1, 0.0008, 'm', 'maximum_accepted_native_pad_depth'), ('anchor_drift', 1, 0.0005, 'm', 'native_fixed_anchor_drift'), ('slip_speed', 1, 0.01, 'm/s', 'rod_points_in_measured_wrists_velocity'), ('hold_duration', 1, 5.0, 's', 'last_completed_native_success_window'), ('window_good', 1, 1.0, 'boolean', 'last_completed_native_success_window'), ('pressure_limited', 2, 1.0, 'boolean', 'actual_existing_controller_pressure_limited_flags'), ('mimic_blocked', 2, 1.0, 'boolean', 'actual_existing_block_flags_with_severe_measured_mimic_error'), ('wrist_z_request', 2, surfa_contr__ACTION_CONTRACT['translation_rate_m_s'], 'm/s', 'submitted_policy_action_14_17_times_wrist_translation_rate'), ('wrist_z_increment', 2, 0.001, 'm', 'measured_wrist_pose_end_minus_start'))
 
 def feedback_schema():
     start = 351
@@ -225,7 +244,7 @@ def semantic_sha256(contract):
     return surfa_contr__hashlib.sha256(surfa_contr__json.dumps(value, sort_keys=True, separators=(',', ':'), allow_nan=False).encode()).hexdigest()
 
 def _schema():
-    return dict(version='dh116-surface-contract-v1', action=copy.deepcopy(surfa_contr__ACTION_CONTRACT), base_observation=dict(size=351, version=LEGACY_OBSERVATION_VERSION, normalization='unchanged_legacy_351_columns;no_running_statistics', previous_action='existing_351_free_wrist_action_columns'), feedback_fields=feedback_schema(), alignment='observation_t_contains_completed_interval_t-1;action_t_executes_next_interval', aggregation='native_dt_weighted_mean;depth_and_drift_max;hold_at_last_completed_window', reset='selected_rows_zero;no_pre_reset_samples_in_next_interval', invalid='zero_diagnostic_features_and_abort_rollout_before_any_PPO_or_BC_update', clipping='none;physical_scales_only;finite_out_of_scale_values_remain_observable')
+    return dict(version='dh116-surface-contract-v2', action=copy.deepcopy(surfa_contr__ACTION_CONTRACT), base_observation=dict(size=351, version=LEGACY_OBSERVATION_VERSION, normalization='unchanged_legacy_351_columns;no_running_statistics', previous_action='existing_351_free_wrist_action_columns'), feedback_fields=feedback_schema(), alignment='observation_t_contains_completed_interval_t-1;action_t_executes_next_interval', aggregation='native_dt_weighted_mean;depth_and_drift_max;hold_at_last_completed_window', reset='selected_rows_zero;no_pre_reset_samples_in_next_interval', invalid='zero_diagnostic_features_and_abort_rollout_before_any_PPO_or_BC_update', clipping='none;physical_scales_only;finite_out_of_scale_values_remain_observable')
 
 def _validate_motion(contract):
     if not isinstance(contract, dict):
@@ -236,11 +255,17 @@ def _validate_motion(contract):
     if contract.get('action') != ACTION_NAME:
         raise ValueError('unknown surface action order/semantics')
     expected_order = 'joint_velocity12_world_translation_velocity6_intrinsic_XYZ_velocity6'
+    action = surfa_contr__ACTION_CONTRACT
+    rates = (
+        ('joint_rate_rad_s', action['joint_rate_rad_s']),
+        ('wrist_rate_m_s', action['translation_rate_m_s']),
+        ('rotation_rate_rad_s', action['rotation_rate_rad_s']),
+    )
     for key in ('policy_control', 'grasp_controller', 'free_wrist_grasp'):
         nested = contract.get(key, {})
         if 'action_size' in nested and nested['action_size'] != 24 or ('action_order' in nested and nested['action_order'] != expected_order):
             raise ValueError('contradictory 24D action order: ' + key)
-        for (field, expected) in (('joint_rate_rad_s', 0.3), ('wrist_rate_m_s', 0.01), ('rotation_rate_rad_s', 0.5)):
+        for field, expected in rates:
             if field in nested and nested[field] != expected:
                 raise ValueError('action scale mismatch: ' + field)
     if contract.get('control_hz', 60) != 60 or contract.get('physics_hz', 480) != 480:
@@ -299,16 +324,21 @@ def require_sha(value, name='SHA256'):
 _ESTIMATOR_STATE_V1_CRLF = 'a7af9f3f214a646f2f95dce45aa4744f378488de34237431c914bd4137b2ee86'
 _ESTIMATOR_STATE_V1_LF = '9f145cf8e68b1dfe8e2c7464ec5fc0cb00e81a2707115c2fe148ab49d77bbb62'
 
-def verify_estimator_state_contract_file(path, expected_sha256):
-    """Check the v1 config's file pin and return the actual raw-byte SHA.
+_ESTIMATOR_STATE_LF = 'e9779749ce7d3f67bfe5c2749ea910b1386a08e00b6f8ced9206ccb859ded1ba'
 
-    The exception applies only to the published v1 CRLF pin on its audited LF
-    checkout. Checkpoint identities still bind their actual bytes.
+def verify_estimator_state_contract_file(path, expected_sha256):
+    """Check a published state schema file pin and return its raw-byte SHA.
+
+    The historical exception applies only to the published v1 CRLF pin on its
+    audited LF checkout. Checkpoint identities still bind actual source bytes.
     """
     expected_sha256 = require_sha(expected_sha256, 'state contract file SHA256')
     actual = stere_contr__file_sha256(path)
-    pinned = expected_sha256 == _ESTIMATOR_STATE_V1_CRLF
-    if not pinned or actual not in (_ESTIMATOR_STATE_V1_CRLF, _ESTIMATOR_STATE_V1_LF):
+    current = expected_sha256 == actual == _ESTIMATOR_STATE_LF
+    legacy = expected_sha256 == _ESTIMATOR_STATE_V1_CRLF and actual in (
+        _ESTIMATOR_STATE_V1_CRLF, _ESTIMATOR_STATE_V1_LF
+    )
+    if not (current or legacy):
         raise ValueError('state contract file SHA256 mismatch')
     return actual
 

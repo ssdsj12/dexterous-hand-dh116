@@ -2,7 +2,7 @@
 
 唯一开发、构建和运行目录：/mnt/mydisk/xk/dh116。开发分支：11-17。
 
-当前包为src/dh116/：24个实现模块、6个包初始化文件及2个CUDA源文件，按env / physics / rl / hand分层。底层物理、接触、控制、几何守卫与生命周期由Teacher和Student共用。模型使用eager执行，关闭torch.compile。
+当前包为 src/dh116/，按 env、physics、rl、hand 分层。底层物理、接触、控制、几何守卫与生命周期由Teacher和Student共用。模型使用eager执行，关闭torch.compile。
 
 ## 环境与入口
 
@@ -20,13 +20,13 @@ bash scripts/python.sh -B -m pytest -q tests
 | scripts/python.sh | 当前Python/SDK库路径与线程设置 |
 | scripts/build_native.py | ropesim、FP64几何核构建与真实flat接触对照 |
 | scripts/prepare_scene.py | 实测场景/SDF/Reset数组及资产SHA验证 |
-| scripts/train_teacher.py | 无相机共享物理Teacher PPO及有界控制窗验证 |
+| scripts/train_teacher.py | 无相机 Teacher PPO、控制窗验证、冻结 Actor 的原生双目回放 |
 | scripts/train_student.py | 封存数据的状态监督/BC，保留独立初态持出与准入 |
 | scripts/run_student.py | Actor-only双RGB部署推理 |
 
 构建使用vendor/ropesim和当前源码；build/scene_bundle保存真实SDF、完整凸包与独立的计划初态/实测Reset，不上传原始数据。新克隆需配置经过SHA核验的本地输入，不会自动伪造几何或监督。
 
-Pinch仅以拇指/食指作为目标SDF；其余三指仍保留完整非目标守卫。Tripod/Power保留独立配置。30mm Lift、5s Hold、0.5mm Slip、0.15mm穿入门槛、2.1mm桌面保护线保持原值。
+Pinch、Tripod 和 Power 各自绑定原生指垫、桌面和双端支架。严格几何审计继续提供 FP64 凸包和 SDF 对照。完整抓取训练的接触与终止规则见下节。
 
 ## 单模板建场（SCENE-INIT-SPEEDUP R1）
 
@@ -38,11 +38,28 @@ Pinch仅以拇指/食指作为目标SDF；其余三指仍保留完整非目标�
 
 ## 三抓法 Teacher PPO
 
-同一个训练入口使用 `--full-grasp` 启用双腕线缆局部参考、一次性参考姿态到位、实测双侧对向力、完全离架高度和连续保持。Pinch 与 Tripod 的非参与指保持原目标。三个任务均从同钟 DeformX 接触对读取桌面和两个端支架载荷。恢复旧模型前应核对配方和来源 SHA。
+同一个训练入口使用 `--full-grasp` 启用双腕线缆局部参考、一次性参考姿态到位、实测双侧对向力、完全离架高度和连续保持。Pinch 与 Tripod 的非参与指保持原目标。左手在 −Y、右手在 +Y，两侧拇指相向。三个任务均从同钟 DeformX 接触对读取桌面和两个端支架载荷。恢复旧模型前应核对配方和来源 SHA。
 
-完整抓握奖励使用同钟 DeformX 接触对生成有界的逐指轻载进度。双手已对向承载时，由手对线缆的向上受力、桌面与两端支架的竖向卸载以及线缆中位点和低点共同引导预抬升。离架前后使用同一势函数，最终验收保留原完全离架、30 mm、5 s 和 0.5 mm 判据。旧策略与优化器保留为对照，新奖励从独立初始权重训练。
+完整抓握奖励使用同钟 DeformX 接触对生成有界的逐指轻载进度。双手已对向承载时，由手对线缆的向上受力、桌面与两端支架的竖向卸载以及线缆中位点和低点共同引导预抬升。离架前后使用同一势函数。成功须满足实测对向承载、完全离架、净抬升 30 mm、连续保持 5 s 与滑移不超过 0.5 mm。非目标载荷超过 0.05 N 或原始手部反力达到 40 N 时重新累计 Hold，探索阶段仍按连续成本计分。
 
-控制窗长 8 个 SDK 步，PPO 每 32 窗更新，默认单回合预算为 720 窗（12 秒）。可信单路越界产生终止事件，该路使用已核验的初态和零反力隔离到窗末，并进行局部 Reset。共享物理步仍计入预算。非有限、求解器错误和来源不一致中止本次运行。按物理 GPU UUID 锁定实例，训练按更新输出汇总及滚动的 `latest.pt` / `best.pt`。
+腕部指令限速为平移 0.05 m/s、旋转 1.0 rad/s，主动指关节为 1.2 rad/s，被动关节限速为 3.0 rad/s。动作仍为 24D，教师与学生部署按同一动作 SHA 校验。
+
+完整抓取模式使用 FP32 指垫 SDF 和原生接触对。指垫顺应超过 0.8 mm、非目标手部网格载荷超过 0.05 N、跟踪滞后超过 10 mm、mimic 误差超过 0.08 rad、接近关节限位及原生反力超过 15 N 时产生有界连续扣分。提交给 PhysX 的每网格反力限幅为 40 N，奖励使用原始测量。线缆掉出桌面、关节超过硬限位 0.25 rad、指垫间隙低于 -3 mm、达标后复触支撑及成功分别统计。活跃环境的数值异常，以及共享求解器或来源异常，拒收本窗。已终止环境保留最后一次有限的测量，随后在窗末局部 Reset。
+
+物理 480 Hz，控制 60 Hz。每窗 8 步，PPO 每 32 窗更新，完整回合默认 600 窗（10 秒）。硬终止在窗末只重置受影响的环境。超时截断保留价值自举。默认使用 `official_cache` 单次读回与 minibatch KL 早停。每 25 轮、最佳更新及最后一轮原子保存 checkpoint。实例按物理 GPU UUID 加锁。
+
+### Native stereo replay
+
+用当前配方的已核验 2 或 512 环境 checkpoint 在两路环境中回放冻结 Actor。命令中的路径和 SHA 取自同一次经过验证的训练。
+
+~~~bash
+bash scripts/python.sh -B scripts/train_teacher.py \
+  --preview-checkpoint /path/to/latest.pt --preview-checkpoint-sha256 SHA256 \
+  --grasp power --gpu 3 --output runs/stereo-preview \
+  --preview-windows 90 --preview-every 15
+~~~
+
+三视图采用同次原生渲染。`configs/cameras/student_stereo.json` 固定 80 mm 双目基线和 86° 水平视场，两台相机从操作者 +X 侧上方朝操作区俯视。原始 RGB 时钟与测得的 SDK Reset 后时钟逐帧校验，容差为 1 µs。橙色管状显示跟随实测线缆节点。左手位于线缆 −Y 侧，右手位于 +Y 侧，双手拇指朝内。每个采样窗口保存第三人称和左右 RGB、帧时钟及 `student_rgb.pt`。原始 RGB 包供 `run_student.py` 使用，`train_student.py` 读取通过资格校验并封存的数据集。
 
 ## 验证与资格
 

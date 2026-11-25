@@ -187,6 +187,10 @@ def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, se
         batch.release_replication()
     started = scene_build__time.perf_counter()
     batch.bind()
+    speed_readback = assets.velocity_limits_readback(
+        batch.hands, instances=len(lanes),
+        passive_limit=getattr(args, 'passive_velocity_limit_rad_s', assets.PASSIVE_VELOCITY_MIN_RAD_S),
+    )
     metadata['seconds']['bind'] = scene_build__time.perf_counter() - started
     metadata['counts']['bind'] = 1
     members = []
@@ -209,7 +213,7 @@ def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, se
     (positions, rotations) = _mesh_poses(archive, bindings, initial)
     (initial['mesh_positions_world_m'], initial['mesh_quaternions_xyzw']) = (positions, rotations)
     initial['rod_positions_w'] = regex_task_setup__torch.as_tensor(rod_nodes, device=initial['q'].device, dtype=regex_task_setup__torch.float32)[None] + initial['env_origins'].float()[:, None]
-    batch.task_setup_metadata = dict(style=archive.style, source_seed_sha256=original_seed_sha, effective_seed_sha256=effective_seed['sha256'], height_derivation=height_proof, active_effort_limit_nm=effort, original_colliders_per_lane=34, sdk_initialization_steps=2, setup_physics_steps=0, native_setup_requalified=False, teacher_admission=False)
+    batch.task_setup_metadata = dict(style=archive.style, source_seed_sha256=original_seed_sha, effective_seed_sha256=effective_seed['sha256'], height_derivation=height_proof, active_effort_limit_nm=effort, original_colliders_per_lane=34, sdk_initialization_steps=2, setup_physics_steps=0, velocity_limits=speed_readback, native_setup_requalified=False, teacher_admission=False)
     return (batch, effective_seed, rod_nodes, bindings, initial)
 from dh116.hand.kinematics import ANGULAR_JOINT_NAMES
 
@@ -680,7 +684,7 @@ class RegexArticulationBatch:
         self.scenes = tuple(scenes)
         self.sides = {}
         self._replication_stage_id = None
-        self.readback_mode = os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'raw')
+        self.readback_mode = os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'official_cache')
         if self.readback_mode not in ('raw', 'official_cache'):
             raise ValueError('explicit raw or official_cache readback backend required')
         self._cached_readers = {}

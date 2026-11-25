@@ -124,19 +124,21 @@ class TensorMeshBridge:
         self._views = None
 
     @tenso_mesh_bridg__torch.no_grad()
-    def targets(self, link_poses):
-        if not isinstance(link_poses, tenso_mesh_bridg__torch.Tensor) or link_poses.shape != (self.n, 2, 23, 7) or link_poses.device != self.positions.device or (not link_poses.is_floating_point()) or (not bool(tenso_mesh_bridg__torch.isfinite(link_poses).all())) or (not tenso_mesh_bridg__torch.allclose(link_poses[..., 3:].norm(dim=-1), tenso_mesh_bridg__torch.ones_like(link_poses[..., 0]), atol=1e-05, rtol=0)):
+    def targets(self, link_poses, *, validate_values=True):
+        if not isinstance(link_poses, tenso_mesh_bridg__torch.Tensor) or link_poses.shape != (self.n, 2, 23, 7) or link_poses.device != self.positions.device or (not link_poses.is_floating_point()):
+            raise ValueError('complete same-device actual link poses required')
+        if validate_values and (not bool(tenso_mesh_bridg__torch.isfinite(link_poses).all()) or not tenso_mesh_bridg__torch.allclose(link_poses[..., 3:].norm(dim=-1), tenso_mesh_bridg__torch.ones_like(link_poses[..., 0]), atol=1e-05, rtol=0)):
             raise ValueError('complete finite unit same-device actual link poses required')
         selected = link_poses[:, self.sides, self.links]
         self.positions[:, self.slots] = selected[..., :3]
         self.quaternions[:, self.slots] = selected[..., 3:]
         return (self.positions, self.quaternions)
 
-    def submit(self, solver, link_poses):
+    def submit(self, solver, link_poses, *, validate_values=True):
         if solver.num_envs != self.n or solver.last_error != 0:
             raise ValueError('same healthy actual shared solver required')
         time = float(solver.time)
-        (p, q) = self.targets(link_poses)
+        (p, q) = self.targets(link_poses, validate_values=validate_values)
         self._views = (CudaTensorView(p), CudaTensorView(q))
         solver.set_mesh_poses_all(*self._views, teleport=False)
         if solver.last_error != 0 or float(solver.time) != time:
@@ -608,6 +610,43 @@ class TensorGeometry:
             raise ValueError('tensor geometry frame/Reset epoch unavailable or changed')
         self.validate_metadata(bindings=bindings, body_names=body_names)
         return self.result
+
+    def policy_pad_gaps(self, poses, nodes, radii):
+        """Sample the locked pad grids on-device in FP32, without hull guards."""
+        if not hasattr(self, '_policy_pad_data'):
+            self.validate_metadata()
+            if not self._pads:
+                raise ValueError('policy distance requires locked pad grids')
+            grids = [pad[4].float() for pad in self._pads]
+            shape = torch.tensor([grid.shape for grid in grids], device=self.device)
+            stride = torch.stack((shape[:, 1] * shape[:, 2], shape[:, 2],
+                                  torch.ones_like(shape[:, 2])), -1)
+            sizes = shape.prod(-1)
+            offsets = sizes.cumsum(0) - sizes
+            corner = torch.tensor([(x, y, z) for x in (0, 1) for y in (0, 1) for z in (0, 1)],
+                                  device=self.device)
+            self._policy_pad_data = (
+                [pad[0] for pad in self._pads], [pad[1] for pad in self._pads],
+                torch.cat([grid.flatten() for grid in grids]),
+                torch.stack([pad[5].float() for pad in self._pads]),
+                torch.stack([pad[6].float() for pad in self._pads]),
+                shape, stride, offsets, (stride[:, None, :] * corner[None, :, :]).sum(-1),
+            )
+        sides, links, grid, origin, spacing, shape, stride, offsets, corners = self._policy_pad_data
+        poses = poses[:, sides, links].float()
+        displacement = nodes[:, None, :, :].float() - poses[..., None, :3]
+        local = displacement @ _rotation_xyzw(poses)
+        lattice = (local - origin[:, None, :]) / spacing[:, None, None]
+        inside = ((lattice >= 0) & (lattice < (shape - 1)[:, None, :])).all(-1)
+        safe = torch.where(inside[..., None], lattice, 0)
+        index = safe.long()
+        fraction = safe - index
+        flat = (index * stride[:, None, :]).sum(-1) + offsets[:, None]
+        values = grid[flat[..., None] + corners[:, None, :]].unflatten(-1, (2, 2, 2))
+        x = torch.lerp(values[..., 0, :, :], values[..., 1, :, :], fraction[..., 0, None, None])
+        y = torch.lerp(x[..., 0, :], x[..., 1, :], fraction[..., 1, None])
+        phi = torch.lerp(y[..., 0], y[..., 1], fraction[..., 2])
+        return phi - radii[:, None, None].to(phi.dtype), inside
 
     def _separation(self, minimum, maximum):
         low = [minimum[:, ids].amin(1) for ids in self._side_ids]

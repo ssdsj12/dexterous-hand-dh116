@@ -306,6 +306,146 @@ def layer_pins(stage):
         pins[str(path)] = usd_surfa__hashlib.sha256(path.read_bytes()).hexdigest()
     return dict(sorted(pins.items()))
 
+ANATOMICAL_SCENE_VERSION = 'dh116-anatomical-scene-v1'
+ANATOMICAL_REFERENCE_VERSION = 'dh116-anatomical-wrist-reference-v1'
+ANATOMICAL_SIDES = ('left', 'right')
+
+def _anatomical_rod_nodes(value):
+    nodes = _array(value, (41, 3), 'anatomical material nodes')
+    if (not scene_input__np.all(scene_input__np.diff(nodes[:, 1]) > 0)
+            or not scene_input__np.allclose(nodes[:, (0, 2)], nodes[20, (0, 2)], atol=2e-06, rtol=0)):
+        raise ValueError('a straight rod in material node order along world Y is required')
+    return nodes
+
+def _require_anatomical_hand_positions(poses, center):
+    if not (poses[0, 1] < center[1] < poses[1, 1]
+            and scene_input__np.all(poses[:, 0] > center[0])):
+        raise ValueError('original left and right wrists must flank the rod from world +X')
+
+def load_anatomical_reference(grasp, reference_sha256, *, root=ROOT):
+    """Return the source-pinned bilateral goal in material node order."""
+    if grasp not in ('pinch', 'tripod', 'power'):
+        raise ValueError('unknown anatomical grasp reference')
+    path = scene_input__Path(root) / 'configs/tasks' / f'{grasp}_reference.json'
+    data = scene_input__json.loads(checked_file(path, reference_sha256))
+    ref = data.get('anatomical_reference', {})
+    if (ref.get('version') != ANATOMICAL_REFERENCE_VERSION or ref.get('native_qualification') is not False
+            or set(ref.get('hands', {})) != set(ANATOMICAL_SIDES)):
+        raise ValueError('source-pinned anatomical wrist reference required')
+    hands = [ref['hands'][side] for side in ANATOMICAL_SIDES]
+    nodes = _anatomical_rod_nodes(ref['rod_nodes_w_m'])
+    poses = _array([hand['root_pose_wxyz'] for hand in hands], (2, 7), 'anatomical wrist goal poses')
+    _require_anatomical_hand_positions(poses, nodes[20])
+    if not scene_input__np.allclose(scene_input__np.linalg.norm(poses[:, 3:], axis=1), 1.0, atol=1e-6, rtol=0):
+        raise ValueError('unit wrist goal quaternions required')
+    stations = tuple(hand['station_node'] for hand in hands)
+    if any(type(i) is not int or not 0 <= i < len(nodes) for i in stations) or not stations[0] < 20 < stations[1]:
+        raise ValueError('left and right goals require material stations on their original anatomical sides')
+    targets = tuple(tuple(hand['target_active_q_rad']) for hand in hands)
+    for row in targets:
+        expand(row)
+    return dict(root_pose_wxyz=poses, station_nodes=stations, rod_nodes_w_m=nodes,
+                target_active_q_rad=targets)
+
+def anatomical_hand_axes(asset, pose):
+    """Measure longitudinal and thumb-side axes from original USD joint origins."""
+    from pxr import Usd, UsdPhysics
+    from dh116.physics.geometry import pose_matrix
+
+    stage = Usd.Stage.Open(str(asset))
+    root = stage.GetDefaultPrim().GetPath()
+    base = root.AppendChild('base_link')
+    points = []
+    for name in ('finger11', 'finger21', 'finger31', 'finger41', 'finger51'):
+        joint = UsdPhysics.RevoluteJoint(stage.GetPrimAtPath(root.AppendPath('joints/' + name)))
+        if (not joint or joint.GetBody0Rel().GetTargets() != [base]
+                or tuple(joint.GetLocalPos1Attr().Get()) != (0.0, 0.0, 0.0)):
+            raise ValueError('original thumb and finger base joint origins required')
+        points.append(joint.GetLocalPos0Attr().Get())
+    points = _array(points, (5, 3), 'original USD hand joint origins')
+    rotation = pose_matrix(pose)[:3, :3]
+    knuckles = points[1:].mean(0)
+    longitudinal = knuckles / scene_input__np.linalg.norm(knuckles)
+    thumb_side = points[0] - knuckles
+    thumb_side -= (thumb_side @ longitudinal) * longitudinal
+    thumb_side /= scene_input__np.linalg.norm(thumb_side)
+    return rotation @ longitudinal, rotation @ thumb_side
+
+def anatomical_scene_inputs(source, spec, *, root=ROOT):
+    """Apply anatomical station placement to a verified physical scene archive."""
+    fields = {'schema', 'grasp', 'source_scene', 'source_station_nodes', 'reference_sha256'}
+    if (set(spec) != fields or spec['schema'] != ANATOMICAL_SCENE_VERSION
+            or spec['grasp'] != source['grasp'] or source.get('anatomical_placement') is not None
+            or spec['source_scene']['sha256'] != source['manifest_sha256']):
+        raise ValueError('explicit original scene and matching anatomical placement required')
+    old_indices = spec['source_station_nodes']
+    if (type(old_indices) is not list or len(old_indices) != 2
+            or any(type(i) is not int or not 0 <= i <= 40 for i in old_indices)
+            or not old_indices[1] < 20 < old_indices[0]):
+        raise ValueError('two original material station indices required')
+    archive = dict(source['archive'])
+    pair, task = archive['pair'], archive['task']
+    if task is None:
+        original = _seed(pair['reset_seed'])
+        nodes = _anatomical_rod_nodes(pair['rod_seed']['proposed_nodes_m'])
+    else:
+        original = _seed(source['authored_seed'])
+        nodes = _anatomical_rod_nodes(source['authored_rod_nodes'])
+    stations = tuple(40 - i for i in old_indices)
+    reference = load_anatomical_reference(source['grasp'], spec['reference_sha256'], root=root)
+    reference_columns = (0, 1) if task is None else (0, 1, 2)
+    if (reference['station_nodes'] != stations or not scene_input__np.allclose(
+            reference['rod_nodes_w_m'][:, reference_columns], nodes[:, reference_columns], atol=1e-7, rtol=0)):
+        raise ValueError('goal and Reset must share the same mirrored material stations')
+    shifts = nodes[list(stations), 1] - nodes[old_indices, 1]
+    roots = _array(original['hand_roots'], (2, 7), 'original wrist poses')
+    roots[:, 1] += shifts
+    original_seed_sha = original['sha256']
+    provenance = dict(source_scene=spec['source_scene'], original_seed_sha256=original_seed_sha,
+                      original_reset_receipt_sha256=archive['reset_receipt_sha256'],
+                      source_station_nodes=old_indices, station_nodes=list(stations),
+                      hand_shifts_y_m=shifts.tolist(), reference_sha256=spec['reference_sha256'])
+    seed = prepare_reset_state(hand_roots=dict(zip(ANATOMICAL_SIDES, roots)), origin=original['origin'],
+                               root_xy=original['root_xy'], initial_offset_m=original['initial_offset_m'],
+                               joint_positions=original['joint_positions'], joint_velocities=original['joint_velocities'],
+                               source_description=_digest(provenance))
+    wrists = _array(seed['reset_root_pose_w'], (2, 7), 'anatomical Reset wrist poses')
+    _require_anatomical_hand_positions(wrists, nodes[20])
+    layout = dict(source['author_layout'], wire_center=nodes[20].copy(), hand_roots={}, active_joints={})
+    active_ids = [scene_reset__JOINTS.index(name) for name in scene_reset__ACTIVE]
+    for i, side in enumerate(ANATOMICAL_SIDES):
+        layout['hand_roots'][side] = scene_input__np.asarray(seed['authored_root_seed_w'][i]).copy()
+        layout['hand_roots'][side][2] -= BUILDER_OFFSET_M
+        layout['active_joints'][side] = scene_input__np.asarray(seed['joint_positions'][i])[active_ids]
+
+    # Ropesim constructor poses are translated from the archived readback.
+    # The native owner writes its own freshly measured mesh poses before stepping.
+    archived_reset = source['reset']
+    measured_nodes = archived_reset['rod_reset']['node_positions']
+    if not scene_input__np.array_equal(scene_input__np.asarray(measured_nodes)[0], nodes.astype(measured_nodes.dtype)):
+        raise ValueError('archived solver nodes differ from original authored material nodes')
+    pad_poses = {}
+    for name, (position, quaternion) in archived_reset['pad_poses_xyzw'].items():
+        side = name.split('.', 1)[0]
+        shifted = scene_input__np.array(position, copy=True)
+        shifted[1] += shifts[ANATOMICAL_SIDES.index(side)]
+        pad_poses[name] = (shifted, scene_input__np.array(quaternion, copy=True))
+    reset = dict(rod_reset=dict(node_positions=measured_nodes.copy()), pad_poses_xyzw=pad_poses,
+                 seed=seed, kind='authored_solver_constructor', native_qualification=False)
+
+    if task is None:
+        archive['pair'] = dict(version=ANATOMICAL_SCENE_VERSION, reset_seed=seed, rod_seed=pair['rod_seed'],
+                               native_qualified=False)
+    else:
+        hands = {side: dict(task['hands'][side], pose_wxyz=seed['reset_root_pose_w'][i])
+                 for i, side in enumerate(ANATOMICAL_SIDES)}
+        archive['task'] = dict(task, hands=hands)
+        if source['grasp'] == 'power':
+            archive['task']['near_open_source_sha256'] = spec['reference_sha256']
+    archive.update(task_seed_sha256=seed['sha256'], reset_receipt_sha256=None)
+    return dict(source, schema=ANATOMICAL_SCENE_VERSION, archive=archive, author_layout=layout,
+                authored_seed=seed, reset=reset, anatomical_placement=provenance, receipt_sha256=None)
+
 def load_scene_inputs(path, expected_sha256, *, root=ROOT):
     root = scene_input__Path(root)
     paths = ProjectPaths(root)
@@ -316,6 +456,13 @@ def load_scene_inputs(path, expected_sha256, *, root=ROOT):
         raise ValueError('project-owned scene manifest required')
     raw = checked_file(path, expected_sha256)
     tree = scene_input__json.loads(raw)
+    if tree.get('schema') == ANATOMICAL_SCENE_VERSION:
+        source_spec = tree['source_scene']
+        source_path = paths._relative(source_spec['path'])
+        source = load_scene_inputs(source_path, source_spec['sha256'], root=root)
+        result = anatomical_scene_inputs(source, tree, root=root)
+        result['manifest_sha256'] = expected_sha256
+        return result
     if tree.get('schema') != 'dh116-materialized-scene-v1' or tree.get('grasp') not in ('pinch', 'tripod', 'power') or tree.get('qualification') != {'native': False, 'teacher': False, 'grasp': False}:
         raise ValueError('unqualified materialized scene schema required')
     arrays_path = path.parent / 'arrays.npz'
@@ -589,12 +736,12 @@ def _bind_support_material(stage, env_prefix, paths, mu_s, mu_k):
     return dict(path=material_path, mu_s=float(mu_s), mu_k=float(mu_k), restitution=0.0, friction_combine_mode='average', restitution_combine_mode='average', calibration_status='candidate_not_measured')
 scene_valid__SIDES = ('left', 'right')
 
+from dh116.hand.kinematics import PASSIVE_VELOCITY_MIN_RAD_S, passive_velocity_limit
+
 def _verify_velocity_readback(velocity, names, instances, passive_limit):
     from dh116.env.contracts import linea_coupl__ACTIVE as ACTIVE
     from dh116.env.contracts import JOINTS
     from dh116.hand.kinematics import veloc_limit__ACTIVE_VELOCITY_LIMIT_RAD_S as ACTIVE_VELOCITY_LIMIT_RAD_S
-    from dh116.hand.kinematics import passive_velocity_limit
-    passive_limit = passive_velocity_limit('adaptive_grasp', passive_limit)
     from dh116.hand.kinematics import JOINT_NAMES
     from dh116.hand.kinematics import palm_mount__CONTRACT as WRIST
     from dh116.hand.kinematics import ANGULAR_JOINT_NAMES
@@ -603,11 +750,35 @@ def _verify_velocity_readback(velocity, names, instances, passive_limit):
     valid = set(names) in (set(JOINTS), set(JOINTS) | set(JOINT_NAMES), set(JOINTS) | set(JOINT_NAMES) | set(ANGULAR_JOINT_NAMES))
     if len(names) != len(set(names)) or not valid:
         raise ValueError('velocity readback requires eleven DH116 joints and optional complete wrist carriage')
-    if instances < 1 or velocity.shape != (instances, len(names)) or (not load_param__np.isfinite(velocity).all()):
-        raise ValueError('finite all-instance N x 11 velocity limit readback required')
-    expected = load_param__np.asarray([WRIST['velocity_limit_m_s'] if name in JOINT_NAMES else ROTATION_CONTRACT['velocity_limit_rad_s'] if name in ANGULAR_JOINT_NAMES else ACTIVE_VELOCITY_LIMIT_RAD_S if name in ACTIVE else passive_limit for name in names])
-    if not load_param__np.allclose(velocity, expected[None, :], atol=1e-06, rtol=0):
-        raise ValueError('simulator velocity limits differ from selected active/passive limits')
+    if instances < 1 or velocity.shape != (instances, len(names)) or not load_param__np.isfinite(velocity).all():
+        raise ValueError('finite all-instance velocity limit readback in named joint order required')
+    expected_by_joint = {
+        **dict.fromkeys(JOINTS, passive_velocity_limit(passive_limit)),
+        **dict.fromkeys(ACTIVE, ACTIVE_VELOCITY_LIMIT_RAD_S),
+        **dict.fromkeys(JOINT_NAMES, WRIST['velocity_limit_m_s']),
+        **dict.fromkeys(ANGULAR_JOINT_NAMES, ROTATION_CONTRACT['velocity_limit_rad_s']),
+    }
+    expected = load_param__np.asarray([expected_by_joint[name] for name in names])
+    mismatch = ~load_param__np.isclose(velocity, expected[None, :], atol=1e-06, rtol=0)
+    if mismatch.any():
+        row, joint = load_param__np.argwhere(mismatch)[0]
+        raise ValueError(f'simulator velocity limits differ at row {row}, {names[joint]}: '
+                         f'{velocity[row, joint]} read, {expected[joint]} configured')
+
+def velocity_limits_readback(hands, *, instances, passive_limit=PASSIVE_VELOCITY_MIN_RAD_S):
+    """Verify configured speed ceilings against every native articulation row."""
+    samples = []
+    for hand in hands:
+        names = tuple(hand.joint_names)
+        velocity = hand.root_physx_view.get_dof_max_velocities().detach().cpu().numpy()
+        _verify_velocity_readback(velocity, names, instances, passive_limit)
+        samples.append(dict(joint_names=list(names), max_velocity=velocity[0].tolist()))
+    if not samples:
+        raise ValueError('at least one native hand is required for velocity readback')
+    return dict(source='root_physx_view.get_dof_max_velocities', instances_per_hand=instances,
+                units='m/s for wrist translations and rad/s for all revolute joints',
+                passive_limit_rad_s=float(passive_limit), all_instance_velocity_limits_verified=True,
+                hands=samples)
 
 @teach_pose_goal__dataclass(frozen=True)
 class FingerGoal:
@@ -716,25 +887,9 @@ def load_finger_goal(spec):
     if type(spec) is not dict or set(spec) != {'schema', 'grasp', 'reference_sha256'} or spec['schema'] != GOAL_SCHEMA or (spec['grasp'] not in ('pinch', 'tripod', 'power')):
         raise ValueError('versioned native finger goal required')
     grasp = spec['grasp']
-    root = teach_pose_goal__Path(__file__).resolve().parents[3]
-    configs = root / 'configs/tasks'
-    references = {'pinch': configs / 'pinch_reference.json', 'tripod': configs / 'tripod_reference.json', 'power': configs / 'power_reference.json'}
-    reference = references[grasp]
-    raw = reference.read_bytes()
-    actual_sha = teach_pose_goal__hashlib.sha256(raw).hexdigest()
-    if spec['reference_sha256'] != actual_sha:
-        raise ValueError('finger goal reference SHA differs')
-    data = teach_pose_goal__json.loads(raw)
-    if grasp == 'pinch':
-        targets = tuple((tuple(data['pose_contract'][side]['hand_active_q']) for side in teach_pose_goal__SIDES))
-    elif grasp == 'power':
-        targets = tuple((tuple(data['candidate'][side]['target_active_q_rad']) for side in teach_pose_goal__SIDES))
-    else:
-        targets = tuple((tuple(data['styles'][grasp][side]['active_q_rad']) for side in teach_pose_goal__SIDES))
-    (lower, upper) = teach_pose_goal__active_limits()
-    q = teach_pose_goal__np.asarray(targets, dtype=float)
-    if q.shape != (2, len(teach_pose_goal__ACTIVE)) or not teach_pose_goal__np.isfinite(q).all() or teach_pose_goal__np.any(q < lower) or teach_pose_goal__np.any(q > upper):
-        raise ValueError('finger goal requires two finite active states inside named DH116 joint limits')
+    goal = load_anatomical_reference(grasp, spec['reference_sha256'])
+    targets = goal['target_active_q_rad']
+    actual_sha = spec['reference_sha256']
     counts = {'pinch': 3, 'tripod': 4, 'power': 6}
     return FingerGoal(grasp, actual_sha, targets, tuple(range(counts[grasp])))
 scene_autho__LEGACY_LOAD_PARAMETERS = load_param__LEGACY_LOAD_PARAMETERS
@@ -798,7 +953,6 @@ def _bind_materials(stage, prepared):
     paths = scene_valid__bind_object_colliders(stage, prefix + '/Table', material)
     scene_valid__verify_collider_bindings(stage, paths, fields)
     return reports
-from dh116.hand.kinematics import passive_velocity_limit
 SHA = re.compile('[0-9a-f]{64}')
 
 def inspect_source_stage(stage, prepared):
@@ -883,7 +1037,7 @@ def author_scene(sim, args, original_layout, sources, prefix, origin):
     for side in ('left', 'right'):
         pose = layout['hand_roots'][side].copy()
         pose[2] += 0.04
-        cfg = ArticulationCfg(prim_path=f'{prefix}/{side}Hand', spawn=sim_utils.UsdFileCfg(usd_path=sources[side], activate_contact_sensors=True, rigid_props=sim_utils.RigidBodyPropertiesCfg(disable_gravity=True), articulation_props=sim_utils.ArticulationRootPropertiesCfg(fix_root_link=True, enabled_self_collisions=False, solver_position_iteration_count=args.position_iterations, solver_velocity_iteration_count=getattr(args, 'velocity_iterations', 4))), init_state=ArticulationCfg.InitialStateCfg(pos=tuple(pose[:3]), rot=tuple(pose[3:]), joint_pos=dict(zip(scene_autho__JOINTS, map(float, expand(layout['active_joints'][side]))))), actuators={'active': ImplicitActuatorCfg(joint_names_expr=list(scene_autho__ACTIVE), stiffness=10.0, damping=0.2, effort_limit_sim=(getattr(args, 'load_parameters', None) or scene_autho__LEGACY_LOAD_PARAMETERS).effort_limit_nm, velocity_limit_sim=ACTIVE_VELOCITY_LIMIT_RAD_S), 'passive': ImplicitActuatorCfg(joint_names_expr=[n for n in scene_autho__JOINTS if n not in scene_autho__ACTIVE], stiffness=0.0, damping=0.0, effort_limit_sim=0.0, velocity_limit_sim=passive_velocity_limit(args.control_mode, getattr(args, 'passive_velocity_limit_rad_s', 3.0)))})
+        cfg = ArticulationCfg(prim_path=f'{prefix}/{side}Hand', spawn=sim_utils.UsdFileCfg(usd_path=sources[side], activate_contact_sensors=True, rigid_props=sim_utils.RigidBodyPropertiesCfg(disable_gravity=True), articulation_props=sim_utils.ArticulationRootPropertiesCfg(fix_root_link=True, enabled_self_collisions=False, solver_position_iteration_count=args.position_iterations, solver_velocity_iteration_count=getattr(args, 'velocity_iterations', 4))), init_state=ArticulationCfg.InitialStateCfg(pos=tuple(pose[:3]), rot=tuple(pose[3:]), joint_pos=dict(zip(scene_autho__JOINTS, map(float, expand(layout['active_joints'][side]))))), actuators={'active': ImplicitActuatorCfg(joint_names_expr=list(scene_autho__ACTIVE), stiffness=10.0, damping=0.2, effort_limit_sim=(getattr(args, 'load_parameters', None) or scene_autho__LEGACY_LOAD_PARAMETERS).effort_limit_nm, velocity_limit_sim=ACTIVE_VELOCITY_LIMIT_RAD_S), 'passive': ImplicitActuatorCfg(joint_names_expr=[n for n in scene_autho__JOINTS if n not in scene_autho__ACTIVE], stiffness=0.0, damping=0.0, effort_limit_sim=0.0, velocity_limit_sim=passive_velocity_limit(getattr(args, 'passive_velocity_limit_rad_s', PASSIVE_VELOCITY_MIN_RAD_S)))})
         if getattr(args, 'palm_transport', 'fixed_pose') == 'driven_carriage':
             from dh116.hand.kinematics import JOINT_NAMES
             from dh116.hand.kinematics import palm_mount__CONTRACT as WRIST

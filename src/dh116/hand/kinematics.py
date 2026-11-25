@@ -6,7 +6,9 @@ import math as defor_wrist_proje__math
 import numpy as joint_targe_readb__np
 import math as palm_mount__math
 import math as tenso_wrist_proje__math
-veloc_limit__ACTIVE_VELOCITY_LIMIT_RAD_S = 0.3
+from dh116.env.contracts import surfa_contr__ACTION_CONTRACT as ACTION_CONTRACT
+
+veloc_limit__ACTIVE_VELOCITY_LIMIT_RAD_S = ACTION_CONTRACT['joint_rate_rad_s']
 import torch as contr_math__torch
 from dh116.env.contracts import MIMIC as runti_mimic__MIMIC
 import torch as comma_kerne__torch
@@ -14,7 +16,7 @@ import torch as defor_wrist_proje__torch
 from dh116.env.contracts import JOINTS
 import torch as palm_mount__torch
 import torch as tenso_wrist_proje__torch
-LEGACY_PASSIVE_VELOCITY_LIMIT_RAD_S = 3.0
+PASSIVE_VELOCITY_MIN_RAD_S = 3.0
 
 def install_hand_mimic(stage, hand_path):
     from pxr import UsdPhysics
@@ -33,7 +35,6 @@ def install_hand_mimic(stage, hand_path):
     return len(runti_mimic__MIMIC)
 BACKEND_SOURCE = 'physx_backend_get_dof_position_targets'
 JOINT_NAMES = ('wrist_x', 'wrist_y', 'wrist_z')
-PASSIVE_VELOCITY_HEADROOM_RAD_S = 2.97
 
 def configure_mimic_compliance(stage, hand_path, natural_frequency, damping_ratio, *, allow_rigid=False):
     """Author compliance, or opt in explicitly to zero-frequency rigid coupling.
@@ -56,18 +57,29 @@ CACHE_SOURCE = 'isaaclab_user_command_cache_joint_pos_target'
 ANGULAR_JOINT_NAMES = ('wrist_roll', 'wrist_pitch', 'wrist_yaw')
 CLOSE_COMMAND_RATE_RAD_S = 0.2
 WRIST_LINEAR = ('wrist_x', 'wrist_y', 'wrist_z')
-palm_mount__CONTRACT = dict(version='driven_wrist_carriage_v2', motion='three_prismatic_drives', stiffness_n_m=100000.0, damping_n_s_m=1000.0, effort_limit_n=100.0, velocity_limit_m_s=0.05, limit_m=0.1, tracking_guard_m=0.003, linear_speed_guard_m_s=0.06, palm_observation='measured_offset_from_common_lift_target', reset='teleport_anchor_and_zero_carriage', qualification='diagnostic_candidate')
-VELOCITY_HEADROOM_CONTRACT = dict(version='passive_velocity_headroom_candidate_v1', passive_velocity_limit_rad_s=PASSIVE_VELOCITY_HEADROOM_RAD_S, nominal_guard_limit_rad_s=3.0, qualification='controlled_simulation_candidate', guaranteed_measured_velocity_bound=False)
+palm_mount__CONTRACT = dict(
+    version='driven_wrist_carriage_v3',
+    motion='three_prismatic_drives',
+    stiffness_n_m=100000.0,
+    damping_n_s_m=1000.0,
+    effort_limit_n=100.0,
+    velocity_limit_m_s=0.10,
+    limit_m=0.1,
+    tracking_guard_m=0.003,
+    linear_speed_guard_m_s=0.12,
+    palm_observation='measured_offset_from_common_lift_target',
+    reset='teleport_anchor_and_zero_carriage',
+    qualification='diagnostic_candidate',
+)
 WRIST_ANGULAR = ('wrist_roll', 'wrist_pitch', 'wrist_yaw')
 ROTATION_CONTRACT = dict(version='external_wrist_rotation_v1', motion='intrinsic_XYZ_revolute_drives', angle_limit_rad=palm_mount__math.pi / 2, stiffness_nm_rad=40.0, damping_nms_rad=4.0, effort_limit_nm=2.0, velocity_limit_rad_s=1.0, calibration_status='simulation_estimate', mechanism='external_support_not_DH116_finger_dof', usd_angle_unit='degree', readback_angle_unit='rad')
 
-def passive_velocity_limit(control_mode, requested=LEGACY_PASSIVE_VELOCITY_LIMIT_RAD_S):
-    """Keep existing modes and defaults; accept only the reviewed candidate."""
-    if isinstance(requested, bool) or not isinstance(requested, (int, float)) or requested not in (LEGACY_PASSIVE_VELOCITY_LIMIT_RAD_S, PASSIVE_VELOCITY_HEADROOM_RAD_S):
-        raise ValueError('passive velocity limit must be 3.0 or the 2.97 rad/s candidate')
-    if control_mode in ('joint_target', 'adaptive_grasp'):
-        return float(requested)
-    return veloc_limit__ACTIVE_VELOCITY_LIMIT_RAD_S
+def passive_velocity_limit(requested=PASSIVE_VELOCITY_MIN_RAD_S):
+    """Return the configured passive coupling limit in rad/s."""
+    if (isinstance(requested, bool) or not isinstance(requested, (int, float))
+            or not palm_mount__math.isfinite(requested) or requested < PASSIVE_VELOCITY_MIN_RAD_S):
+        raise ValueError('passive velocity limit must be finite and at least 3.0 rad/s')
+    return float(requested)
 contr_math__ACTIVE_VELOCITY_LIMIT_RAD_S = veloc_limit__ACTIVE_VELOCITY_LIMIT_RAD_S
 comma_kerne__ACTIVE_VELOCITY_LIMIT_RAD_S = veloc_limit__ACTIVE_VELOCITY_LIMIT_RAD_S
 
@@ -129,7 +141,7 @@ def author_mount(stage, hand_path, rotation=False):
         j.CreateLocalPos1Attr(Gf.Vec3f(0))
         j.CreateLocalRot0Attr(Gf.Quatf(1))
         j.CreateLocalRot1Attr(Gf.Quatf(1))
-contr_math__CONTRACT = dict(version='free_wrist_grasp_v1', action_size=26, action_order='joint_velocity12_world_translation_velocity6_intrinsic_XYZ_velocity6_normal_force2', joint_rate_rad_s=contr_math__ACTIVE_VELOCITY_LIMIT_RAD_S, joint_target_lead_rad=0.1, palm_lower_m=[-0.03, -0.03, -0.004], palm_upper_m=[0.03, 0.03, 0.05], wrist_rate_m_s=0.01, rotation_rate_rad_s=0.5, rotation_limit_rad=contr_math__math.pi / 2, joint_bounds='actual_affine_mimic_compatible_limits_not_reset_pose_envelope', posture_reference='reset_only;zero_action_holds_current_targets', normal_force_range_n=[2.0, 12.0], friction_excluded=True, stage_flow=None, pose_latch=False, automatic_ascent=False, orientation='seed_world_quaternion_times_intrinsic_X_then_Y_then_Z', hardware_calibration_complete=False)
+contr_math__CONTRACT = dict(version='free_wrist_grasp_v1', action_size=26, action_order='joint_velocity12_world_translation_velocity6_intrinsic_XYZ_velocity6_normal_force2', joint_rate_rad_s=contr_math__ACTIVE_VELOCITY_LIMIT_RAD_S, joint_target_lead_rad=0.1, palm_lower_m=[-0.03, -0.03, -0.004], palm_upper_m=[0.03, 0.03, 0.05], wrist_rate_m_s=ACTION_CONTRACT['translation_rate_m_s'], rotation_rate_rad_s=ACTION_CONTRACT['rotation_rate_rad_s'], rotation_limit_rad=contr_math__math.pi / 2, joint_bounds='actual_affine_mimic_compatible_limits_not_reset_pose_envelope', posture_reference='reset_only;zero_action_holds_current_targets', normal_force_range_n=[2.0, 12.0], friction_excluded=True, stage_flow=None, pose_latch=False, automatic_ascent=False, orientation='seed_world_quaternion_times_intrinsic_X_then_Y_then_Z', hardware_calibration_complete=False)
 
 def _read(getter, source, names, names_valid, *, count=None, integer=False):
     result = dict(available=False, source=source, values=None, finite_env=None, dtype=None, shape=None, error=None)
@@ -251,7 +263,7 @@ def check_transport(hands, mounts, target, *, return_validity=False):
 
 def constrain_palm_z_movement(movement, clearances, clearance_floor_m):
     """Keep palm descent above the configured floor without changing X/Y."""
-    if not contr_math__torch.isfinite(contr_math__torch.as_tensor(clearance_floor_m)) or clearance_floor_m < 0:
+    if not contr_math__math.isfinite(clearance_floor_m) or clearance_floor_m < 0:
         raise ValueError('clearance floor must be finite and nonnegative')
     z = contr_math__torch.maximum(movement[:, :, 2], -(clearances - clearance_floor_m).clamp_min(0))
     return contr_math__torch.cat((movement[:, :, :2], z[:, :, None]), dim=-1)
@@ -317,7 +329,6 @@ defor_wrist_proje__palm_transport = palm_transport
 defor_wrist_proje__per_hand_safe_z = per_hand_safe_z
 tenso_wrist_proje__palm_transport = palm_transport
 tenso_wrist_proje__per_hand_safe_z = per_hand_safe_z
-from dh116.env.contracts import surfa_contr__ACTION_CONTRACT as defor_wrist_proje__ACTION_CONTRACT
 defor_wrist_proje__DT = 1 / 480
 defor_wrist_proje__CLEARANCE_M = 0.0021
 defor_wrist_proje__SOURCE = 'tabletop_command_kernels.palm_transport+per_hand_safe_z:policy_owned_default_clearance'
@@ -341,7 +352,7 @@ def project_policy_wrist_targets(*, root_seed_w, measured_base_w, common_lift_of
         raise ValueError('original intrinsic XYZ limits required')
     lower = root_seed_w.new_tensor(defor_wrist_proje__WRIST['palm_lower_m'])
     upper = root_seed_w.new_tensor(defor_wrist_proje__WRIST['palm_upper_m'])
-    (palms, pre_projection, reasons) = defor_wrist_proje__palm_transport(palm_offsets_m, requested_palm_offsets_m, measured_clearance_m, defor_wrist_proje__CLEARANCE_M, defor_wrist_proje__ACTION_CONTRACT['translation_rate_m_s'], defor_wrist_proje__DT, lower, upper, allowed, live, vector_norm=True)
+    (palms, pre_projection, reasons) = defor_wrist_proje__palm_transport(palm_offsets_m, requested_palm_offsets_m, measured_clearance_m, defor_wrist_proje__CLEARANCE_M, ACTION_CONTRACT['translation_rate_m_s'], defor_wrist_proje__DT, lower, upper, allowed, live, vector_norm=True)
     (projected_z, safe_z) = defor_wrist_proje__per_hand_safe_z(palms, measured_base_w, root_seed_w, common_lift_offset_m, measured_clearance_m, defor_wrist_proje__CLEARANCE_M)
     clipped = live[:, None] & ((projected_z - palms[:, :, 2]).abs() > 1e-12)
     palms[:, :, 2] = defor_wrist_proje__torch.where(live[:, None], projected_z, palms[:, :, 2])
@@ -354,10 +365,15 @@ def project_policy_wrist_targets(*, root_seed_w, measured_base_w, common_lift_of
 tenso_wrist_proje__CLEARANCE_M = defor_wrist_proje__CLEARANCE_M
 tenso_wrist_proje__DT = defor_wrist_proje__DT
 tenso_wrist_proje__SOURCE = defor_wrist_proje__SOURCE
-from dh116.env.contracts import surfa_contr__ACTION_CONTRACT as tenso_wrist_proje__ACTION_CONTRACT
 
-def project_tensor_policy_wrist_targets(*, root_seed_w, measured_base_w, common_lift_offset_m, measured_clearance_m, palm_offsets_m, requested_palm_offsets_m, angles_rad, requested_angles_rad, allowed, live):
-    """Project the full same-device batch without per-field host decisions."""
+def project_tensor_policy_wrist_targets(*, root_seed_w, measured_base_w, common_lift_offset_m,
+                                        measured_clearance_m, palm_offsets_m, requested_palm_offsets_m,
+                                        angles_rad, requested_angles_rad, allowed, live, validate_values=True):
+    """Project same-device wrist targets.
+
+    Set validate_values=False only when the caller has validated or sanitized
+    the finite inputs, unit quaternions, and intrinsic angle bounds.
+    """
     if not isinstance(root_seed_w, tenso_wrist_proje__torch.Tensor) or root_seed_w.ndim != 3 or root_seed_w.shape[1:] != (2, 7) or (len(root_seed_w) < 1) or (not root_seed_w.is_floating_point()):
         raise ValueError('measured and authored wrist poses must be floating [N,2,7] WXYZ')
     n = len(root_seed_w)
@@ -368,17 +384,18 @@ def project_tensor_policy_wrist_targets(*, root_seed_w, measured_base_w, common_
     for mask in (allowed, live):
         if not isinstance(mask, tenso_wrist_proje__torch.Tensor) or mask.shape != (n,) or mask.dtype != tenso_wrist_proje__torch.bool or (mask.device != root_seed_w.device):
             raise ValueError('explicit same-device boolean allowed/live masks required')
-    finite = tenso_wrist_proje__torch.isfinite(tenso_wrist_proje__torch.cat([value.reshape(-1) for (value, _) in values])).all()
-    norms = tenso_wrist_proje__torch.linalg.vector_norm(tenso_wrist_proje__torch.stack((root_seed_w[..., 3:], measured_base_w[..., 3:])), dim=-1)
-    unit = tenso_wrist_proje__torch.isclose(norms, tenso_wrist_proje__torch.ones_like(norms), atol=1e-05, rtol=0).all()
-    angles_valid = ~(tenso_wrist_proje__torch.cat((angles_rad.reshape(-1), requested_angles_rad.reshape(-1))).abs() > tenso_wrist_proje__math.pi / 2).any()
     seed_scale = root_seed_w[..., 3:].abs().amax(-1, keepdim=True)
-    nonzero = (seed_scale > 0).all()
-    if not bool(finite & unit & angles_valid & nonzero):
-        raise ValueError('finite wrist inputs, unit WXYZ quaternions and original intrinsic XYZ limits required')
+    if validate_values:
+        finite = tenso_wrist_proje__torch.isfinite(tenso_wrist_proje__torch.cat([value.reshape(-1) for (value, _) in values])).all()
+        norms = tenso_wrist_proje__torch.linalg.vector_norm(tenso_wrist_proje__torch.stack((root_seed_w[..., 3:], measured_base_w[..., 3:])), dim=-1)
+        unit = tenso_wrist_proje__torch.isclose(norms, tenso_wrist_proje__torch.ones_like(norms), atol=1e-05, rtol=0).all()
+        angles_valid = ~(tenso_wrist_proje__torch.cat((angles_rad.reshape(-1), requested_angles_rad.reshape(-1))).abs() > tenso_wrist_proje__math.pi / 2).any()
+        nonzero = (seed_scale > 0).all()
+        if not bool(finite & unit & angles_valid & nonzero):
+            raise ValueError('finite wrist inputs, unit WXYZ quaternions and original intrinsic XYZ limits required')
     lower = root_seed_w.new_tensor(tenso_wrist_proje__WRIST['palm_lower_m'])
     upper = root_seed_w.new_tensor(tenso_wrist_proje__WRIST['palm_upper_m'])
-    (palms, pre_projection, reasons) = tenso_wrist_proje__palm_transport(palm_offsets_m, requested_palm_offsets_m, measured_clearance_m, tenso_wrist_proje__CLEARANCE_M, tenso_wrist_proje__ACTION_CONTRACT['translation_rate_m_s'], tenso_wrist_proje__DT, lower, upper, allowed, live, vector_norm=True)
+    (palms, pre_projection, reasons) = tenso_wrist_proje__palm_transport(palm_offsets_m, requested_palm_offsets_m, measured_clearance_m, tenso_wrist_proje__CLEARANCE_M, ACTION_CONTRACT['translation_rate_m_s'], tenso_wrist_proje__DT, lower, upper, allowed, live, vector_norm=True)
     (projected_z, safe_z) = tenso_wrist_proje__per_hand_safe_z(palms, measured_base_w, root_seed_w, common_lift_offset_m, measured_clearance_m, tenso_wrist_proje__CLEARANCE_M)
     clipped = live[:, None] & ((projected_z - palms[:, :, 2]).abs() > 1e-12)
     palms[:, :, 2] = tenso_wrist_proje__torch.where(live[:, None], projected_z, palms[:, :, 2])

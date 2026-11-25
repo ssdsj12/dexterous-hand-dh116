@@ -164,11 +164,16 @@ def test_selected_reset_preserves_peer_state_targets_and_pending_reactions():
     assert torch.equal(hand.instantaneous_wrench_composer.force[:2], force[:2]) and (not hand.instantaneous_wrench_composer.force[2].any())
     assert all((rows.tolist() == [2] for (_, rows) in hand.root_physx_view.calls))
 
-def control_fixture():
+def control_fixture(*, soft_constraints=False):
     writes = []
     sides = {}
     for name in ('left', 'right'):
         sides[name] = SimpleNamespace(joint_names=NAMES, hand=SimpleNamespace(permanent_wrench_composer=SimpleNamespace(reset=lambda : writes.append('reset'))), set_wrenches=lambda **kw: writes.append(kw), set_joint_position_target=lambda *a, **kw: writes.append('target'))
+    if soft_constraints:
+        limits = torch.tensor([-1.0, 2.0]).expand(2, 17, 2)
+        for side in sides.values():
+            side.row_indices = torch.arange(2)
+            side.hand.root_physx_view = SimpleNamespace(get_dof_limits=lambda: limits)
     batch = SimpleNamespace(sides=sides, write_data_to_sim=lambda : writes.append('write'))
     roots = torch.zeros(2, 2, 7, dtype=torch.float64)
     roots[:, :, 3] = 1
@@ -178,7 +183,10 @@ def control_fixture():
     q = torch.zeros(2, 2, 17, dtype=torch.float32)
     q[:, :, :11] = torch.tensor(expand([0.2] * 6))
     state = dict(q=q, qd=torch.zeros_like(q), backend_targets=q.clone(), root_pose_wxyz=roots.clone(), link_pose_xyzw=torch.zeros(2, 2, 1, 7, dtype=torch.float64), body_com_pose_w=torch.zeros(2, 2, 1, 7, dtype=torch.float64))
-    control = TensorControl(batch, roots, {'left.pad': dict(side='left', body_index=0), 'right.pad': dict(side='right', body_index=0)}, ('left.pad', 'right.pad', 'table'))
+    control = TensorControl(batch, roots, {'left.pad': dict(side='left', body_index=0),
+                                           'right.pad': dict(side='right', body_index=0)},
+                            ('left.pad', 'right.pad', 'table'), isolate_constraints=soft_constraints,
+                            soft_constraints=soft_constraints)
     stamp = SharedSourceIdentity(1, 2, (0, 1), 'run', ('a', 'b'), ('rod0', 'rod1'), (1, 1), (0, 0), 2, 2 / 480, 1 / 480, 1 / 480, 2 / 480, 4.0, 'a' * 64, 'cpu_fixture')
     action = torch.full((2, 24), 0.2)
     action[1] *= -1
@@ -240,3 +248,22 @@ def test_full_control_rejects_only_the_unsafe_reaction_row_before_sdk_write():
         torch.testing.assert_close(expected[0], state['backend_targets'][0, side, control.write_ids[side]])
         torch.testing.assert_close(expected[1], old[side], atol=0, rtol=0)
     assert w[0, 0, 0] > 30
+
+
+def test_soft_training_caps_submitted_force_without_altering_evidence_or_terminating():
+    control, stamp, state, transaction, wrench, source, writes = control_fixture(soft_constraints=True)
+    wrench[0, 0, :3] = torch.tensor([60.0, 80.0, 0.0])
+    wrench[0, 0, 5] = 5.0
+    wrench[1, 0, 1] = 17.0
+    measured_wrench = wrench.clone()
+    control.submit(transaction, stamp=stamp, wrenches=wrench, state=state, reaction_source=source)
+    left = next(row for row in writes if isinstance(row, dict))
+    torch.testing.assert_close(left['forces'][:, 0], torch.tensor([[24., 32., 0.], [0., 17., 0.]]))
+    torch.testing.assert_close(left['torques'][:, 0, 2], torch.tensor([2.0, 0.0]))
+    assert torch.equal(wrench, measured_wrench)
+    assert not transaction['constraint_failure'].any()
+    after = replace(stamp, sdk_step=3, rod_ticks=(12, 12), solver_time_s=4 + 1 / 480)
+    joint = control.active[0][1]
+    state['q'][:, 0, joint] = torch.tensor([-1.24, -1.26])
+    assert control.finish(transaction, state, stamp=after).tolist() == [False, True]
+    assert transaction['soft_joint_limit'].tolist() == [1.0, 1.0]

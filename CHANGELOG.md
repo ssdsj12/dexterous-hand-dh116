@@ -1,5 +1,20 @@
 # Changelog
 
+## Anatomical grasp scenes and first-person stereo — 2026-11-25
+
+- Rebuild Pinch, Tripod and Power resets and references with the left wrist at −Y, right wrist at +Y, and thumbs inward. Verify actual PhysX link positions at startup and after a local Reset.
+- Set the fixed, rectified stereo rig 0.32 m behind and 0.42 m above the wire center. Verify 12 same-clock native captures with all 41 material nodes in each eye's field of view.
+- Gate Hold on target-only load and raw hand reaction below 40 N. Isolate nonfinite post-terminal samples from reward and observation calculations on active lanes.
+- Pass 223 CPU and 13 CUDA tests. Each grasp passes the two-window 2- and 512-environment probes and two PPO updates on 2 environments, all with observed exit 0.
+- All three stereo previews save their frames and return from App.close before exiting with SIGSEGV. Preserve the captures with diagnostic status.
+
+## Faster Teacher control and native stereo — 2026-11-25
+
+- Bind the 0.05 m/s wrist, 1.0 rad/s wrist rotation and 1.2 rad/s active joint commands to the shared action contract and verify all PhysX speed limits at startup.
+- Apply continuous costs for mild guard excursions and log individual terminal causes. Keep measured bilateral load, detached lift, hold and slip as success conditions.
+- Reuse native CUDA contact reductions, use FP32 pad sampling, defer reward validation to window settlement and apply minibatch KL early stopping. Save checkpoints at intervals, best updates and completion.
+- Replay a source-bound frozen Actor in the supported cable scene and capture fixed stereo plus an overview at one measured simulation boundary.
+
 ## Teacher grasp reward — 2026-11-25
 
 - Add bounded light-contact and assisted-lift potential from owned DeformX contact pairs for Pinch, Tripod and Power.

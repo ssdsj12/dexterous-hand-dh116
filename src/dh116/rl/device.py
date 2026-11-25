@@ -1,6 +1,7 @@
 from dh116.env.contracts import source_file
 """Device rollout/PPO overrides plus exact Teacher policy/Adam/RNG checkpoint state."""
 import copy
+import math
 from copy import deepcopy as devic_ppo__deepcopy
 import torch as devic_rollo__torch
 from copy import deepcopy as tenso_check__deepcopy
@@ -262,15 +263,16 @@ def _statistics(value):
 class DeviceDeformablePPOTrainer(PPOTrainer):
     """Use the original model and public trainer API with device-owned samples.
 
-    The original constructor signature is preserved. Current-model validation,
-    the frozen base source check, optimizer construction, noise projection and
-    session capabilities remain in force. Exact KL evaluates the requested complete
-    batch in one actor forward, independent of legacy visual chunk settings.
+    The audit path retains the exact full-rollout KL checks. Production
+    collectors opt into a sampled KL guard before each Adam step.
     """
 
-    def __init__(self, model, config=None, *, rollout_steps=32, num_envs=1, device='cpu'):
+    def __init__(self, model, config=None, *, rollout_steps=32, num_envs=1, device='cpu', fast_update=False):
         if not isinstance(model, devic_ppo__TensorNativeTeacher):
             raise ValueError('production tensor Teacher model required')
+        if type(fast_update) is not bool:
+            raise TypeError('fast_update must be a boolean')
+        self._fast_update = fast_update
         verify_base_ppo_source()
         super().__init__(model, config, rollout_steps=rollout_steps, num_envs=num_envs, device=device)
 
@@ -410,15 +412,105 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
             rollback()
         return (None, attempts)
 
+    def _minibatch_policy(self, batch, indices):
+        torch = devic_ppo__torch
+        entropy_noise = torch.randn(len(indices), 24, device=self.device, dtype=batch['old_mu'].dtype)
+        actor_obs = self._actor_input(devic_ppo___index(batch['actor_obs'], indices))
+        mu = self.model.latent_mean(actor_obs)
+        std = self.model.log_std.exp().expand_as(mu)
+        try:
+            log_prob = squashed_log_prob(batch['latent_actions'][indices], mu, std)
+            entropy = squashed_entropy(mu, std, entropy_noise).mean()
+        except ValueError:
+            if self._fast_update:
+                return None
+            raise
+        return mu, std, log_prob - batch['old_log_prob'][indices], entropy
+
+    def _minibatch_losses(self, batch, indices, returns, advantage, ratio, entropy):
+        torch = devic_ppo__torch
+        clip = self.config.clip
+        adv = advantage[indices]
+        policy_loss = -torch.minimum(ratio * adv, ratio.clamp(1 - clip, 1 + clip) * adv).mean()
+        value = self.model.value(batch['critic_obs'][indices])
+        old_value, target = batch['values'][indices], returns[indices]
+        clipped_value = old_value + (value - old_value).clamp(-clip, clip)
+        value_loss = torch.maximum((value - target).square(), (clipped_value - target).square()).mean()
+        loss = policy_loss + self.config.value_coef * value_loss - self.config.entropy_coef * entropy
+        return loss, (policy_loss, value_loss, entropy)
+
+    def _finish_update(self, accepted_updates):
+        if accepted_updates:
+            self.policy_version += 1
+            self.counters['updates'] += 1
+        self._new_rollout()
+
+    def _update_fast(self, batch, returns, advantage):
+        torch = devic_ppo__torch
+        total = len(advantage)
+        target_kl = self.config.target_kl
+        minibatch_count = min(total, self.config.minibatches)
+        loss_sum = torch.zeros(3, dtype=torch.float64, device=self.device)
+        kl_sum = 0.0
+        accepted_updates = optimized_samples = 0
+        stop_reason = early_stop_kl = None
+        for _ in range(self.config.epochs):
+            for indices in torch.randperm(total, device=self.device).tensor_split(minibatch_count):
+                self.optimizer.zero_grad(set_to_none=True)
+                policy = self._minibatch_policy(batch, indices)
+                if policy is None:
+                    stop_reason = 'nonfinite_policy'
+                    break
+                _, _, log_ratio, entropy = policy
+                frozen_log_ratio = log_ratio.detach()
+                approx_kl = float((frozen_log_ratio.expm1() - frozen_log_ratio).mean().clamp_min(0))
+                if not math.isfinite(approx_kl):
+                    stop_reason = 'nonfinite_kl'
+                    break
+                if target_kl is not None and approx_kl > target_kl:
+                    stop_reason = 'target_kl'
+                    early_stop_kl = approx_kl
+                    break
+                loss, losses = self._minibatch_losses(batch, indices, returns, advantage, log_ratio.exp(), entropy)
+                if not bool(torch.isfinite(loss)):
+                    stop_reason = 'nonfinite_loss'
+                    break
+                loss.backward()
+                grad_norm = torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.max_grad_norm)
+                if not bool(torch.isfinite(grad_norm)):
+                    stop_reason = 'nonfinite_gradient'
+                    break
+                self.optimizer.step()
+                self.project_noise()
+                loss_sum += torch.stack(losses).detach().double()
+                kl_sum += approx_kl
+                accepted_updates += 1
+                optimized_samples += len(indices)
+            if stop_reason is not None:
+                break
+        self.optimizer.zero_grad(set_to_none=True)
+        self._finish_update(accepted_updates)
+        policy_loss, value_loss, entropy = (loss_sum / accepted_updates).tolist() if accepted_updates else (None, None, None)
+        return dict(
+            policy_loss=policy_loss, value_loss=value_loss, entropy=entropy,
+            kl=kl_sum / accepted_updates if accepted_updates else None,
+            ppo_update_mode='sampled_kl', samples=total, optimized_samples=optimized_samples,
+            minibatch_updates=accepted_updates, policy_version=self.policy_version,
+            target_kl=target_kl, early_stopped=stop_reason is not None,
+            stop_reason=stop_reason, early_stop_kl=early_stop_kl,
+        )
+
     def update(self):
         if self._pending is not None:
             raise RuntimeError('cannot update with pending transition')
         if not self.rollout.full:
             raise RuntimeError('complete nonempty rollout required')
         batch = self.rollout.batch(resolve_actor=False)
-        frozen_check = self._check_frozen_policy(batch)
+        frozen_check = None if self._fast_update else self._check_frozen_policy(batch)
         (returns, advantage) = self.rollout.returns_and_advantages(self.config)
         advantage = ((advantage - advantage.mean()) / advantage.std(unbiased=False).clamp_min(1e-08)).detach()
+        if self._fast_update:
+            return self._update_fast(batch, returns, advantage)
         total = len(advantage)
         (trace, epoch_trace) = ([], [])
         early_stopped = False
@@ -429,22 +521,9 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
             minibatches = devic_ppo__torch.randperm(total, device=self.device).tensor_split(min(total, self.config.minibatches))
             for (minibatch, indices) in enumerate(minibatches):
                 self.optimizer.zero_grad(set_to_none=True)
-                entropy_noise = devic_ppo__torch.randn(len(indices), 24, device=self.device, dtype=batch['old_mu'].dtype)
-                actor_obs = self._actor_input(devic_ppo___index(batch['actor_obs'], indices))
-                mu = self.model.latent_mean(actor_obs)
-                std = self.model.log_std.exp().expand_as(mu)
-                z = batch['latent_actions'][indices]
-                log_prob = squashed_log_prob(z, mu, std)
-                log_ratio = log_prob - batch['old_log_prob'][indices]
+                mu, std, log_ratio, entropy = self._minibatch_policy(batch, indices)
                 ratio = log_ratio.exp()
-                adv = advantage[indices]
-                policy_loss = -devic_ppo__torch.minimum(ratio * adv, ratio.clamp(1 - self.config.clip, 1 + self.config.clip) * adv).mean()
-                value = self.model.value(batch['critic_obs'][indices])
-                (old_value, target) = (batch['values'][indices], returns[indices])
-                clipped_value = old_value + (value - old_value).clamp(-self.config.clip, self.config.clip)
-                value_loss = devic_ppo__torch.maximum((value - target).square(), (clipped_value - target).square()).mean()
-                entropy = squashed_entropy(mu, std, entropy_noise).mean()
-                loss = policy_loss + self.config.value_coef * value_loss - self.config.entropy_coef * entropy
+                loss, (policy_loss, value_loss, entropy) = self._minibatch_losses(batch, indices, returns, advantage, ratio, entropy)
                 _finite('PPO loss', loss)
                 loss.backward()
                 with devic_ppo__torch.no_grad():
@@ -472,10 +551,7 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
             epoch_trace.append(dict(policy_epoch_index=epoch, attempted_minibatches=len(epoch_rows), accepted_minibatches=sum((row['accepted_lr'] is not None for row in epoch_rows)), exact_full_rollout_kl=self._minibatch_exact_kl(batch, devic_ppo__torch.arange(total, device=self.device)), sample_weighted_pre_step_entropy=sum((row['entropy'] * row['samples'] for row in epoch_rows)) / epoch_samples, early_stopped=early_stopped, action_groups={name: dict(indices=list(range(lo, hi)), log_std=self.model.log_std.detach()[lo:hi].clone(), latent_std=self.model.log_std.detach().exp()[lo:hi]) for (name, lo, hi) in (('fingers12', 0, 12), ('translation6', 12, 18), ('rotation6', 18, 24))}))
             if early_stopped:
                 break
-        if accepted_updates:
-            self.policy_version += 1
-            self.counters['updates'] += 1
-        self._new_rollout()
+        self._finish_update(accepted_updates)
         return _statistics(dict({key: value / accepted_updates if accepted_updates else None for (key, value) in aggregate.items()}, samples=total, optimized_samples=optimized_samples, minibatch_updates=accepted_updates, policy_version=self.policy_version, target_kl=self.config.target_kl, early_stopped=early_stopped, frozen_policy_check=frozen_check, minibatch_trace=trace, epoch_trace=epoch_trace))
 tenso_check__verify_base_ppo_source = verify_base_ppo_source
 tenso_check__DeviceDeformablePPOTrainer = DeviceDeformablePPOTrainer
@@ -507,7 +583,7 @@ def identity(trainer, *, recipe_sha256, receipt_sha256, backend_profile, seed_sh
             raise ValueError('tensor model dependency source SHA differs: ' + name)
     sources = {name: tenso_check__file_sha256(source_file(name)) for name in _SOURCES}
     sources['rl/training.py'] = tenso_check__file_sha256(source_file('rl/training.py'))
-    return dict(version=tenso_check__VERSION, model=model, recipe_sha256=recipe_sha256, receipt_sha256=receipt_sha256, seed_sha256=seed_sha256, policy_seed=policy_seed, backend_profile=asdict(backend_profile), ppo_config=asdict(trainer.config), rollout_steps=trainer.rollout_steps, num_envs=trainer.num_envs, device_type=trainer.device.type, cuda_rng_devices=tenso_check__torch.cuda.device_count() if tenso_check__torch.cuda.is_initialized() else 0, source_sha256=sources, torch_version=str(tenso_check__torch.__version__), history_reset='clear', physical_state_saved=False, restart_requires_verified_reset=True, teacher_admission=False, grasp_qualified=False)
+    return dict(version=tenso_check__VERSION, model=model, recipe_sha256=recipe_sha256, receipt_sha256=receipt_sha256, seed_sha256=seed_sha256, policy_seed=policy_seed, backend_profile=asdict(backend_profile), ppo_config=asdict(trainer.config), ppo_update_mode='sampled_kl' if trainer._fast_update else 'audited', rollout_steps=trainer.rollout_steps, num_envs=trainer.num_envs, device_type=trainer.device.type, cuda_rng_devices=tenso_check__torch.cuda.device_count() if tenso_check__torch.cuda.is_initialized() else 0, source_sha256=sources, torch_version=str(tenso_check__torch.__version__), history_reset='clear', physical_state_saved=False, restart_requires_verified_reset=True, teacher_admission=False, grasp_qualified=False)
 
 def _same_tree(left, right):
     if isinstance(left, tenso_check__torch.Tensor):
@@ -576,7 +652,7 @@ def _report(path, packet):
     return dict(path=str(path), sha256=tenso_check__file_sha256(path), version=tenso_check__VERSION, identity=tenso_check__deepcopy(packet['identity']), counters=tenso_check__deepcopy(packet['counters']), policy_version=packet['policy_version'], physical_state_saved=False, restart_requires_verified_reset=True, teacher_admission=False, grasp_qualified=False)
 
 def save_checkpoint(path, trainer, **context):
-    """Publish a verified exclusive snapshot without changing live state or RNG."""
+    """Publish an atomic exclusive snapshot without changing live state or RNG."""
     tenso_check___clean(trainer, 'clear')
     path = tenso_check__Path(path)
     if path.exists():
@@ -595,10 +671,11 @@ def save_checkpoint(path, trainer, **context):
             tenso_check__torch.save(packet, stream)
             stream.flush()
             os.fsync(stream.fileno())
-            serialized = tenso_check__torch.load(temporary, map_location='cpu', weights_only=True)
-            if not _same_tree(packet, serialized):
-                raise ValueError('serialized tensor checkpoint changed policy/Adam/counters/RNG')
-            _validate(serialized, trainer, expected)
+            if not trainer._fast_update:
+                serialized = tenso_check__torch.load(temporary, map_location='cpu', weights_only=True)
+                if not _same_tree(packet, serialized):
+                    raise ValueError('serialized tensor checkpoint changed policy/Adam/counters/RNG')
+                _validate(serialized, trainer, expected)
             os.link(temporary, path)
         finally:
             temporary.unlink()

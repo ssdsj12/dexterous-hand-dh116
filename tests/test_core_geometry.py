@@ -62,6 +62,18 @@ def _materialized():
         sources[side] = {'source_sha256': side, 'sdf_binding': {name: {'sha256': str(i) * 64, 'capture_sha256': 'a' * 64} for (i, name) in enumerate(grids[side])}}
     return (geometry, grids, sources, names)
 
+def test_fp32_training_pad_sampling_uses_only_locked_lattice():
+    owner = _capture_owner(_grid())
+    nodes = torch.zeros((2, 41, 3), dtype=torch.float32)
+    nodes[..., 2] = 0.6
+    nodes[1, :, 0] = 0.1
+    radii = torch.full((2,), 0.005)
+    gaps, valid = owner.policy_pad_gaps(_poses(2).float(), nodes, radii)
+    assert gaps.dtype == torch.float32
+    torch.testing.assert_close(gaps[0], torch.full((2, 41), 0.0028), atol=1e-7, rtol=0)
+    assert valid[0].all() and not valid[1].any()
+
+
 def test_pose_transform_and_full_vertex_bounds_match_frozen_oracle():
     m = _math()
     pose = np.array([0.137, -0.293, 0.619, 1, 2, 3, 4], dtype=float)

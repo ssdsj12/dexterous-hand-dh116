@@ -44,8 +44,17 @@
   },
   "material_status": "explicit_candidate_inherits_P0_solver_coefficients_not_measured_task_material",
   "scene_input": {
-    "path": "build/scene_bundle/scene.json",
-    "sha256": "d1b8b5404af1ee809e88ffdf384c629fe7833e86ea471f88a3ccfaee5fac9a93"
+    "path": "build/scene_bundle/anatomical/pinch_legacy/scene.json",
+    "sha256": "1b3d42ec95dc3dbbbae316b4d99a447e12dd9af168a9fb6a52e85e5590c3908a",
+    "source_scene": {
+      "path": "build/scene_bundle/scene.json",
+      "sha256": "d1b8b5404af1ee809e88ffdf384c629fe7833e86ea471f88a3ccfaee5fac9a93"
+    },
+    "source_station_nodes": [
+      36,
+      4
+    ],
+    "reference_sha256": "3b597850ff95cfd7668af8f7764375380180a1235a90987fbe60d2bc05fbe2bf"
   },
   "qualification": {
     "teacher": false,
@@ -61,7 +70,16 @@
     "evidence_path": "build/scene_bundle/height_failure.json"
   },
   "full_scene_input": {
-    "path": "build/scene_bundle/pinch_supported/scene.json",
-    "sha256": "c43d29b93ef94799eaaf1edf2f97d0241a48994f6ac1891766e5bc4bca86cc44"
+    "path": "build/scene_bundle/anatomical/pinch/scene.json",
+    "sha256": "4bc89729e0fbf91686141ced6e4d046f926614d805b3b05ea02fff5218fa3d55",
+    "source_scene": {
+      "path": "build/scene_bundle/pinch_supported/scene.json",
+      "sha256": "c43d29b93ef94799eaaf1edf2f97d0241a48994f6ac1891766e5bc4bca86cc44"
+    },
+    "source_station_nodes": [
+      36,
+      4
+    ],
+    "reference_sha256": "3b597850ff95cfd7668af8f7764375380180a1235a90987fbe60d2bc05fbe2bf"
   }
 }

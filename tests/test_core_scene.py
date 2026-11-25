@@ -5,6 +5,151 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+def test_current_speed_action_binds_wrist_z_feedback_and_keeps_observation_width():
+    from dh116.env.contracts import ACTION_NAME, LEGACY_OBSERVATION_VERSION, bind_contract
+    from dh116.env.contracts import state_contract, surfa_contr__validate_contract
+    from dh116.env.contracts import verify_estimator_state_contract_file
+
+    rates = dict(joint_rate_rad_s=1.2, wrist_rate_m_s=0.05, rotation_rate_rad_s=1.0)
+    motion = dict(action=ACTION_NAME, action_size=24, observation_size=351,
+                  observation_version=LEGACY_OBSERVATION_VERSION, policy_control=rates)
+    contract = bind_contract(motion)
+    assert surfa_contr__validate_contract(contract) is contract
+    assert contract['observation_size'] == state_contract()['size'] == 371
+    action = contract['surface_contract']['action']
+    assert action['size'] == 24
+    assert (action['joint_rate_rad_s'], action['translation_rate_m_s'],
+            action['rotation_rate_rad_s']) == (1.2, 0.05, 1.0)
+    wrist_z = next(row for row in contract['surface_contract']['feedback_fields']
+                   if row['name'] == 'wrist_z_request')
+    assert wrist_z['slice'] == [367, 369]
+    assert wrist_z['scale'] == 0.05
+    for row in state_contract()['dimensions'][367:369]:
+        assert row['normalization'] == 'mean(task.actions[:,[14,17]]*0.05)/0.05'
+    manifest = Path(__file__).resolve().parents[1] / 'configs/contracts/privileged_state.json'
+    manifest_sha = hashlib.sha256(manifest.read_bytes()).hexdigest()
+    assert verify_estimator_state_contract_file(manifest, manifest_sha) == manifest_sha
+    with pytest.raises(ValueError, match='action scale mismatch'):
+        bind_contract(dict(motion, policy_control=dict(rates, wrist_rate_m_s=0.01)))
+
+def test_old_speed_action_cannot_resume_a_checkpoint_even_with_consistent_hashes():
+    from dh116.env.contracts import make_contract, stere_contr__digest, stere_contr__validate_contract
+    from dh116.env.contracts import surfa_contr__ACTION_CONTRACT
+
+    current = make_contract('teacher', {})
+    assert stere_contr__validate_contract(current) is current
+    old_action = dict(surfa_contr__ACTION_CONTRACT, version='dh116-surface-motion24-v1',
+                      joint_rate_rad_s=0.3, translation_rate_m_s=0.01, rotation_rate_rad_s=0.5)
+    old_sha = stere_contr__digest(old_action)
+    assert old_sha == '498cebedfe520cc2f6593b32776581c3da826ba95e4db441b7938d29176c55d9'
+    old = dict(current, action_contract=old_action, action_contract_sha256=old_sha)
+    old.pop('contract_sha256')
+    old['contract_sha256'] = stere_contr__digest(old)
+    with pytest.raises(ValueError, match='canonical action contract mismatch'):
+        stere_contr__validate_contract(old)
+
+def test_velocity_limit_readback_checks_every_lane_with_the_exact_configured_passive_cap():
+    from types import SimpleNamespace
+
+    import torch
+
+    from dh116.env import scene
+    from dh116.env.contracts import JOINTS, linea_coupl__ACTIVE
+    from dh116.hand.kinematics import ANGULAR_JOINT_NAMES, JOINT_NAMES
+
+    names = ANGULAR_JOINT_NAMES + JOINTS + JOINT_NAMES
+    passive = 3.25
+    speeds = [1.0 if name in ANGULAR_JOINT_NAMES else 0.10 if name in JOINT_NAMES
+              else 1.2 if name in linea_coupl__ACTIVE else passive for name in names]
+    velocities = torch.tensor(speeds).repeat(2, 1)
+    view = SimpleNamespace(get_dof_max_velocities=lambda: velocities)
+    hand = SimpleNamespace(joint_names=names, root_physx_view=view)
+    receipt = scene.velocity_limits_readback((hand,), instances=2, passive_limit=passive)
+    assert receipt['instances_per_hand'] == 2
+    assert receipt['hands'][0]['joint_names'] == list(names)
+    assert receipt['hands'][0]['max_velocity'] == pytest.approx(speeds)
+
+    velocities[1, names.index('finger13')] = 3.0
+    with pytest.raises(ValueError, match='simulator velocity limits differ'):
+        scene.velocity_limits_readback((hand,), instances=2, passive_limit=passive)
+    with pytest.raises(ValueError, match='at least 3.0'):
+        scene.velocity_limits_readback((hand,), instances=2, passive_limit=2.97)
+
+def test_measured_wrist_guard_accepts_speed_through_twelve_centimeters_per_second():
+    import torch
+
+    from dh116.hand.kinematics import transport_safe
+
+    measured = torch.zeros((2, 2, 7))
+    measured[..., 3] = 1.0
+    velocity = torch.zeros((2, 2, 3))
+    velocity[:, 0, 0] = torch.tensor([0.12, 0.1201])
+    assert transport_safe(measured, measured, velocity).tolist() == [True, False]
+
+def test_tensor_wrist_projection_reuses_checked_inputs_without_changing_targets():
+    import torch
+
+    from dh116.hand.kinematics import project_tensor_policy_wrist_targets
+
+    seed = torch.zeros((2, 2, 7), dtype=torch.float64)
+    seed[..., 3] = 1.0
+    zero = seed.new_zeros((2, 2, 3))
+    live = torch.tensor([True, False])
+    inputs = dict(root_seed_w=seed, measured_base_w=seed, common_lift_offset_m=seed.new_zeros(2),
+                  measured_clearance_m=seed.new_full((2, 2), 0.004),
+                  palm_offsets_m=zero, requested_palm_offsets_m=zero + 0.012,
+                  angles_rad=zero, requested_angles_rad=zero + 0.25, allowed=live, live=live)
+    checked = project_tensor_policy_wrist_targets(**inputs)
+    fast = project_tensor_policy_wrist_targets(**inputs, validate_values=False)
+    assert checked.keys() == fast.keys()
+    for name, expected in checked.items():
+        if isinstance(expected, torch.Tensor):
+            torch.testing.assert_close(fast[name], expected, rtol=0, atol=0)
+        else:
+            assert fast[name] == expected
+    with pytest.raises(ValueError, match='finite wrist inputs'):
+        project_tensor_policy_wrist_targets(**dict(inputs, measured_base_w=seed + float('nan')))
+
+
+@pytest.mark.parametrize('grasp,full_grasp', [('pinch', False), ('pinch', True),
+                                            ('tripod', True), ('power', True)])
+def test_task_scene_uses_original_hand_assets_on_anatomical_sides(grasp, full_grasp):
+    from dh116.env.scene import anatomical_hand_axes, load_anatomical_reference, load_scene_inputs, load_task_scene
+
+    archive, reset = load_task_scene(grasp, full_grasp=full_grasp)
+    scene = archive.scene_inputs
+    poses = scene['author_layout']['hand_roots']
+    center = scene['author_layout']['wire_center']
+    assert poses['left'][1] < center[1] < poses['right'][1]
+    assert all(poses[side][0] > center[0] for side in ('left', 'right'))
+    assert Path(scene['assets']['left']).name.endswith('DH116_left.usd')
+    assert Path(scene['assets']['right']).name.endswith('DH116_right.usd')
+    seed = archive.pair['reset_seed'] if archive.task is None else scene['authored_seed']
+    np.testing.assert_allclose(np.array(seed['authored_root_seed_w'])[:, 1],
+                               [poses['left'][1], poses['right'][1]], atol=0, rtol=0)
+    np.testing.assert_allclose(reset['rod_reset']['node_positions'][0, 20], center,
+                               atol=1e-7, rtol=0)
+    placement = scene['anatomical_placement']
+    assert placement['station_nodes'] == [40 - i for i in placement['source_station_nodes']]
+    reference = load_anatomical_reference(grasp, placement['reference_sha256'])
+    assert reference['station_nodes'] == tuple(placement['station_nodes'])
+    root = Path(__file__).resolve().parents[1]
+    source = placement['source_scene']
+    original = load_scene_inputs(source['path'], source['sha256'], root=root)
+    old_seed = original['archive']['pair']['reset_seed'] if archive.task is None else original['authored_seed']
+    assert seed['sha256'] != old_seed['sha256']
+    for key in ('joint_positions', 'joint_velocities'):
+        assert seed[key] == old_seed[key]
+    assert scene['assets'] == original['assets']
+    for i, side in enumerate(('left', 'right')):
+        pose = seed['reset_root_pose_w'][i]
+        np.testing.assert_array_equal(np.delete(pose, 1), np.delete(old_seed['reset_root_pose_w'][i], 1))
+        for candidate in (pose, reference['root_pose_wxyz'][i]):
+            axis, thumb = anatomical_hand_axes(root / scene['assets'][side], candidate)
+            assert axis[0] < 0
+            assert thumb[1] * (1 if side == 'left' else -1) > 0
+
+
 def package(tmp_path):
     root = tmp_path / 'root'
     root.mkdir()
@@ -50,22 +195,34 @@ def test_materialized_input_cannot_override_identity_or_qualification(tmp_path, 
         module.load_scene_inputs(path, digest, root=root)
 
 def test_current_pinch_bundle_keeps_authored_and_measured_reset_distinct(monkeypatch):
-    """The native author uses the proposal; solver Reset keeps its measured packet."""
+    """Preserve the archived packet and use a separate anatomical startup seed."""
     from types import SimpleNamespace
-    from dh116.env.scene import load_task_scene
-    from dh116.env.scene import prepared_scene
+    from dh116.env.scene import load_scene_inputs, load_task_scene, prepared_scene
     from dh116.env.lifecycle import NativeOwners
     import dh116.hand.articulation as tabletop_regex_articulation
     import dh116.hand.articulation as tabletop_regex_task_setup
     root = Path(__file__).resolve().parents[1]
-    (archive, measured) = load_task_scene('pinch', root=root)
+    archive, constructor = load_task_scene('pinch', root=root)
     inputs = archive.scene_inputs
-    assert inputs['grasp'] == archive.style == 'pinch' and inputs['qualification'] == {'native': False, 'teacher': False, 'grasp': False} and (measured is inputs['reset'])
-    pair = archive.pair
-    assert pair['reset_seed']['sha256'] == 'c19b0c971d76e4e613b7ca3ed12d06012514fd3e7a08a3823daee927e634ce81' and measured['seed']['sha256'] == '9ced76db3e4444107271296993f985b97dc034c40e5140f483288de5546b3bb5' and (pair['reset_seed']['reset_root_pose_w'] != measured['seed']['reset_root_pose_w'])
-    proposed = np.asarray(pair['rod_seed']['proposed_nodes_m'], dtype=np.float64)
-    observed = np.asarray(measured['rod_reset']['node_positions'])
-    assert proposed.shape == (41, 3) and observed.shape == (1, 41, 3) and np.array_equal(proposed.astype(np.float32), observed[0]) and (not np.array_equal(proposed, observed[0]))
+    assert inputs['grasp'] == archive.style == 'pinch'
+    assert inputs['qualification'] == {'native': False, 'teacher': False, 'grasp': False}
+    assert constructor is inputs['reset'] and constructor['kind'] == 'authored_solver_constructor'
+    source = inputs['anatomical_placement']['source_scene']
+    original = load_scene_inputs(source['path'], source['sha256'], root=root)
+    measured = original['reset']
+    proposed = original['archive']['pair']['reset_seed']
+    assert proposed['sha256'] == 'c19b0c971d76e4e613b7ca3ed12d06012514fd3e7a08a3823daee927e634ce81'
+    assert measured['seed']['sha256'] == '9ced76db3e4444107271296993f985b97dc034c40e5140f483288de5546b3bb5'
+    assert archive.reset_receipt_sha256 is None
+    assert archive.pair['reset_seed'] == constructor['seed']
+    assert len({proposed['sha256'], measured['seed']['sha256'], constructor['seed']['sha256']}) == 3
+    np.testing.assert_array_equal(constructor['rod_reset']['node_positions'],
+                                  measured['rod_reset']['node_positions'])
+    thumb = 'left.finger14_link'
+    source_pos, source_quat = measured['pad_poses_xyzw'][thumb]
+    pos, quat = constructor['pad_poses_xyzw'][thumb]
+    np.testing.assert_allclose(pos, np.asarray(source_pos) + [0, -0.4, 0], atol=1e-7, rtol=0)
+    np.testing.assert_array_equal(quat, source_quat)
 
     class ReachedNativeAuthoring(Exception):
         pass

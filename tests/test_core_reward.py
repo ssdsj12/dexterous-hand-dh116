@@ -123,14 +123,15 @@ def test_goal_full_recipe_preserves_hold_standard_and_a_32_window_rollout():
         assert dict(config.success) == {'net_lift_m': 0.03, 'hold_s': 5.0, 'max_slip_m': 0.0005}
 
 
-def test_goal_full_rewards_light_contact_and_continuous_measured_lift():
-    from dh116.rl.reward import train_rewar___FULL_UNITS
+def goal_full_setup(*, defer_checks=True, first_contact=1):
+    from dh116.rl.reward import GOAL_SOFT_COSTS, train_rewar___FULL_UNITS
 
     config = load_config(ROOT / 'configs/training/reward_pinch.json', full_grasp=True)
-    reward = TensorTrainingReward(config, num_envs=2, device='cpu')
+    reward = TensorTrainingReward(config, num_envs=2, device='cpu', defer_checks=defer_checks)
     units = {**train_rewar___FULL_UNITS, 'load_progress_left': 'dimensionless',
              'load_progress_right': 'dimensionless', 'support_unload': 'dimensionless',
-             'hand_lift_load': 'dimensionless', 'slip': 'm'}
+             'hand_lift_load': 'dimensionless', 'slip': 'm',
+             **dict.fromkeys(GOAL_SOFT_COSTS, 'dimensionless')}
     specs = (*((name, 'rad', 'fixture') for name in ERROR_FIELDS),
              ('distance', 'm', 'fixture'),
              *((name, 'dimensionless', 'fixture') for name in
@@ -142,13 +143,13 @@ def test_goal_full_rewards_light_contact_and_continuous_measured_lift():
         anchor_specs=tuple((f'{i}:{anchor}', 'drift', 'uncertainty') for anchor in range(4)),
     ) for i in range(2))
 
-    def endpoint(tick, *, touch=0., carried=False, detached=False, upward=0., min_z=0.):
+    def endpoint(tick, *, touch=0., carried=False, detached=False, upward=0., min_z=0., median_z=0.01):
         base = frame(tick)
         fields = dict(base.fields)
         for name, unit in units.items():
             if name != 'slip':
                 dtype = (torch.float64 if unit == 'm' or name.startswith(('load_progress', 'coverage'))
-                         or name in ('support_unload', 'hand_lift_load') else torch.bool)
+                         or name in (*GOAL_SOFT_COSTS, 'support_unload', 'hand_lift_load') else torch.bool)
                 fields[name] = torch.zeros(2, dtype=dtype)
         fields['load_progress_left'].fill_(touch)
         fields['load_progress_right'].fill_(touch)
@@ -157,17 +158,23 @@ def test_goal_full_rewards_light_contact_and_continuous_measured_lift():
                 fields[name].fill_(1)
             fields['support_unload'].fill_(0.8)
             fields['hand_lift_load'].fill_(upward)
-            fields['median_z'].fill_(0.01)
+            fields['median_z'].fill_(median_z)
             fields['min_z'].fill_(min_z)
             fields['no_external_support'].fill_(detached)
-        return replace(base, fields=fields, anchor_present=torch.full((2,), tick >= 9),
+        return replace(base, fields=fields, anchor_present=torch.full((2,), tick >= first_contact),
                        anchor_drift=torch.zeros((2, 4), dtype=torch.float64),
                        anchor_uncertainty=torch.zeros((2, 4), dtype=torch.float64),
                        anchor_reference=torch.zeros((2, 4, 1), dtype=torch.float64),
-                       anchor_reference_tick=torch.full((2, 4), 9, dtype=torch.long))
+                       anchor_reference_tick=torch.full((2, 4), first_contact, dtype=torch.long))
 
     reward.reset_selected((0, 1), schemas, endpoint(0), previous_request=torch.zeros(2, 24),
                           tokens=('reset', 'reset'), policy_uids=('policy', 'policy'))
+    return reward, schemas, endpoint
+
+
+@pytest.mark.parametrize('defer_checks', (False, True))
+def test_goal_full_rewards_light_contact_and_continuous_measured_lift(defer_checks):
+    reward, schemas, endpoint = goal_full_setup(defer_checks=defer_checks, first_contact=9)
     phases = (dict(touch=.25), dict(carried=True, min_z=.005),
               dict(carried=True, upward=.8, min_z=-.001),
               dict(carried=True, upward=.8, min_z=.005),
@@ -190,13 +197,71 @@ def test_goal_full_rewards_light_contact_and_continuous_measured_lift():
     assert not packets[5].terms['prelift']['contribution'].any()
     assert all(not packet.terminated.any() for packet in packets)
 
+def test_goal_full_clean_contact_and_unsaturated_force_are_required_at_success_boundary():
+    from dh116.physics.runtime import NativeTensorPhysicsRuntime
+
+    reward, schemas, endpoint = goal_full_setup()
+    runtime = NativeTensorPhysicsRuntime.__new__(NativeTensorPhysicsRuntime)
+    runtime._hand_mesh_slots = (0, 2)
+    wrench = torch.zeros((2, 3, 6), dtype=torch.float64)
+    force_limit = wrench.new_tensor(40.)
+    wrench[:, 0, 0] = torch.nextafter(force_limit, wrench.new_tensor(0.))
+    wrench[:, 1, 0] = 80.  # External support is tracked by separate contact readouts.
+    below_limit = runtime._reaction_force_cost(wrench)
+    wrench[1, 2, 1] = force_limit
+    at_limit = runtime._reaction_force_cost(wrench)
+    assert (below_limit < 1.0).all() and at_limit[1] == 1.0
+    for window in range(301):
+        token = f'hold-{window}'
+        begin(reward, schemas, tick=window * 8, token=token)
+        for tick in range(window * 8 + 1, window * 8 + 9):
+            measured = endpoint(tick, carried=True, detached=True, upward=1., min_z=.031, median_z=.031)
+            measured.fields['hold_motion'].fill_(True)
+            measured.fields['soft_reaction_force'] = at_limit if tick == 2401 else below_limit
+            if tick == 2401:
+                measured.fields['soft_non_target_contact'][0] = 0.01
+            reward.observe(measured)
+        packet = reward.settle_once((token, token))
+        if window == 299:
+            torch.testing.assert_close(packet.post_context['hold_s'], torch.full((2,), 2399 / 480, dtype=torch.float64))
+    assert packet.event.tolist() == [0.0, 0.0]
+    assert packet.terminated.tolist() == [False, False]
+    torch.testing.assert_close(packet.post_context['hold_s'], torch.full((2,), 6 / 480, dtype=torch.float64))
+    assert packet.substep_terms['soft_non_target_contact']['contribution'][0, 0] > 0
+    assert packet.substep_terms['soft_reaction_force']['contribution'][1, 0] > 0
+
+
+@pytest.mark.parametrize('already_terminal', (False, True))
+def test_goal_full_nan_tail_is_only_ignored_after_trusted_terminal(already_terminal):
+    reward, schemas, endpoint = goal_full_setup()
+    begin(reward, schemas)
+    for tick in range(1, 9):
+        measured = endpoint(tick, carried=True)
+        if already_terminal and tick == 2:
+            measured.fields['constraint_failure'][0] = True
+        if tick == 3:
+            measured.fields['numerical_health'][0] = False
+            measured.fields['distance'][0] = float('nan')
+        reward.observe(measured)
+    if not already_terminal:
+        with pytest.raises(SourceFailure, match='invalid source'):
+            reward.settle_once(('w0', 'w0'))
+        assert reward.quarantined.all()
+        return
+    packet = reward.settle_once(('w0', 'w0'))
+    assert packet.event.tolist() == [-40.0, 0.0]
+    assert packet.substeps.tolist() == [2, 8]
+    assert packet.post_context['physics_tick'].tolist() == [2, 8]
+    assert torch.isfinite(packet.reward).all() and not reward.quarantined.any()
+
+
 def test_wrist_reference_is_invariant_to_lane_origin_and_rod_yaw():
     from dh116.physics.runtime import rod_local_wrists
     rod = torch.zeros((1, 41, 3), dtype=torch.float64)
     rod[0, :, 1] = torch.linspace(-0.25, 0.25, 41, dtype=rod.dtype)
-    wrists = torch.tensor([[[0.012, 0.20, 0.025, 1, 0, 0, 0],
-                            [0.018, -0.19, 0.040, 1, 0, 0, 0]]], dtype=rod.dtype)
-    ids = torch.tensor([[36, 4]])
+    wrists = torch.tensor([[[0.012, -0.20, 0.025, 1, 0, 0, 0],
+                            [0.018, 0.19, 0.040, 1, 0, 0, 0]]], dtype=rod.dtype)
+    ids = torch.tensor([[4, 36]])
     position, rotation = rod_local_wrists(rod, wrists, ids)
     yaw = rod.new_tensor([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
     origin = rod.new_tensor([17, 23, 0.5])

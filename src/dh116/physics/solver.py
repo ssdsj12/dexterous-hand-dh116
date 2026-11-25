@@ -198,19 +198,45 @@ def solver_clock_matches(before, after, *, steps):
     return min(abs(after - exact), abs(after - float(rounded))) <= tolerance
 from dh116.env.contracts import runti_io__ROOT as tenso_backe_profi__ROOT
 
-def flat_cuda_pair_capture(raw, *, n, vertices, meshes, substeps, device, expected_owner_time_s):
+def flat_cuda_pair_capture(raw, *, n, vertices, meshes, substeps, device, expected_owner_time_s, strict_audit=True):
     """Validate owned compact tensors from the read-once flat ABI."""
     if raw.get('schema') != 'dh116.sdf_pair_flat_cuda.v1' or raw['substeps'] != substeps or raw['num_envs'] != n or (raw['mesh_count'] != meshes) or (raw['owner_time_s_before'] != expected_owner_time_s) or (raw['owner_time_s_after'] != expected_owner_time_s):
         raise ValueError('current complete flat CUDA boundary required')
     ids = raw['indices_gpu']
     vectors = raw['vectors_gpu']
     meta = raw['lane_meta_gpu']
-    if not all((isinstance(x, tenso_pair_captu__torch.Tensor) and x.device == tenso_pair_captu__torch.device(device) for x in (ids, vectors, meta, raw['node_forces_gpu'], raw['mesh_wrenches_gpu']))) or ids.ndim != 2 or ids.shape[1] != 4 or (ids.dtype != tenso_pair_captu__torch.int32) or (vectors.shape != (len(ids), 12)) or (vectors.dtype != tenso_pair_captu__torch.float32) or (meta.shape != (n, 4)) or (meta.dtype != tenso_pair_captu__torch.int32) or bool(((meta[:, 0] != 0) | (meta[:, 1] != 0) | (meta[:, 2] < 1) | (meta[:, 3] < 0) | (meta[:, 3] > meta[:, 2])).any()) or (not bool(meta[:, 3].sum() == len(ids))):
+    if not all((isinstance(x, tenso_pair_captu__torch.Tensor) and x.device == tenso_pair_captu__torch.device(device) for x in (ids, vectors, meta, raw['node_forces_gpu'], raw['mesh_wrenches_gpu']))) or ids.ndim != 2 or ids.shape[1] != 4 or (ids.dtype != tenso_pair_captu__torch.int32) or (vectors.shape != (len(ids), 12)) or (vectors.dtype != tenso_pair_captu__torch.float32) or (meta.shape != (n, 4)) or (meta.dtype != tenso_pair_captu__torch.int32):
         raise ValueError('owned finite-capacity actual flat CUDA tensors required')
+    node_forces, mesh_wrenches = raw['node_forces_gpu'], raw['mesh_wrenches_gpu']
+    if node_forces.shape != (n, vertices, 3) or mesh_wrenches.shape != (n, meshes, 6) or not all(
+            x.dtype in (tenso_pair_captu__torch.float32, tenso_pair_captu__torch.float64)
+            for x in (node_forces, mesh_wrenches)):
+        raise ValueError('owned native force/wrench reductions have invalid shape or dtype')
+    invalid_lane = ((meta[:, 0] != 0) | (meta[:, 1] != 0) | (meta[:, 2] < 1)
+                    | (meta[:, 3] < 0) | (meta[:, 3] > meta[:, 2]))
     index = ids.long()
+    limits = index.new_tensor([n, substeps, vertices, meshes])
+    if not strict_audit:
+        # The source-locked native ABI creates owned pair buffers. Keep the
+        # device health mask and safe gather indices until the window gate.
+        valid_indices = ((index >= 0) & (index < limits)).all()
+        index = index.clamp_min(0).minimum(limits - 1)
+        val = vectors.double()
+        nf = (val[:, 3:6] * val[:, 6:9]).sum(-1)
+        valid = ~invalid_lane & valid_indices & (meta[:, 3].sum() == len(ids))
+        valid &= tenso_pair_captu__torch.isfinite(val).all() & (nf >= -1e-5).all()
+        valid &= tenso_pair_captu__torch.isfinite(node_forces).flatten(1).all(1)
+        valid &= tenso_pair_captu__torch.isfinite(mesh_wrenches).flatten(1).all(1)
+        balance = node_forces.double().sum(1) + mesh_wrenches[..., :3].double().sum(1)
+        valid &= balance.norm(dim=-1) <= 0.001
+        return dict(counts=meta[:, 3].long(), env_ids=index[:, 0], indices=index[:, 1:],
+                    vectors=val, normal_force=nf, node_forces=node_forces,
+                    mesh_wrenches=mesh_wrenches, pair_lane_meta=meta, valid=valid,
+                    pair_owner_time_s=expected_owner_time_s)
+    if bool(invalid_lane.any()) or not bool(meta[:, 3].sum() == len(ids)):
+        raise ValueError('finite capacity and matching owned lane counts required')
     env_id = index[:, 0]
     pair = index[:, 1:]
-    limits = index.new_tensor([n, substeps, vertices, meshes])
     val = vectors.double()
     if bool(((index < 0) | (index >= limits)).any()) or not bool(tenso_pair_captu__torch.isfinite(val).all()):
         raise ValueError('invalid flat actual pair')
@@ -360,6 +386,7 @@ class TensorRodOwner:
         self._reaction = None
         self._initial_step = physics_step
         self._initial_used = False
+        self.strict_audit = True
 
     @property
     def ticks(self):
@@ -380,15 +407,22 @@ class TensorRodOwner:
             new = float(self.solver.time)
             if self.solver.last_error != 0 or not tenso_rod_owner__solver_clock_matches(old, new, steps=1):
                 raise ValueError('actual shared CUDA solver clock failed')
-            packet = tenso_rod_owner__flat_cuda_pair_capture(self.solver.contact_pair_samples_flat_cuda_v1(), n=self.solver.num_envs, vertices=41, meshes=len(self.mesh_names), substeps=self.substeps, device=self.device, expected_owner_time_s=new)
-            residual = packet['node_forces'].sum(1) + packet['mesh_wrenches'][..., :3].sum(1)
-            if bool((residual.norm(dim=-1) > 0.001).any()):
-                raise ValueError('original rod/mesh force balance guard failed')
+            packet = tenso_rod_owner__flat_cuda_pair_capture(
+                self.solver.contact_pair_samples_flat_cuda_v1(), n=self.solver.num_envs, vertices=41,
+                meshes=len(self.mesh_names), substeps=self.substeps, device=self.device,
+                expected_owner_time_s=new, strict_audit=self.strict_audit,
+            )
+            if self.strict_audit:
+                residual = packet['node_forces'].sum(1) + packet['mesh_wrenches'][..., :3].sum(1)
+                if bool((residual.norm(dim=-1) > 0.001).any()):
+                    raise ValueError('original rod/mesh force balance guard failed')
             self.physics_step = physics_step
             self._time = new
             self._consumed = False
             self._reaction = packet
-            return {k: v.clone() if isinstance(v, tenso_rod_owner__torch.Tensor) else v for (k, v) in packet.items()}
+            if self.strict_audit:
+                return {k: v.clone() if isinstance(v, tenso_rod_owner__torch.Tensor) else v for (k, v) in packet.items()}
+            return packet
         except BaseException:
             self._failed = True
             self._reaction = None

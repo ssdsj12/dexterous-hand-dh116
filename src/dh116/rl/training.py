@@ -18,6 +18,7 @@ from time import perf_counter as teach_train__perf_counter
 from dh116.rl.student_data import StereoBCTrainer as StereoBCTrainer
 import json as stere_infer__json
 from dh116.rl.ppo import PPOConfig
+from dh116.rl.reward import GOAL_SOFT_COSTS, GOAL_TERMINATIONS
 from dh116.env.contracts import runti_io__ROOT as teach_train__ROOT
 from dh116.rl.student_data import save_actor_package
 import math
@@ -127,7 +128,15 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
                     record['grasp_metrics'] = dict(zip(names, torch.cat((
                         summary[:, :3].mean(0), summary[:, 3:5].amax(0), summary[:, 5:7].sum(0)
                     )).tolist()))
+                    reason_start = 11
+                    reason_end = reason_start + len(GOAL_TERMINATIONS) + 3
+                    samples = float(summary[:, -1].sum())
                     record['grasp_metrics'].update(
+                        termination_counts=dict(zip((*GOAL_TERMINATIONS, 'prohibited_support', 'success', 'timeout'),
+                                                    summary[:, reason_start:reason_end].sum(0).long().tolist(), strict=True)),
+                        soft_cost_mean_per_second=dict(zip(GOAL_SOFT_COSTS,
+                                                           (summary[:, reason_end:-1].sum(0) / samples).tolist(),
+                                                           strict=True)),
                         last_detached_lift_m=float(summary[-1, 3]),
                         bilateral_support_rate=record['grasp_metrics']['opposed_rate'],
                         arrival_rate=float(summary[:, 7].mean()),
@@ -139,15 +148,18 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
                              float(summary[:, 3].max()), float(summary[:, 2].mean()))
                 else:
                     score = (float(reward),)
-                path = output / '.next_checkpoint.pt'
-                record['checkpoint_sha256'] = save_snapshot(path, collector.trainer, args, profile, seed)
-                os.replace(path, output / 'latest.pt')
-                if update % args.checkpoint_interval == 0:
-                    os.link(output / 'latest.pt', output / f'checkpoint_{update:04d}.pt')
-                if best is None or score > best:
-                    os.link(output / 'latest.pt', output / '.next_best.pt')
-                    os.replace(output / '.next_best.pt', output / 'best.pt')
-                    best = score
+                new_best = best is None or score > best
+                periodic = update % args.checkpoint_interval == 0
+                if new_best or periodic or update == args.updates:
+                    path = output / '.next_checkpoint.pt'
+                    record['checkpoint_sha256'] = save_snapshot(path, collector.trainer, args, profile, seed)
+                    os.replace(path, output / 'latest.pt')
+                    if periodic:
+                        os.link(output / 'latest.pt', output / f'checkpoint_{update:04d}.pt')
+                    if new_best:
+                        os.link(output / 'latest.pt', output / '.next_best.pt')
+                        os.replace(output / '.next_best.pt', output / 'best.pt')
+                        best = score
                 record['peak_cuda_allocated_bytes'] = torch.cuda.max_memory_allocated()
                 record['iteration_seconds'] = teach_train__perf_counter() - rollout_start
                 print('DH116_PPO_UPDATE', teach_train__json.dumps(record, allow_nan=False), flush=True)
@@ -163,13 +175,30 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
     updates = collector.trainer.counters['updates']
     if runtime.physics_step != end or collector.controls != total or updates != (0 if probe else args.updates) or (probe and runtime.resets != ([1, 2] if len(lanes) == 2 else [1] * len(lanes))):
         raise ValueError('incomplete actual bounded run')
-    return dict(throughput_probe_only=probe, updates=updates, controls=total, environments=len(lanes), sdk_step=end, iterations=iterations, window_seconds=window_seconds, window_phases=window_phases, sdk_initialization_steps=2, physics_hz=480, control_hz=60, rod_substeps=12, articulations=2, action_size=24, run_uuid=run_uuid, geometry_backend=getattr(collector.geometry, 'backend', None), geometry_measurement=geometry_measurement_identity(collector.geometry), actual_measurement_backend=geometry_measurement_identity(collector.geometry)['actual_measurement_backend'], measurement_scope='bounded_diagnostic', measurement_native_evidence=args.measurement_native_evidence, scene_construction=getattr(batch, 'construction_metadata', None), native_readback_mode=getattr(batch, 'readback_mode', 'raw'), source_cache_metadata=batch.readback_metadata() if hasattr(batch, 'readback_metadata') else None, readback_audit=batch.readback_audit() if hasattr(batch, 'readback_audit') else None, reset_ids=runtime.resets, reset_checks=collector.reset_proofs, peak_cuda_allocated_bytes=torch.cuda.max_memory_allocated(), teacher_admission=False, grasp_qualified=False)
+    return dict(throughput_probe_only=probe, updates=updates, controls=total, environments=len(lanes), sdk_step=end, iterations=iterations, window_seconds=window_seconds, window_phases=window_phases, sdk_initialization_steps=2, physics_hz=480, control_hz=60, rod_substeps=12, articulations=2, action_size=24, run_uuid=run_uuid, geometry_backend=getattr(collector.geometry, 'backend', None), geometry_measurement=geometry_measurement_identity(collector.geometry), actual_measurement_backend=geometry_measurement_identity(collector.geometry)['actual_measurement_backend'], measurement_scope='bounded_diagnostic', measurement_native_evidence=args.measurement_native_evidence, scene_construction=getattr(batch, 'construction_metadata', None), task_setup=batch.task_setup_metadata, native_readback_mode=getattr(batch, 'readback_mode', 'raw'), source_cache_metadata=batch.readback_metadata() if hasattr(batch, 'readback_metadata') else None, readback_audit=batch.readback_audit() if hasattr(batch, 'readback_audit') else None, reset_ids=runtime.resets, reset_checks=collector.reset_proofs, peak_cuda_allocated_bytes=torch.cuda.max_memory_allocated(), teacher_admission=False, grasp_qualified=False)
 from dh116.env.contracts import require_aligned
 from dh116.rl.student_data import _validate_state
 
+def native_recipe(grasp, *, receipt_sha256, num_envs, episode_windows, scene_build_mode, full_grasp):
+    """Bind the native launch and frozen replay to the same sources and task."""
+    inventory = {
+        str(path.relative_to(teach_train__ROOT)): teach_train__file_sha256(path)
+        for path in (teach_train__ROOT / 'src/dh116').rglob('*')
+        if path.is_file() and path.suffix in ('.py', '.cu')
+    }
+    reward_config = teach_train__ROOT / 'configs/training' / f'reward_{grasp}.json'
+    recipe_sha = digest(dict(
+        source=inventory, scene=receipt_sha256, reward=teach_train__file_sha256(reward_config),
+        full=full_grasp, envs=num_envs, episode_windows=episode_windows, build=scene_build_mode,
+        readback=os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'official_cache'),
+        geometry=os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager'),
+    ))
+    return inventory, recipe_sha
+
+
 def _checkpoint_context(trainer, args, profile, seed):
     from dh116.env.contracts import runti_io__digest as digest
-    recipe = digest(dict(schema='dh116-tensor-native-ppo-recipe-v2', model=trainer.model.model_identity, rollout_steps=trainer.rollout_steps, episode_windows=getattr(args, 'episode_windows', 32), num_envs=trainer.num_envs, receipt_sha256=args.receipt_sha256, profile_sha256=profile.digest, seed_sha256=seed['sha256'], policy_seed=args.policy_seed, physics_hz=480, control_hz=60, solver_substeps=12, action_size=24, native_recipe_sha256=args.native_recipe_sha256, geometry_backend=os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager'), readback_backend=os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'raw'), geometry_measurement=__import__('dh116.physics.geometry', fromlist=['CudaGeometryProfile']).CudaGeometryProfile.load().identity() if os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND') == 'cuda_cabi' else None))
+    recipe = digest(dict(schema='dh116-tensor-native-ppo-recipe-v2', model=trainer.model.model_identity, rollout_steps=trainer.rollout_steps, episode_windows=getattr(args, 'episode_windows', 32), num_envs=trainer.num_envs, receipt_sha256=args.receipt_sha256, profile_sha256=profile.digest, seed_sha256=seed['sha256'], policy_seed=args.policy_seed, physics_hz=480, control_hz=60, solver_substeps=12, action_size=24, native_recipe_sha256=args.native_recipe_sha256, geometry_backend=os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager'), readback_backend=os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'official_cache'), geometry_measurement=__import__('dh116.physics.geometry', fromlist=['CudaGeometryProfile']).CudaGeometryProfile.load().identity() if os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND') == 'cuda_cabi' else None))
     return dict(recipe_sha256=recipe, receipt_sha256=args.receipt_sha256, backend_profile=profile,
                 seed_sha256=seed['sha256'], policy_seed=args.policy_seed)
 
@@ -210,7 +239,7 @@ def validate_native_options(scene_build_mode=None, *, training=False):
         raise ValueError('PhysX replicated placement is diagnostic only until native equivalence is qualified')
     if mode not in ('reference', 'clone', 'replicated'):
         raise ValueError('scene build mode must be reference, clone or replicated before App startup')
-    if os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'raw') not in ('raw', 'official_cache'):
+    if os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'official_cache') not in ('raw', 'official_cache'):
         raise ValueError('readback must be raw or official_cache before App startup')
     if os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager') not in ('eager', 'cuda_cabi'):
         raise ValueError('geometry must be eager or cuda_cabi; compilation disabled')
@@ -231,7 +260,7 @@ def train_teacher_main(argv=None):
     parser.add_argument('--policy-seed', type=int, default=20261123)
     parser.add_argument('--resume', type=teach_train__Path, help='resume to --updates after a fresh physical Reset')
     parser.add_argument('--resume-sha256', help='expected SHA256 of the existing restart checkpoint')
-    parser.add_argument('--checkpoint-interval', type=int, default=20)
+    parser.add_argument('--checkpoint-interval', type=int, default=25)
     parser.add_argument('--retain-probe-frames', action='store_true')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--probe-control-windows', type=int, choices=(2,))
@@ -245,7 +274,7 @@ def train_teacher_main(argv=None):
     if args.outer_timeout_s < 240 or (args.probe_control_windows and args.outer_timeout_s > 900):
         parser.error('outer timeout must be at least 240 seconds, with a 900-second ceiling for a two-window probe')
     if args.episode_windows is None:
-        args.episode_windows = 720 if args.full_grasp else 32
+        args.episode_windows = 600 if args.full_grasp else 32
     if args.full_grasp and args.episode_windows <= 300:
         parser.error('full grasp needs a longer episode than the 300-window Hold alone')
     if args.episode_windows < 1:
@@ -259,15 +288,11 @@ def train_teacher_main(argv=None):
     scene_spec = task.get('full_scene_input', task['scene_input']) if args.full_grasp else task['scene_input']
     args.receipt_sha256 = scene_spec['sha256']
     args.measurement_native_evidence = None
-    from dh116.env.contracts import runti_io__digest as digest
-    inventory = {str(p.relative_to(teach_train__ROOT)): teach_train__file_sha256(p)
-                 for p in (teach_train__ROOT / 'src/dh116').rglob('*')
-                 if p.suffix in ('.py', '.cu') and p.is_file()}
-    recipe_sha = digest(dict(source=inventory, scene=args.receipt_sha256, reward=teach_train__file_sha256(
-        teach_train__ROOT / 'configs/training' / f'reward_{args.grasp}.json'),
-        full=args.full_grasp, envs=args.num_envs, episode_windows=args.episode_windows, build=args.scene_build_mode,
-        readback=os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'raw'),
-        geometry=os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager')))
+    inventory, recipe_sha = native_recipe(
+        args.grasp, receipt_sha256=args.receipt_sha256, num_envs=args.num_envs,
+        episode_windows=args.episode_windows, scene_build_mode=args.scene_build_mode,
+        full_grasp=args.full_grasp,
+    )
     args.native_recipe_sha256 = recipe_sha
     args.completed_updates = 0
     if (args.resume is None) != (args.resume_sha256 is None) or (args.resume is not None and args.updates is None):
@@ -347,7 +372,7 @@ class NativeTensorCollector(NativeTensorPhysicsRuntime):
         cfg = tenso_colle__json.loads((project / f'configs/training/teacher_{self.style}.json').read_text())
         self.model = TensorNativeTeacher(cfg, backend_profile=profile, num_envs=self.n, reward_config=self.config).to(self.device)
         pp = self.config.ppo
-        self.trainer = DeviceDeformablePPOTrainer(self.model, PPOConfig(lr=pp['learning_rate'], gamma=pp['gamma'], lam=pp['gae_lambda'], clip=pp['clip'], epochs=pp['epochs'], minibatches=pp['minibatches'], value_coef=pp['value'], entropy_coef=pp['entropy'], max_grad_norm=pp['max_grad_norm'], target_kl=pp['target_kl'], kl_backtrack_steps=pp['kl_backtrack_steps']), rollout_steps=pp['rollout_steps'], num_envs=self.n, device=self.device)
+        self.trainer = DeviceDeformablePPOTrainer(self.model, PPOConfig(lr=pp['learning_rate'], gamma=pp['gamma'], lam=pp['gae_lambda'], clip=pp['clip'], epochs=pp['epochs'], minibatches=pp['minibatches'], value_coef=pp['value'], entropy_coef=pp['entropy'], max_grad_norm=pp['max_grad_norm'], target_kl=pp['target_kl'], kl_backtrack_steps=pp['kl_backtrack_steps']), rollout_steps=pp['rollout_steps'], num_envs=self.n, device=self.device, fast_update=self.full_grasp)
         self._initialize_episode()
 
     def observation(self):
@@ -395,6 +420,7 @@ class NativeTensorCollector(NativeTensorPhysicsRuntime):
             v = self.reward._last_values
             contacted = (v['coverage_left'] > 0) & (v['coverage_right'] > 0)
             detached = v['bilateral_support'] & v['no_external_support'] & v['off_table']
+            detached &= (v['soft_non_target_contact'] == 0) & (v['soft_reaction_force'] < 1.0)
             lift = packet.terms['lift']['raw'].masked_fill(~detached, 0)
             supported = v['bilateral_support'] & v['off_table'] & ~v['no_external_support'] & ~v['prohibited_support']
             supported_height = (v['median_z'] - packet.post_context['reset_median_z_m']).masked_fill(~supported, 0)
@@ -404,6 +430,12 @@ class NativeTensorCollector(NativeTensorPhysicsRuntime):
                 (packet.event == 100).sum().double(), (packet.event == -40).sum().double(),
                 self.reward._arrived.double().mean(), packet.terms['load_progress']['raw'].mean(),
                 packet.terms['prelift']['contribution'].amax(), supported_height.clamp_min(0).amax(),
+                *(packet.reason_masks[name].sum().double()
+                  for name in (*GOAL_TERMINATIONS, 'prohibited_support', 'success')),
+                packet.truncated.sum().double(),
+                *(packet.substep_terms[name]['contribution'].nan_to_num().sum() * 480
+                  for name in GOAL_SOFT_COSTS),
+                packet.substeps.sum().double(),
             ))
         self.snapshot('window_' + str(self.controls), dict(schemas=tuple(self.reward.schemas), packet=packet, post_value=value, actions=actions))
         self.timings['value_and_reward_settlement'] = tenso_colle__perf_counter() - phase_start

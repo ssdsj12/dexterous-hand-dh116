@@ -44,8 +44,17 @@
   },
   "material_status": "explicit_candidate_inherits_P0_solver_coefficients_not_measured_task_material",
   "scene_input": {
-    "path": "build/scene_bundle/tripod/scene.json",
-    "sha256": "1ed7cfa0e3ceb19508d09bbac02eed9dfcb4fe2040031e70aef62ec9385c4609"
+    "path": "build/scene_bundle/anatomical/tripod/scene.json",
+    "sha256": "5b8a0e257b2e97b401f3a54956ad9e41543d064d253844139bdb0e462f3c4323",
+    "source_scene": {
+      "path": "build/scene_bundle/tripod/scene.json",
+      "sha256": "1ed7cfa0e3ceb19508d09bbac02eed9dfcb4fe2040031e70aef62ec9385c4609"
+    },
+    "source_station_nodes": [
+      36,
+      8
+    ],
+    "reference_sha256": "5e54678899eefcca9d9d2233607a4e7d497a4f8672f97b7778b8661a53b9a93f"
   },
   "qualification": {
     "teacher": false,

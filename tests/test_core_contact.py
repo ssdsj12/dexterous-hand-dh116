@@ -34,6 +34,37 @@ def test_flat_pair_fp64_scatter_preserves_cancellation_and_owns_buffers():
     raw['lane_meta_gpu'].zero_()
     assert packet['vectors'].abs().sum() > 0 and packet['indices'][0, 1] == 7 and (packet['pair_lane_meta'][0, 3] == 3)
 
+def test_native_training_flat_capture_reuses_bound_reductions():
+    raw = flat()
+    packet = flat_cuda_pair_capture(
+        raw, n=2, vertices=41, meshes=2, substeps=12, device='cpu',
+        expected_owner_time_s=0.1, strict_audit=False,
+    )
+    assert packet['node_forces'] is raw['node_forces_gpu']
+    assert packet['mesh_wrenches'] is raw['mesh_wrenches_gpu']
+    assert packet['valid'].all()
+    raw['lane_meta_gpu'][1, 1] = 1
+    rejected = flat_cuda_pair_capture(
+        raw, n=2, vertices=41, meshes=2, substeps=12, device='cpu',
+        expected_owner_time_s=0.1, strict_audit=False,
+    )
+    assert rejected['valid'].tolist() == [True, False]
+    raw['lane_meta_gpu'][1, 1] = 0
+    raw['indices_gpu'][0, 0] = -1
+    malformed = flat_cuda_pair_capture(
+        raw, n=2, vertices=41, meshes=2, substeps=12, device='cpu',
+        expected_owner_time_s=0.1, strict_audit=False,
+    )
+    assert malformed['valid'].tolist() == [False, False]
+    raw['indices_gpu'][0, 0] = 0
+    raw['node_forces_gpu'][1, 0, 0] += 0.002
+    rejected = flat_cuda_pair_capture(
+        raw, n=2, vertices=41, meshes=2, substeps=12, device='cpu',
+        expected_owner_time_s=0.1, strict_audit=False,
+    )
+    assert rejected['valid'].tolist() == [True, False]
+
+
 def test_empty_flat_lane_is_measured_zero_without_fabricated_pairs():
     raw = flat()
     raw['indices_gpu'] = torch.empty(0, 4, dtype=torch.int32)
@@ -71,10 +102,14 @@ class Solver:
         self.time = 0.0
         self.initial = torch.arange(246).reshape(2, 41, 3).float() / 100
         self.p = self.initial.clone()
+        self.v = torch.zeros_like(self.p)
         self.reads = 0
 
     def positions(self):
         return self.p
+
+    def velocities(self):
+        return self.v
 
     def step_free(self, dt, substeps):
         self.time = float(np.float32(self.time) + np.float32(dt))
@@ -143,7 +178,7 @@ def test_grasp_contact_requires_each_substep_and_counts_uncancelled_support_load
 
     for env in range(2):
         for step in range(12):
-            for side, node in enumerate((32, 8)):
+            for side, node in enumerate((8, 32)):
                 for finger, direction in enumerate((1., -1., -1.)):
                     if (env, step, side, finger) != (1, 11, 0, 2):
                         pair(env, step, node, side * 3 + finger, (direction, 0., 0.), .12)
@@ -155,11 +190,12 @@ def test_grasp_contact_requires_each_substep_and_counts_uncancelled_support_load
     packet = dict(env_ids=keys[:, 0], indices=keys[:, 1:], vectors=raw,
                   normal_force=(raw[:, 3:6] * raw[:, 6:9]).sum(1))
     nodes = torch.zeros(2, 41, 3, dtype=torch.float64)
-    nodes[:, :, 1] = torch.arange(41)
+    nodes[:, :, 1] = torch.linspace(-0.25, 0.25, 41)
     readout = GraspContactReadout('tripod', names, device='cpu')
     result = readout(packet, nodes)
     torch.testing.assert_close(result['coverage_left'], torch.tensor([1., 2/3], dtype=torch.float64))
     assert result['opposed_left'].tolist() == [True, False]
+    assert result['contact_nodes'][0].tolist() == [8, 32]
     assert result['bilateral_support'].tolist() == [True, False]
     assert result['off_table'].tolist() == [True, True]
     assert result['no_external_support'].tolist() == [False, True]
@@ -170,12 +206,12 @@ def test_flat_reward_readout_separates_light_contact_from_vertical_carry():
 
     names = ('left.finger14_link', 'left.finger23_link',
              'right.finger14_link', 'right.finger23_link', 'table', 'support_0', 'support_1')
-    indices = [(0, 0, 32, 0), (0, 0, 20, 5), (1, 0, 8, 0)]
+    indices = [(0, 0, 8, 0), (0, 0, 20, 5), (1, 0, 32, 0)]
     vectors = [[0, 0, 0, 1, 0, 0, 0.025, 0, 0, 0, 0, 0],
                [0, 0, 0, 1, 0, 0, 0.100, 0, 0, 0, 0, 0],
                [0, 0, 0, 1, 0, 0, 0.025, 0, 0, 0, 0, 0]]
     for step in range(12):
-        indices.extend(((2, step, 32, 0), (2, step, 8, 2), (2, step, 20, 5)))
+        indices.extend(((2, step, 8, 0), (2, step, 32, 2), (2, step, 20, 5)))
         vectors.extend(([0, 0, 0, 1, 0, 0, 0.1, 0, 0.04, 0, 0, 0],
                         [0, 0, 0, 1, 0, 0, 0.1, 0, 0.02, 0, 0, 0],
                         [0, 0, 0, 0, 0, 1, 0, 0, 0.12, 0, 0, 0]))
@@ -183,14 +219,17 @@ def test_flat_reward_readout_separates_light_contact_from_vertical_carry():
     packet = dict(env_ids=indices[:, 0], indices=indices[:, 1:], vectors=vectors,
                   normal_force=(vectors[:, 3:6] * vectors[:, 6:9]).sum(-1))
     nodes = torch.zeros((3, 41, 3), dtype=torch.float64)
-    nodes[:, :, 1] = torch.arange(41)
-    result = GraspContactReadout('pinch', names, device='cpu')(packet, nodes)
+    nodes[:, :, 1] = torch.linspace(-0.25, 0.25, 41)
+    readout = GraspContactReadout('pinch', names, device='cpu')
+    result = readout(packet, nodes)
     assert 0 < result['load_progress_left'][0] < 1
     assert result['load_progress_left'][1] == 0
     assert not result['bilateral_support'].any()
     assert result['no_external_support'].tolist() == [False, True, False]
     torch.testing.assert_close(result['support_vertical_n'], nodes.new_tensor([0, 0, 0.12]))
     torch.testing.assert_close(result['hand_vertical_n'], nodes.new_tensor([0, 0, 0.06]))
+    nodes[0, 8, 1] = 0.15  # A left material node displaced into the right world half.
+    assert readout(packet, nodes)['load_progress_left'][0] == 0
 
 def test_quarantine_parks_only_the_failed_rod_without_opening_a_new_episode():
     solver, rod = owner()
@@ -206,6 +245,28 @@ def test_quarantine_parks_only_the_failed_rod_without_opening_a_new_episode():
     assert next_reaction['reset_ids'] == (1, 1)
     assert next_reaction['rod_ticks'] == (12, 12)
     assert solver.time == ledger['pair_owner_time_s']
+
+
+def test_full_rod_observations_retain_the_last_finite_row_without_hiding_validity():
+    from dh116.physics.runtime import NativeTensorPhysicsRuntime
+
+    solver, rod = owner()
+    physical = NativeTensorPhysicsRuntime.__new__(NativeTensorPhysicsRuntime)
+    physical.runtime, physical.device, physical.n = rod, rod.device, solver.num_envs
+    physical.nodes, physical.velocity = solver.positions().clone(), solver.velocities().clone()
+
+    solver.p[0, 20, 2] = float('nan')
+    solver.p[1, 20, 2] += 0.01
+    solver.v[1, 20, 2] = 0.05
+    valid = physical._read_full_rod_state()
+
+    assert valid.tolist() == [False, True]
+    torch.testing.assert_close(physical.nodes[0], solver.initial[0], atol=0, rtol=0)
+    torch.testing.assert_close(physical.nodes[1], solver.p[1], atol=0, rtol=0)
+    torch.testing.assert_close(physical.velocity[1], solver.v[1], atol=0, rtol=0)
+    solver.v[1, 20, 2] = float('inf')
+    assert physical._read_full_rod_state().tolist() == [False, False]
+    assert torch.isfinite(physical.nodes).all() and torch.isfinite(physical.velocity).all()
 
 
 def test_native_float_clock_uses_exact_advance_once_ulp_is_large():

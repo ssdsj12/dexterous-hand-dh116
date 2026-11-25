@@ -661,5 +661,233 @@
       }
     },
     "grasp_success_verified": false
+  },
+  "anatomy_stereo_r1": {
+    "baseline_commit": "2e7293532107dc2d32f9e903cf07436a4f2609b7",
+    "action_contract_sha256": "b621d0b6d2285e9c46050d4851f18f3ce39584a10763e35d6851bed540f29e6a",
+    "tests": {
+      "cpu_pass": 223,
+      "cpu_gpu_only_skips": 12,
+      "cuda_pass": 13
+    },
+    "scene_center_m": [
+      0.43,
+      0.0,
+      0.365
+    ],
+    "camera_fov_deg": 86,
+    "stereo_baseline_m": 0.08,
+    "camera_sha256": "c3732a4a19bac84eab51cc5a1e321598dd38bb2069fb21313b7dfb5b5fd599a1",
+    "composite_image_sha256": "a83796454c8aba1a6fca4a987bf38dfcadc44ff14aeb89e5b918cf03ad398dd2",
+    "evidence_sha256": "63f9b37c552b8310c0c6aff2696870a5458ebd4c9d1e7db9b7b2c6c2eec6e32a",
+    "artifact_scope": "Recorded native stereo preview. The rendering worker exits with SIGSEGV after App.close. Student admission remains false.",
+    "success_criteria": {
+      "detached_lift_m": 0.03,
+      "hold_s": 5.0,
+      "max_slip_m": 0.0005
+    },
+    "by_grasp": {
+      "pinch": {
+        "scene_sha256": "4bc89729e0fbf91686141ced6e4d046f926614d805b3b05ea02fff5218fa3d55",
+        "reference_file_sha256": "3b597850ff95cfd7668af8f7764375380180a1235a90987fbe60d2bc05fbe2bf",
+        "wrist_y_relative_to_wire_m": {
+          "left": -0.1708017140421883,
+          "right": 0.18834674360418163
+        },
+        "thumb_inward_verified_at_start_and_local_reset": true,
+        "reset_ids_after_probe": [
+          1,
+          2
+        ],
+        "probes": {
+          "2": {
+            "exit_code": 0,
+            "window_seconds": [
+              0.7346678769681603,
+              0.5364155101124197
+            ],
+            "natural_exit_verified": true,
+            "recipe_sha256": "55c46771141536e6fd24692e3a70d2ba9a86b58ccb7386462440487405cdec67",
+            "receipt_sha256": "cf59a633b67ee33550ea71a09b36dfa39d0d5d1124f6fa375f6a404b8deda028",
+            "receipt": "runs/grasp-anatomy-eye-r1/pinch-probe/native_result.json"
+          },
+          "512": {
+            "exit_code": 0,
+            "window_seconds": [
+              0.6852455490734428,
+              0.46403395710512996
+            ],
+            "natural_exit_verified": true,
+            "recipe_sha256": "6a48eee68762fd256e181a34a2725c82abd7daabd34fcb5dab6d7d2b0d53a432",
+            "receipt_sha256": "d84bdd725a06aa0d3c35d2ed2e029680362d2d2a2eb2807c005032e9e297a07d",
+            "receipt": "runs/grasp-anatomy-eye-r1/pinch-512-probe/native_result.json"
+          }
+        },
+        "training_smoke": {
+          "environments": 2,
+          "ppo_updates": 2,
+          "exit_code": 0,
+          "receipt_sha256": "f18aa74bd2bf31bbf315b576d64b60f5bddaee67554141a2df310a829f82babb"
+        },
+        "replay": {
+          "native_frames": 4,
+          "sdk_steps": [
+            2,
+            162,
+            322,
+            482
+          ],
+          "max_stereo_clock_error_s": 0.0,
+          "visible_wire_nodes_per_eye": 41,
+          "min_brown_mask_pixels": 1277,
+          "app_close_returned": true,
+          "exit_code": -11,
+          "measurement_only": true,
+          "peak_detached_lift_m": 0.0,
+          "record_sha256": "d970cd9ca693c21e3c74b0271b31f8f18146103c4e3e283b732a2ad00ea37c2d"
+        },
+        "previous_geometry_benchmark": {
+          "ppo_updates": 5,
+          "environments": 512,
+          "exit_code": 0,
+          "mean_iteration_seconds": 14.765091613773256,
+          "receipt_sha256": "bc712e1aab5bd1abd3eb305ea41e55b26498118c0025b81384f046dc9b8e906a"
+        }
+      },
+      "tripod": {
+        "scene_sha256": "5b8a0e257b2e97b401f3a54956ad9e41543d064d253844139bdb0e462f3c4323",
+        "reference_file_sha256": "5e54678899eefcca9d9d2233607a4e7d497a4f8672f97b7778b8661a53b9a93f",
+        "wrist_y_relative_to_wire_m": {
+          "left": -0.2711255848202721,
+          "right": 0.1739391386713966
+        },
+        "thumb_inward_verified_at_start_and_local_reset": true,
+        "reset_ids_after_probe": [
+          1,
+          2
+        ],
+        "probes": {
+          "2": {
+            "exit_code": 0,
+            "window_seconds": [
+              0.7793879800010473,
+              0.541439640102908
+            ],
+            "natural_exit_verified": true,
+            "recipe_sha256": "63cf028ac6e83d8163273e24295167201797611f203c019477011eb5b21055c8",
+            "receipt_sha256": "a8483bcb0600e9fe6daf868950a368cded8d78af7bb7a6defe1ff53949b206e1",
+            "receipt": "runs/grasp-anatomy-eye-r1/tripod-probe/native_result.json"
+          },
+          "512": {
+            "exit_code": 0,
+            "window_seconds": [
+              0.5763795950915664,
+              0.4300490610767156
+            ],
+            "natural_exit_verified": true,
+            "recipe_sha256": "8f22bab9f8986f77399ed01116343d67dafe4ca228d571f5ad74db137c9639aa",
+            "receipt_sha256": "c9dd28a76d82e1905a45f093668534ac389f110d7f87fd716b949297a1f975ca",
+            "receipt": "runs/grasp-anatomy-eye-r1/tripod-512-probe/native_result.json"
+          }
+        },
+        "training_smoke": {
+          "environments": 2,
+          "ppo_updates": 2,
+          "exit_code": 0,
+          "receipt_sha256": "250aec545812d197cf4ed18f2c66448737a4637d0f175dc3a088bbe2b7b93159"
+        },
+        "replay": {
+          "native_frames": 4,
+          "sdk_steps": [
+            2,
+            162,
+            322,
+            482
+          ],
+          "max_stereo_clock_error_s": 0.0,
+          "visible_wire_nodes_per_eye": 41,
+          "min_brown_mask_pixels": 914,
+          "app_close_returned": true,
+          "exit_code": -11,
+          "measurement_only": true,
+          "peak_detached_lift_m": 0.0,
+          "record_sha256": "d250ef3fc5588804701f4ffe8d8aa9f97d17bb31337a309e02018a617ea1d8bb"
+        },
+        "previous_geometry_benchmark": {
+          "ppo_updates": 5,
+          "environments": 512,
+          "exit_code": 0,
+          "mean_iteration_seconds": 15.361383366584779,
+          "receipt_sha256": "672b287cf3fe71381a78438b2d589e18c1601e508f8ba9bfea51cd2875735d63"
+        }
+      },
+      "power": {
+        "scene_sha256": "ccff43f45855417fe5012f317974612ab9d3e6122bc01754e029fe6642d1ca8f",
+        "reference_file_sha256": "7277991c97aa2c77c4dc9b91c152df3654d205a4b78324b7b7e57266e8aa5150",
+        "wrist_y_relative_to_wire_m": {
+          "left": -0.16800798473692097,
+          "right": 0.14875008167886578
+        },
+        "thumb_inward_verified_at_start_and_local_reset": true,
+        "reset_ids_after_probe": [
+          1,
+          2
+        ],
+        "probes": {
+          "2": {
+            "exit_code": 0,
+            "window_seconds": [
+              0.745037391781807,
+              0.527615515049547
+            ],
+            "natural_exit_verified": true,
+            "recipe_sha256": "7e6eff46cdda53fbc8067b110e12ad8d0d6d642879d743dee08729f095e7db4e",
+            "receipt_sha256": "01d8f2cbfa87ebbaf5598e8468720911a0d2c9fd7e24e88fc6f420ba903334f7",
+            "receipt": "runs/grasp-anatomy-eye-r1/power-probe/native_result.json"
+          },
+          "512": {
+            "exit_code": 0,
+            "window_seconds": [
+              0.6477176200132817,
+              0.39132273895666003
+            ],
+            "natural_exit_verified": true,
+            "recipe_sha256": "fa35ce6aab662fac30cd481e7ee218e9ebdfc0f07a0b79d3ad0efde271281773",
+            "receipt_sha256": "a8e8ebc27fef5bcaf2ae2d91543414376b8c5ad5848b56afdb077ec89551d94e",
+            "receipt": "runs/grasp-anatomy-eye-r1/power-512-probe/native_result.json"
+          }
+        },
+        "training_smoke": {
+          "environments": 2,
+          "ppo_updates": 2,
+          "exit_code": 0,
+          "receipt_sha256": "c82ecb61bcd7852370c49a82c78ae94cbb32c44fc0b2661c6943f4fac6369b22"
+        },
+        "replay": {
+          "native_frames": 4,
+          "sdk_steps": [
+            2,
+            162,
+            322,
+            482
+          ],
+          "max_stereo_clock_error_s": 0.0,
+          "visible_wire_nodes_per_eye": 41,
+          "min_brown_mask_pixels": 1046,
+          "app_close_returned": true,
+          "exit_code": -11,
+          "measurement_only": true,
+          "peak_detached_lift_m": 0.0,
+          "record_sha256": "51202fe49ee7f031f0d811ac69ec40fb776a5f3af7343b3bbbe830f795d184aa"
+        },
+        "previous_geometry_benchmark": {
+          "ppo_updates": 5,
+          "environments": 512,
+          "exit_code": 0,
+          "mean_iteration_seconds": 12.61394482497126,
+          "receipt_sha256": "15c1591d8a1c292214e4864a6ab6f266ae9c2d15bae84f4d5241f656d30ab38d"
+        }
+      }
+    }
   }
 }

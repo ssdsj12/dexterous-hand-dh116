@@ -1,4 +1,4 @@
-"""Frozen device PPO algorithm and complete checkpoint continuation contracts."""
+"""Device PPO algorithms and complete checkpoint continuation contracts."""
 import ast
 from copy import deepcopy
 from pathlib import Path
@@ -44,8 +44,56 @@ def test_two_actual_updates_match_original_all_parameters_adam_gae_metrics_rng(m
         assert trainer.counters == expected['counters'] and trainer.policy_version == update + 1
         assert trainer.clean_boundary
 
-def trainer_for(model):
-    return DeviceDeformablePPOTrainer(deepcopy(model), PPOConfig(lr=0.0001, epochs=1, minibatches=1, target_kl=0.02, kl_backtrack_steps=3), rollout_steps=3, num_envs=2)
+def trainer_for(model, *, fast_update=False):
+    return DeviceDeformablePPOTrainer(deepcopy(model), PPOConfig(lr=0.0001, epochs=1, minibatches=1, target_kl=0.02, kl_backtrack_steps=3), rollout_steps=3, num_envs=2, fast_update=fast_update)
+
+def test_fast_update_stops_before_the_minibatch_that_exceeds_sampled_kl(monkeypatch):
+    from dh116.rl.ppo import squashed_log_prob
+
+    model, obs, *_ = teacher_data(monkeypatch)
+    config = PPOConfig(lr=0.001, epochs=2, minibatches=2, target_kl=0.001, kl_backtrack_steps=3)
+    trainer = DeviceDeformablePPOTrainer(model, config, rollout_steps=3, num_envs=2, fast_update=True)
+    collect(trainer, obs)
+    batch = trainer.rollout.batch()
+    actor_rows, critic_rows = [], []
+    seed(35)
+    with (
+        model.actor.register_forward_pre_hook(lambda module, args: actor_rows.append(len(args[0]))),
+        model.critic.register_forward_pre_hook(lambda module, args: critic_rows.append(len(args[0]))),
+    ):
+        metrics = trainer.update()
+
+    assert actor_rows == [3, 3] and critic_rows == [3]
+    assert metrics['early_stopped'] and metrics['stop_reason'] == 'target_kl'
+    assert metrics['minibatch_updates'] == 1 and metrics['optimized_samples'] == 3
+    assert 0 <= metrics['kl'] <= config.target_kl
+    assert {int(state['step']) for state in trainer.optimizer.state.values()} == {1}
+    assert trainer.policy_version == trainer.counters['updates'] == 1
+    assert trainer.clean_boundary
+
+    rejected = torch.randperm(6, generator=torch.Generator().manual_seed(35)).tensor_split(2)[1]
+    with torch.no_grad():
+        mu = model.latent_mean({key: value[rejected] for key, value in batch['actor_obs'].items()})
+        std = model.log_std.exp().expand_as(mu)
+        log_ratio = squashed_log_prob(batch['latent_actions'][rejected], mu, std) - batch['old_log_prob'][rejected]
+        expected_kl = (log_ratio.expm1() - log_ratio).mean().item()
+    assert metrics['early_stop_kl'] == pytest.approx(expected_kl)
+    assert metrics['early_stop_kl'] > config.target_kl
+
+def test_fast_update_discards_nonfinite_gradient_without_stepping_adam(monkeypatch):
+    model, obs, *_ = teacher_data(monkeypatch)
+    trainer = trainer_for(model, fast_update=True)
+    collect(trainer, obs)
+    before = parameter_digest(trainer.model)
+    with trainer.model.actor_head.weight.register_hook(lambda grad: torch.full_like(grad, torch.nan)):
+        metrics = trainer.update()
+
+    assert metrics['early_stopped'] and metrics['stop_reason'] == 'nonfinite_gradient'
+    assert metrics['minibatch_updates'] == metrics['optimized_samples'] == 0
+    assert parameter_digest(trainer.model) == before
+    assert not trainer.optimizer.state
+    assert trainer.policy_version == trainer.counters['updates'] == 0
+    assert trainer.clean_boundary
 
 def test_exact_kl_audits_full_4096_in_one_actor_forward(monkeypatch):
     from dh116.rl.ppo import latent_gaussian_kl as latent_gaussian_kl
@@ -135,12 +183,13 @@ def checkpoint_context(profile):
 def draw():
     return (torch.rand(9), random.random(), np.random.rand(9))
 
-def test_checkpoint_continues_next_actual_update_with_policy_adam_rng_and_new_session(tmp_path, monkeypatch):
+@pytest.mark.parametrize('fast_update', [False, True])
+def test_checkpoint_continues_next_actual_update_with_policy_adam_rng_and_new_session(tmp_path, monkeypatch, fast_update):
     import dh116.rl.device as cp
     from dh116.env.contracts import runti_io__file_sha256 as file_sha256
     (model, obs, profile, *_) = teacher_data(monkeypatch)
     context = checkpoint_context(profile)
-    original = trainer_for(model)
+    original = trainer_for(model, fast_update=fast_update)
     seed(101)
     collect(original, obs)
     assert original.update()['minibatch_updates'] == 1
@@ -151,17 +200,25 @@ def test_checkpoint_continues_next_actual_update_with_policy_adam_rng_and_new_se
     old_session = original.session_id
     old_capability = original._capability
     old_rollout = original.rollout
-    report = cp.save_checkpoint(path, original, **context)
+    with monkeypatch.context() as save_audit:
+        if fast_update:
+            def unexpected_roundtrip(*args, **kwargs):
+                pytest.fail('fast checkpoint save read the serialized snapshot')
+            save_audit.setattr(torch, 'load', unexpected_roundtrip)
+        report = cp.save_checkpoint(path, original, **context)
     assert digest_tree(rng()) == before_rng and parameter_digest(original.model) == before_policy
     assert digest_tree(original.optimizer.state_dict()) == before_adam
     assert original.session_id == old_session and original._capability is old_capability and (original.rollout is old_rollout)
     assert report['sha256'] == file_sha256(path) and report['physical_state_saved'] is False and (report['restart_requires_verified_reset'] is True)
+    if fast_update:
+        with pytest.raises(ValueError, match='identity'):
+            cp.load_checkpoint(path, trainer_for(model), expected_sha256=report['sha256'], **context)
     expected_draw = digest_tree(draw())
     collect(original, obs)
     expected_batch = digest_tree(original.rollout.batch())
     expected_metrics = digest_tree(original.update())
     expected_rng = digest_tree(rng())
-    restored = trainer_for(model)
+    restored = trainer_for(model, fast_update=fast_update)
     seed(999)
     draw()
     destination_session = restored.session_id

@@ -248,14 +248,19 @@ class SourceFreezeAudit:
 import types as stat_cache_relea__types
 import sys as nativ_owner__sys
 
-def run_native_session(project, archive, gpu, num_envs, output, *, max_sdk_step, author_and_exercise, owned_names, runtime_source_audit=True):
+def run_native_session(project, archive, gpu, num_envs, output, *, max_sdk_step, author_and_exercise,
+                       owned_names, runtime_source_audit=True, enable_cameras=False):
     _nativ_sessi_import__assert_clean_import_boundary = assert_clean_import_boundary
     _nativ_sessi_import__assert_clean_import_boundary()
     from isaaclab.app import AppLauncher
     argv = nativ_sessi__sys.argv
     try:
         nativ_sessi__sys.argv = argv[:1]
-        app = AppLauncher(headless=True, device='cuda:0', enable_cameras=False, fast_shutdown=False, experience=archive.experience).app
+        # The offscreen camera experience caps the renderer at one adapter.
+        # Its default selector maps the single visible CUDA UUID to Vulkan.
+        experience = '' if enable_cameras else archive.experience
+        app = AppLauncher(headless=True, device='cuda:0', enable_cameras=enable_cameras,
+                          fast_shutdown=False, experience=experience).app
     finally:
         nativ_sessi__sys.argv = argv
     entered = False
@@ -335,7 +340,7 @@ def run_native_session(project, archive, gpu, num_envs, output, *, max_sdk_step,
                 raise RuntimeError('; '.join(errors)) from None
             return True
         entered = True
-        return _nativ_sessi_import__run_lifecycle_with_stat_cache(SimpleNamespace(update=app.update, close=lambda : app.close(wait_for_replicator=False)), lifecycle=_nativ_sessi_import__run_lifecycle, cache_release=cache, read_sim=read_sim, read_completed_sdk_step=lambda : completed_step, max_sdk_step=max_sdk_step, make_sim=make_sim, acquire=acquire, synchronize=lambda : torch.cuda.synchronize(0), clear_sim=lambda sim: _nativ_sessi_import__clear_known_simulation_instance(sim, contract=clear_contract), stop=stop, manager_is_none=lambda : SimulationManager.get_physics_sim_view() is None, freeze=freeze, output=output, cleanup='explicit', owned_names=tuple(owned_names), trace_factory=_nativ_sessi_import__StartupTrace, before_close_guard=release_before_close)
+        return _nativ_sessi_import__run_lifecycle_with_stat_cache(SimpleNamespace(update=app.update, close=lambda: app.close(wait_for_replicator=False)), lifecycle=_nativ_sessi_import__run_lifecycle, cache_release=cache, read_sim=read_sim, read_completed_sdk_step=lambda : completed_step, max_sdk_step=max_sdk_step, make_sim=make_sim, acquire=acquire, synchronize=lambda : torch.cuda.synchronize(0), clear_sim=lambda sim: _nativ_sessi_import__clear_known_simulation_instance(sim, contract=clear_contract), stop=stop, manager_is_none=lambda : SimulationManager.get_physics_sim_view() is None, freeze=freeze, output=output, cleanup='explicit', owned_names=tuple(owned_names), trace_factory=_nativ_sessi_import__StartupTrace, before_close_guard=release_before_close)
     finally:
         if not entered:
             app.close(wait_for_replicator=False)

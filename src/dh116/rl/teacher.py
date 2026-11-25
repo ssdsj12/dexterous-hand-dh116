@@ -669,7 +669,6 @@ class TensorSourceOwner:
         distance = self._floating(distance_m, (len(ids),), 'measured Reset distance').double()
         if bool((~tenso_sourc_owner__torch.isfinite(distance) | (distance < 0)).any()):
             raise ValueError('actual finite nonnegative measured Reset distance required')
-        self._verify_profile()
         boundary = self._boundary()
         identities = self._identities(boundary)
         for lane in ids:
@@ -677,11 +676,15 @@ class TensorSourceOwner:
             current = identities[lane]
             if current.rod_tick != 0 or (prior is not None and (current.reset_id == prior.reset_id or current.episode_uid == prior.episode_uid)):
                 raise ValueError('fresh zero-tick nodes and a new native Reset epoch required')
-        (rest, total) = self._read_parameters(boundary)
-        keep = tenso_sourc_owner__torch.ones(self.n, dtype=tenso_sourc_owner__torch.bool, device=self.device)
-        keep[selected] = False
-        if not tenso_sourc_owner__torch.equal(rest[keep], self._rest[keep]) or not tenso_sourc_owner__torch.equal(total[keep], self._rest_total[keep]):
-            raise ValueError('selected Reset changed peer material rest references')
+        if self.context_mode != FULL_CONTEXT_MODE:
+            self._verify_profile()
+            rest, total = self._read_parameters(boundary)
+            keep = tenso_sourc_owner__torch.ones(self.n, dtype=tenso_sourc_owner__torch.bool, device=self.device)
+            keep[selected] = False
+            if not tenso_sourc_owner__torch.equal(rest[keep], self._rest[keep]) or not tenso_sourc_owner__torch.equal(total[keep], self._rest_total[keep]):
+                raise ValueError('selected Reset changed peer material rest references')
+            self._rest[selected] = rest[selected]
+            self._rest_total[selected] = total[selected]
         p = tenso_sourc_owner__torch.as_tensor(self.runtime.solver.positions(), device=self.device).detach()
         if p.shape != (self.n, 41, 3):
             raise ValueError('actual complete source-owned Reset nodes required')
@@ -696,8 +699,6 @@ class TensorSourceOwner:
         self._reference_sdk[selected] = boundary.sdk_step
         self._reference_policy_time[selected] = boundary.policy_time_s
         self._previous[selected] = 0.0
-        self._rest[selected] = rest[selected]
-        self._rest_total[selected] = total[selected]
         for lane in ids:
             self._reset_identities[lane] = identities[lane]
             self._previous_tokens[lane] = 'measured-reset:' + identities[lane].episode_uid
@@ -828,6 +829,8 @@ class TensorNativeTeacher(EagerRuntimePolicy, PrivilegedTeacher):
             raise ValueError('unchanged shared finger-goal model/reward configuration required')
         context_mode = _TEACHER_CONTEXT_MODES[reward.profile]
         identity = dict(policy_version='dh116-tensor-native-context-teacher-v1', source_family='shared_batched_solver_v1', grasp=grasp, task_kind='deformable_rod', parent_num_envs=num_envs, action_size=24, common_size=371, measured_common_size=66, raw_common_unknown='NaN_false_305', context_size=50, context_mode=context_mode, input_keys=list(tenso_nativ_teach__INPUT_KEYS), backend_sha256=backend_profile.binary_sha256, backend_profile_sha256=backend_profile.digest, source_tree_sha256=backend_profile.source_tree_sha256, config_semantic_sha256=tenso_nativ_teach__digest(config), reward_config_sha256=reward.config_sha256, rod_position_frame='world_minus_environment_origin', other_rod_vector_frames='world', physics_coordinate_frame='world', checkpoint_namespace='tensor_native_teacher_' + grasp + '_v1', native_ready=False, teacher_admission=False, grasp_qualified=False, backend_scope='flat_candidate_unqualified', architecture=dict(common=[66, 256, 256], rod=[13, 64, 64], context=[100, 64, 64], fusion=448, actor=24, critic=1))
+        from dh116.env.contracts import action_sha256
+        identity['action_contract_sha256'] = action_sha256()
         identity['dependency_source_sha256'] = {name: file_sha256(source_file(name)) for name in ('rl/teacher.py','rl/device.py','physics/solver.py','rl/ppo.py','env/contracts.py')}
         identity['model_identity_sha256'] = tenso_nativ_teach__digest(identity)
         initialize_native_network(self, identity, backend_profile, context_mode, model['initial_std'])

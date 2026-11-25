@@ -1363,6 +1363,17 @@ def _clock(value):
         raise ValueError('invalid raw render clock')
     return tiled_stere_captu__copy.deepcopy(value)
 
+_CAPTURE_TIME_TOLERANCE_S = 1e-6
+
+
+def _validate_capture_time(raw_clock, physical_timestamp_s):
+    if (type(physical_timestamp_s) not in (float, int)
+            or not tiled_stere_captu__math.isfinite(physical_timestamp_s)
+            or physical_timestamp_s < 0
+            or abs(raw_clock['simulation_time'] - physical_timestamp_s) > _CAPTURE_TIME_TOLERANCE_S):
+        raise ValueError('render and physical timestamps must agree within 1e-6 seconds')
+
+
 class TiledNativeStereoReader:
     """Two fixed camera prims, two render products, one external render boundary."""
     pose_backend = 'two_fixed_usd_cameras_isaac45'
@@ -1430,7 +1441,8 @@ class TiledNativeStereoReader:
 
 class TiledStereoCapture:
 
-    def __init__(self, sim, reader, calibration, snapshot, *, render_setting, max_render_attempts=4, origins=None):
+    def __init__(self, sim, reader, calibration, snapshot, *, render_setting, max_render_attempts=4,
+                 origins=None, initial_reset_clock=False):
         if not isinstance(calibration, tiled_stere_captu__StereoCalibration) or not callable(snapshot):
             raise ValueError('calibration and physical snapshot required')
         if type(max_render_attempts) is not int or not 1 <= max_render_attempts <= 16:
@@ -1441,6 +1453,9 @@ class TiledStereoCapture:
             raise ValueError('render setting get/set required')
         (self.sim, self.reader, self.calibration, self.snapshot) = (sim, reader, calibration, snapshot)
         (self.render_setting, self.max_render_attempts, self.origins) = (render_setting, max_render_attempts, origins)
+        if type(initial_reset_clock) is not bool:
+            raise ValueError('initial Reset clock mode must be explicit')
+        self._reset_origin = (sim.current_time_step_index, float(sim.current_time)) if initial_reset_clock else None
         self.last_capture_id = 0
         self.last_epoch = None
         self.last_episode = None
@@ -1448,7 +1463,9 @@ class TiledStereoCapture:
         self._close_error = None
 
     @classmethod
-    def from_native(cls, sim, origins, calibration, snapshot, *, width=640, height=480, horizontal_fov_degrees=75.0, device='cuda:0', render_setting=None, max_render_attempts=4, max_readback_bytes=1024 ** 3):
+    def from_native(cls, sim, origins, calibration, snapshot, *, width=640, height=480,
+                    horizontal_fov_degrees=75.0, device='cuda:0', render_setting=None,
+                    max_render_attempts=4, max_readback_bytes=1024 ** 3, initial_reset_clock=False):
         try:
             _tiled_stere_captu_import__TiledNativeStereoReader = TiledNativeStereoReader
             if not callable(snapshot):
@@ -1461,7 +1478,8 @@ class TiledStereoCapture:
                 raise ValueError('readable boolean render setting required')
             reader = _tiled_stere_captu_import__TiledNativeStereoReader(sim, origins, cal, device, max_readback_bytes=max_readback_bytes)
             try:
-                return cls(sim, reader, cal, snapshot, render_setting=setting, origins=origins, max_render_attempts=max_render_attempts)
+                return cls(sim, reader, cal, snapshot, render_setting=setting, origins=origins,
+                           max_render_attempts=max_render_attempts, initial_reset_clock=initial_reset_clock)
             except BaseException:
                 reader.close()
                 raise
@@ -1477,11 +1495,23 @@ class TiledStereoCapture:
         stamp = float(self.sim.current_time)
         if type(step) is not int or step < 0 or (not tiled_stere_captu__math.isfinite(stamp)) or (stamp < 0):
             raise ValueError('invalid physical SDK clock')
-        tiled_stere_captu__validate_identity(rows, len(rows), stamp)
+        physical_timestamp = stamp
+        if self._reset_origin is not None:
+            origin_step, origin_stamp = self._reset_origin
+            if step < origin_step or stamp < origin_stamp:
+                raise ValueError('physical SDK clock predates the initial Reset')
+            if self.last_capture_id == 0 and (
+                (step, stamp) != self._reset_origin
+                or any(row['policy_tick'] != 0 or row['rod_tick'] != 0
+                       or row['solver_time_s'] != 0.0 for row in rows)
+            ):
+                raise ValueError('initial native render must anchor to the measured zero-motion Reset')
+            physical_timestamp = stamp - origin_stamp
+        tiled_stere_captu__validate_identity(rows, len(rows), physical_timestamp)
         for row in rows:
             if any((type(row[k]) is not int or row[k] < 0 for k in ('sdk_step', 'rod_step', 'rod_tick'))) or any((isinstance(row[k], bool) or not isinstance(row[k], (int, float)) or (not tiled_stere_captu__math.isfinite(row[k])) or (row[k] < 0) for k in ('sdk_timestamp_s', 'solver_time_s'))) or row['sdk_step'] != step or (abs(row['sdk_timestamp_s'] - stamp) > 1e-06) or (row['calibration_sha256'] != self.calibration.sha256) or (not isinstance(row['state_sha256'], str)) or (not tiled_stere_captu__re.fullmatch('[0-9a-f]{64}', row['state_sha256'])) or any((not isinstance(row[k], str) or not row[k] for k in ('rod_uid', 'material_reference_uid'))):
                 raise ValueError('invalid physical/rod state binding')
-        return (before, rows, step, stamp)
+        return before, rows, step, stamp, physical_timestamp
 
     def capture(self):
         if self._closed:
@@ -1499,7 +1529,10 @@ class TiledStereoCapture:
             if self.render_setting.get() is not original:
                 raise RuntimeError('render setting restore failed')
         timing = packet['render_timing']
-        if type(self.sim.current_time_step_index) is not int or self.sim.current_time_step_index != timing['physical_step'] or float(self.sim.current_time) != timing['physical_timestamp_s'] or (not tiled_stere_captu___same_snapshot(self.snapshot(), packet['identity'])):
+        if (type(self.sim.current_time_step_index) is not int
+                or self.sim.current_time_step_index != timing['physical_step']
+                or float(self.sim.current_time) != timing['absolute_sdk_timestamp_s']
+                or not tiled_stere_captu___same_snapshot(self.snapshot(), packet['identity'])):
             raise RuntimeError('physical state changed during camera restoration')
         rows = packet['identity'] if isinstance(packet['identity'], list) else [packet['identity']]
         self.last_capture_id = timing['capture_id']
@@ -1508,7 +1541,7 @@ class TiledStereoCapture:
         return packet
 
     def _capture(self):
-        (before, rows, step, stamp) = self._physical()
+        before, rows, step, stamp, physical_timestamp = self._physical()
         episode = tuple(((r['run_uuid'], r['env_id'], r['episode_uid'], r['reset_id']) for r in rows))
         previous = self.last_epoch if episode == self.last_episode else None
 
@@ -1547,7 +1580,8 @@ class TiledStereoCapture:
                 raw = _clock(packet['raw_clock'])
                 if raw != current:
                     raise ValueError('fixed camera returned a stale render product')
-                if _clock(self.reader.read_clock())['render_frame_number'] != current['render_frame_number']:
+                _validate_capture_time(raw, physical_timestamp)
+                if _clock(self.reader.read_clock()) != current:
                     raise ValueError('raw render clock changed during paired image read')
                 if type(packet['native_evidence']) is not bool:
                     raise ValueError('explicit reader source required')
@@ -1563,7 +1597,18 @@ class TiledStereoCapture:
         self.calibration.validate_readback(left['K'], right['K'], left['T_world'], right['T_world'], origins=self.origins)
         check()
         capture_id = self.last_capture_id + 1
-        timing = dict(capture_id=capture_id, raw_left_clock=left['raw_clock'], raw_right_clock=right['raw_clock'], camera_pose_backend=getattr(self.reader, 'pose_backend', 'unspecified'), raw_left_metadata=str(left.get('raw_time_metadata', 'unavailable'))[:4096], raw_right_metadata=str(right.get('raw_time_metadata', 'unavailable'))[:4096], physical_timestamp_s=stamp, physical_step=step, clock_mapping='single_render_frozen_physics_boundary', native_synchronization_qualified=False)
+        origin_step, origin_stamp = self._reset_origin or (None, None)
+        timing = dict(
+            capture_id=capture_id, raw_left_clock=left['raw_clock'], raw_right_clock=right['raw_clock'],
+            camera_pose_backend=getattr(self.reader, 'pose_backend', 'unspecified'),
+            raw_left_metadata=str(left.get('raw_time_metadata', 'unavailable'))[:4096],
+            raw_right_metadata=str(right.get('raw_time_metadata', 'unavailable'))[:4096],
+            physical_step=step, physical_timestamp_s=physical_timestamp, absolute_sdk_timestamp_s=stamp,
+            reset_origin_sdk_step=origin_step, reset_origin_sdk_timestamp_s=origin_stamp,
+            clock_mapping='same_render_and_sdk_initial_reset_elapsed' if self._reset_origin is not None
+            else 'same_render_and_absolute_sdk',
+            native_synchronization_qualified=False,
+        )
         return dict(left_rgb=left['rgb'], right_rgb=right['rgb'], identity=before, calibration_sha256=self.calibration.sha256, K_left=left['K'], K_right=right['K'], T_world_left=left['T_world'], T_world_right=right['T_world'], render_timing=timing, render_passes=render_calls, source_scope='native_tiled_reader' if left['native_evidence'] and right['native_evidence'] else 'cpu_fixture')
 
     def close(self):
@@ -1579,3 +1624,65 @@ class TiledStereoCapture:
             raise
         finally:
             self.sim = self.reader = self.snapshot = self.render_setting = self.origins = None
+
+
+def rod_preview_mesh(nodes, radius):
+    """Return a capped display tube centered on all 41 measured material nodes."""
+    np = depth_hand_point__np
+    nodes = np.asarray(nodes, dtype=np.float64)
+    if nodes.shape != (41, 3) or not np.isfinite(nodes).all() or not np.isfinite(radius) or radius <= 0:
+        raise ValueError('preview requires 41 finite rod nodes and the positive contact radius')
+    segments = np.diff(nodes, axis=0)
+    lengths = np.linalg.norm(segments, axis=1)
+    if (lengths <= 1e-12).any():
+        raise ValueError('degenerate measured rod segment')
+    directions = segments / lengths[:, None]
+    bisectors = directions[:-1] + directions[1:]
+    reversed_segments = np.linalg.norm(bisectors, axis=1) < 1e-12
+    bisectors[reversed_segments] = directions[1:][reversed_segments]
+    tangents = np.vstack((directions[0], bisectors, directions[-1]))
+    tangents /= np.linalg.norm(tangents, axis=1, keepdims=True)
+
+    sides = 12
+    angles = np.linspace(0.0, 2.0 * np.pi, sides, endpoint=False)
+    cosine, sine = np.cos(angles)[:, None], np.sin(angles)[:, None]
+    normal = np.zeros(3)
+    rings = []
+    for center, tangent in zip(nodes, tangents, strict=True):
+        normal = normal - np.dot(normal, tangent) * tangent
+        length = np.linalg.norm(normal)
+        if length < 1e-12:
+            normal = np.cross(tangent, np.eye(3)[np.argmin(np.abs(tangent))])
+            length = np.linalg.norm(normal)
+        normal /= length
+        radial = cosine * normal + sine * np.cross(tangent, normal)
+        rings.append(center + radius * radial)
+    faces = [
+        (row * sides + column, row * sides + (column + 1) % sides,
+         (row + 1) * sides + (column + 1) % sides, (row + 1) * sides + column)
+        for row in range(len(nodes) - 1) for column in range(sides)
+    ]
+    faces.extend((tuple(reversed(range(sides))), tuple(range(len(nodes) * sides - sides, len(nodes) * sides))))
+    return np.concatenate(rings).astype(np.float32), faces
+
+
+def student_rgb_frame(capture, proprio):
+    """Export only the native RGB-clock and measured proprioception."""
+    if capture.get('source_scope') != 'native_tiled_reader':
+        raise ValueError('Student RGB requires a native tiled render')
+    timing = capture['render_timing']
+    left_clock, right_clock = (_clock(timing[f'raw_{side}_clock']) for side in ('left', 'right'))
+    if left_clock != right_clock:
+        raise ValueError('Student RGB requires a shared render')
+    for clock in (left_clock, right_clock):
+        _validate_capture_time(clock, timing['physical_timestamp_s'])
+    left, right = capture['left_rgb'], capture['right_rgb']
+    torch = tiled_stere_captu__torch
+    if (not isinstance(proprio, torch.Tensor) or proprio.dtype != torch.float32
+            or proprio.shape != (len(left), 62) or not torch.isfinite(proprio).all()
+            or (proprio[:, 38:].abs() > 1).any()):
+        raise ValueError('measured Student proprioception with the actual previous action is required')
+    stamp = left_clock['simulation_time']
+    return dict(left_rgb=left.detach().cpu().clone(), right_rgb=right.detach().cpu().clone(),
+                proprio=proprio.detach().cpu().clone(), frame_id=left_clock['render_frame_number'],
+                left_timestamp_s=stamp, right_timestamp_s=stamp, now_timestamp_s=stamp)

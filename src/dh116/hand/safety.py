@@ -567,7 +567,7 @@ DT = 1 / 480
 
 class TensorControl:
 
-    def __init__(self, batch, root_seed_w, bindings, mesh_names, *, isolate_constraints=False):
+    def __init__(self, batch, root_seed_w, bindings, mesh_names, *, isolate_constraints=False, soft_constraints=False):
         self.batch = batch
         self.roots = root_seed_w.detach().double().clone()
         self.device = self.roots.device
@@ -593,6 +593,34 @@ class TensorControl:
         self.epoch = 0
         self.mesh_count = len(mesh_names)
         self.isolate_constraints = isolate_constraints
+        self.soft_constraints = soft_constraints
+        if self.soft_constraints:
+            limits = []
+            finger_ids = []
+            follower_ids, master_ids, ratios, offsets = [], [], [], []
+            offset = 0
+            for idx, side in enumerate(('left', 'right')):
+                owner = batch.sides[side]
+                joints = sorted(set(self.active[idx]) | {f for f, _, _, _ in self.mimic[idx]})
+                readback = owner.hand.root_physx_view.get_dof_limits().to(self.device)
+                limits.append(readback.index_select(0, owner.row_indices)[:, joints])
+                finger_ids.extend(offset + j for j in joints)
+                for f, m, ratio, bias in self.mimic[idx]:
+                    follower_ids.append(offset + f)
+                    master_ids.append(offset + m)
+                    ratios.append(ratio)
+                    offsets.append(bias)
+                offset += len(owner.joint_names)
+            t = tenso_contr__torch
+            self.finger_hard_limits = t.cat(limits, dim=1).float()
+            if not bool(t.isfinite(self.finger_hard_limits).all()
+                        & (self.finger_hard_limits[..., 0] < self.finger_hard_limits[..., 1]).all()):
+                raise ValueError('finite increasing native finger hard limits required')
+            self._finger_ids = t.tensor(finger_ids, device=self.device)
+            self._mimic_follower_ids = t.tensor(follower_ids, device=self.device)
+            self._mimic_master_ids = t.tensor(master_ids, device=self.device)
+            self._mimic_ratios = t.tensor(ratios, device=self.device, dtype=t.float32)
+            self._mimic_offsets = t.tensor(offsets, device=self.device, dtype=t.float32)
         self.fixed_fingers = ()
         self._failed = False
 
@@ -605,6 +633,17 @@ class TensorControl:
             self.angles[env_ids] = 0
         self.pending = None
         self.epoch += 1
+
+    def measured_joint_guards(self, state):
+        """Read gross hard-limit violations and continuous, normalized costs."""
+        q = state['q'].flatten(1).float()
+        low, high = self.finger_hard_limits.unbind(-1)
+        q_finger = q[:, self._finger_ids]
+        gap = tenso_contr__torch.minimum(q_finger - low, high - q_finger)
+        mimic = q[:, self._mimic_follower_ids] - self._mimic_ratios * q[:, self._mimic_master_ids] - self._mimic_offsets
+        return ((gap < -0.25).any(1),
+                ((mimic.abs().amax(1) - 0.08) / 0.08).clamp(0, 1),
+                ((0.05 - gap.amin(1)) / 0.05).clamp(0, 1))
 
     def joint_failures(self, state):
         q = state['q'].double()
@@ -634,26 +673,28 @@ class TensorControl:
                 self._failed = True
                 raise ValueError('finite complete actual pre-action roots/base/clearance required')
             finite_inputs.append(value)
-        finite = tenso_contr__torch.isfinite(tenso_contr__torch.cat([v.reshape(-1) for v in finite_inputs])).all()
-        if not bool(finite & ~(actions.abs() > 1).any()):
-            validate_actions(actions)
-            self._failed = True
-            raise ValueError('finite complete actual pre-action state/base/clearance required')
+        if not self.soft_constraints:
+            finite = tenso_contr__torch.stack([tenso_contr__torch.isfinite(v).all() for v in finite_inputs]).all()
+            if not bool(finite & ~(actions.abs() > 1).any()):
+                validate_actions(actions)
+                self._failed = True
+                raise ValueError('finite complete actual pre-action state/base/clearance required')
         q = state['q'].double()
         command = tenso_contr__torch.cat([state['backend_targets'][:, s, self.active[s]].double() for s in (0, 1)], 1)
         actual = tenso_contr__torch.cat([q[:, s, self.active[s]] for s in (0, 1)], 1)
-        mimic = tenso_contr__torch.stack([q[:, s, f] - ratio * q[:, s, m] - offset for s in (0, 1) for (f, m, ratio, offset) in self.mimic[s]], 1)
         if halted is None:
             halted = tenso_contr__torch.zeros(self.n, device=self.device, dtype=tenso_contr__torch.bool)
         action = actions.double()
-        target = finger_pre_guard(command, action, actual, mimic, self.low, self.high, DT, self.rates, policy_owned=True)
+        target = finger_pre_guard(command, action, actual, None, self.low, self.high, DT, self.rates, policy_owned=True)
         (_, target) = surface_final_guard(command, target, self.low, self.high, DT)
         if self.fixed_fingers:
             target[:, self.fixed_fingers] = command[:, self.fixed_fingers]
         (palm, angle) = wrist_requested_targets(self.palms, self.angles, action, self.rates, DT)
-        projection = project_tensor_policy_wrist_targets(root_seed_w=self.roots, measured_base_w=base_poses_wxyz.double(), common_lift_offset_m=self.roots.new_zeros(self.n), measured_clearance_m=clearance_m.double(), palm_offsets_m=self.palms, requested_palm_offsets_m=palm, angles_rad=self.angles, requested_angles_rad=angle, allowed=~halted, live=~halted)
+        projection = project_tensor_policy_wrist_targets(root_seed_w=self.roots, measured_base_w=base_poses_wxyz.double(), common_lift_offset_m=self.roots.new_zeros(self.n), measured_clearance_m=clearance_m.double(), palm_offsets_m=self.palms, requested_palm_offsets_m=palm, angles_rad=self.angles, requested_angles_rad=angle, allowed=~halted, live=~halted, validate_values=not self.soft_constraints)
         anchors = state['root_pose_wxyz'].double()
         local = tenso_contr__torch.stack([local_translation(projection['projected_root_poses'][:, s], anchors[:, s]) for s in (0, 1)], 1)
+        if self.soft_constraints:
+            local = local.clamp(-MOUNT['limit_m'], MOUNT['limit_m'])
         bad = (local.abs() > MOUNT['limit_m']).any((1, 2)) & ~halted
         if not self.isolate_constraints and bool(bad.any()):
             raise ValueError('original mount translation hard limit')
@@ -683,23 +724,42 @@ class TensorControl:
                 if not isinstance(value, tenso_contr__torch.Tensor) or value.shape != (self.n, len(self.write_ids[s])) or value.device != self.device or (not value.is_floating_point()):
                     raise ValueError('finite complete projected command before native write required')
             finite_inputs = [wrenches, state['link_pose_xyzw'], state['body_com_pose_w'], *transaction['expected']]
-            finite = tenso_contr__torch.isfinite(tenso_contr__torch.cat([v.reshape(-1) for v in finite_inputs])).all()
             forces = []
             torques = []
             over_force = []
+            submit_valid = reaction_source.get('valid')
+            if submit_valid is None:
+                submit_valid = ~tenso_contr__torch.zeros_like(transaction['halted'])
             for s in (0, 1):
                 bodies = self.contact_bodies[s]
                 w = wrenches[:, self.slots[s]].double()
                 origin = state['link_pose_xyzw'][:, s, bodies, :3].double()
                 com = state['body_com_pose_w'][:, s, bodies, :3].double()
-                over_force.append((tenso_contr__torch.linalg.vector_norm(w[..., :3], dim=-1) > 30).any(1))
+                magnitude = tenso_contr__torch.linalg.vector_norm(w[..., :3], dim=-1)
+                if self.soft_constraints:
+                    # Limit the applied wrench only; accounting retains the original measured forces.
+                    w = w * (40.0 / magnitude.clamp_min(40.0))[..., None]
+                else:
+                    over_force.append((magnitude > 30).any(1))
                 forces.append(w[..., :3].float())
                 torques.append((w[..., 3:] + tenso_contr__torch.linalg.cross(origin - com, w[..., :3], dim=-1)).float())
-            representable = tenso_contr__torch.isfinite(tenso_contr__torch.cat([v.reshape(-1) for v in forces + torques])).all()
-            over_force = tenso_contr__torch.stack(over_force).any(0)
-            if not bool(finite & representable):
-                raise ValueError('finite command/link/COM/wrench and representable SDK force/COM torque required')
-            if self.isolate_constraints:
+            if self.soft_constraints:
+                for values in (*forces, *torques, *transaction['expected']):
+                    submit_valid = submit_valid & tenso_contr__torch.isfinite(values).flatten(1).all(1)
+                transaction['submit_valid'] = submit_valid
+                isolated = transaction['halted'] | ~submit_valid
+                for s in (0, 1):
+                    previous = state['backend_targets'][:, s, self.write_ids[s]]
+                    transaction['expected'][s] = tenso_contr__torch.where(isolated[:, None], previous, transaction['expected'][s])
+                    forces[s] = forces[s].masked_fill(isolated[:, None, None], 0)
+                    torques[s] = torques[s].masked_fill(isolated[:, None, None], 0)
+            else:
+                finite = tenso_contr__torch.stack([
+                    tenso_contr__torch.isfinite(v).all() for v in finite_inputs + forces + torques]).all()
+                if not bool(finite):
+                    raise ValueError('finite command/link/COM/wrench and representable SDK force/COM torque required')
+                over_force = tenso_contr__torch.stack(over_force).any(0)
+            if self.isolate_constraints and not self.soft_constraints:
                 transaction['constraint_failure'] |= over_force & ~transaction['halted']
                 isolated = transaction['halted'] | transaction['constraint_failure']
                 for s in (0, 1):
@@ -707,7 +767,7 @@ class TensorControl:
                     transaction['expected'][s] = tenso_contr__torch.where(isolated[:, None], previous, transaction['expected'][s])
                     forces[s] = forces[s].masked_fill(isolated[:, None, None], 0)
                     torques[s] = torques[s].masked_fill(isolated[:, None, None], 0)
-            elif bool(over_force.any()):
+            elif not self.soft_constraints and bool(over_force.any()):
                 raise ValueError('original 30 N reaction guard failed')
             for (s, side) in enumerate(('left', 'right')):
                 owner = self.batch.sides[side]
@@ -728,15 +788,18 @@ class TensorControl:
             self._failed = True
             self.pending = None
             raise ValueError('one actual SDK/rod step with unchanged source identity required by owned batch')
-        bad = self.joint_failures(state)
-        wrong_target = tenso_contr__torch.zeros_like(bad)
-        for s in (0, 1):
-            actual = state['backend_targets'][:, s, self.write_ids[s]]
-            wrong_target |= ~tenso_contr__torch.isclose(actual, transaction['expected'][s], rtol=0, atol=1e-07).all(1)
-        if bool(wrong_target.any()) or (not self.isolate_constraints and bool(bad.any())):
-            self.pending = None
-            self._failed = True
-            raise ValueError('actual SDK target/finite/joint/MIMIC guard failed')
+        if self.soft_constraints:
+            bad, transaction['soft_mimic'], transaction['soft_joint_limit'] = self.measured_joint_guards(state)
+        else:
+            bad = self.joint_failures(state)
+            wrong_target = tenso_contr__torch.zeros_like(bad)
+            for s in (0, 1):
+                actual = state['backend_targets'][:, s, self.write_ids[s]]
+                wrong_target |= ~tenso_contr__torch.isclose(actual, transaction['expected'][s], rtol=0, atol=1e-07).all(1)
+            if bool(wrong_target.any()) or (not self.isolate_constraints and bool(bad.any())):
+                self.pending = None
+                self._failed = True
+                raise ValueError('actual SDK target/finite/joint/MIMIC guard failed')
         active = ~(transaction['halted'] | transaction['constraint_failure'] | bad)
         self.palms = tenso_contr__torch.where(active[:, None, None], transaction['projection']['palm_offsets_m'], self.palms)
         self.angles = tenso_contr__torch.where(active[:, None, None], transaction['projection']['projected_angles'], self.angles)
