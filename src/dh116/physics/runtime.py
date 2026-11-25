@@ -797,13 +797,8 @@ class NativeTensorPhysicsRuntime:
                 self._soft_pad_depth = ((-0.0008 - min_gap) / 0.0022).clamp(0, 1)
             else:
                 require_substep_guard(min_gap < -0.003, 'Reset pad is behind its native SDF surface')
-            # Outside the lattice use only a center-to-cable approach distance.
-            # Guard and cost inputs retain the measured in-lattice gaps.
-            sides, links, *_ = self.geometry._policy_pad_data
-            centers = poses[:, sides, links, :3].float()
-            center_gap = (p[:, None].float() - centers[:, :, None]).norm(dim=-1).amin(-1)
-            center_gap = center_gap - self.radii[subset, None].float()
-            return torch.where(valid.any(-1), nearest, center_gap).clamp_min(0).mean(-1).double()
+            # Boundary extension is used only for the approach potential.
+            return gaps.amin(-1).clamp_min(0).mean(-1).double()
         power_distance = None
         if self.style == 'power':
             rows = torch.arange(len(p), device=self.device)[:, None]

@@ -1090,5 +1090,106 @@
       "teacher": false,
       "grasp": false
     }
+  },
+  "grasp_approach_r8": {
+    "baseline_commit": "fd6e44c502f2497d665d6d68b900a1b7e3183151",
+    "r7_completed_training": {
+      "pinch": {
+        "receipt_sha256": "83c3661ef9108f96aaa889da540b71e785375a695b7d544f059bdb4e1a7e38b6",
+        "latest_checkpoint_sha256": "e495a738c21910b199dde7b03c3bacdff0a9c01c43defbd1b496a3b58425387a",
+        "updates": 64,
+        "environments": 512,
+        "exit_code": 0,
+        "metrics_peak": {
+          "bilateral_support_rate": 0.00189208984375,
+          "prelift_potential": 0.24606807768370695,
+          "detached_lift_m": 0.0,
+          "hold_s": 0.0,
+          "successes": 0.0
+        }
+      },
+      "tripod": {
+        "receipt_sha256": "895c144089544ae940960febe06cc0487eb114deb70ed811b24eeecc10b216b1",
+        "latest_checkpoint_sha256": "5df9a7bacaa38ed9c1c367ed57b239c8897eaf87c5076fe830696573eb9dfeda",
+        "updates": 32,
+        "environments": 512,
+        "exit_code": 0,
+        "metrics_peak": {
+          "bilateral_support_rate": 0.0,
+          "prelift_potential": 0.442512185562115,
+          "detached_lift_m": 0.0,
+          "hold_s": 0.0,
+          "successes": 0.0
+        }
+      },
+      "power": {
+        "receipt_sha256": "3cd3f435cd8ecd63fc8ce7197e7a835c35cd420c76b6e8ccb4470b2aedf51e10",
+        "latest_checkpoint_sha256": "854f7065aeb016ddc60fc76800ac3d621a7ed87cbbc640cda56ff589d20ccdeb",
+        "updates": 16,
+        "environments": 512,
+        "exit_code": 0,
+        "metrics_peak": {
+          "bilateral_support_rate": 0.0,
+          "prelift_potential": 0.0,
+          "detached_lift_m": 0.0,
+          "hold_s": 0.0,
+          "successes": 0.0
+        }
+      }
+    },
+    "r8_approach": {
+      "tests": {
+        "cpu_passed": 227,
+        "cpu_skipped": 12,
+        "cuda_passed": 13
+      },
+      "locked_sdf_boundary_min_gap_m": {
+        "pinch": 0.007000001035630703,
+        "tripod": 0.007000001035630703,
+        "power": 0.007000000104308128
+      },
+      "runtime_source_sha256": {
+        "src/dh116/physics/runtime.py": "90a09e777d59654d2444d5019f3d0d8460aef326e7ef977957ef6d2e4e6c8000",
+        "src/dh116/physics/geometry.py": "f0a0e73a289874d701fc66f757628c93e12d9500f7e737cbde0be0b16ac07dcc"
+      },
+      "cuda_geometry_manifest_sha256": "b404fec530a64a762784fa47fb6502caaaa67ea268590cdc9ab3efa3ba92e514",
+      "original_cuda_binary_sha256": "28ea506daab85a9f2b19f88dbee2e41caf72091dcb47001ce18b407a5c1f7bbe",
+      "invalid_stale_manifest_attempts": {
+        "pinch": {
+          "exit_code": 1,
+          "worker_log_sha256": "c757459065c3318fc7ce14fb646a4210412ff0b13380043d9a2c484812afc556"
+        },
+        "tripod": {
+          "exit_code": 1,
+          "worker_log_sha256": "708c3d2ef35fb8559e73713c3d51450e141e8a9be71c53c11261785f89eb84fe"
+        }
+      },
+      "probes": {
+        "environments": 512,
+        "controls": 2,
+        "updates": 0,
+        "by_grasp": {
+          "pinch": {
+            "receipt_sha256": "014feb0e97354e47edff61865b620d0da2a975ef338f8a138cda55f3f2e2616c",
+            "recipe_sha256": "8f1d90fce0a31135406e60878739c0e7c488f5194a302519f9dd841800b37326",
+            "exit_code": 0
+          },
+          "tripod": {
+            "receipt_sha256": "c5454d06f6ffd6046fac3859c0566461257afebd968e7c1cd3d8e1b6d6555cc1",
+            "recipe_sha256": "49a4a4085107dfeb4d7a634a66876796200ff3babaae40e1d18ab992e40ede10",
+            "exit_code": 0
+          },
+          "power": {
+            "receipt_sha256": "2d4640ba2da1ce45731d18b2564c7efbcf18160ad2926bdd990d28d4815a521e",
+            "recipe_sha256": "4ed5efe66bad93cc2c97f5dce1229326d1a65f7592e2f0bac9c1a107286dbf01",
+            "exit_code": 0
+          }
+        }
+      }
+    },
+    "qualification": {
+      "teacher": false,
+      "grasp": false
+    }
   }
 }

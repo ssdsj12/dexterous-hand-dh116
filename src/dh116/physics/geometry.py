@@ -612,7 +612,7 @@ class TensorGeometry:
         return self.result
 
     def policy_pad_gaps(self, poses, nodes, radii):
-        """Sample the locked pad grids on-device in FP32, without hull guards."""
+        """Return signed lattice gaps and continuous approach distances outside it."""
         if not hasattr(self, '_policy_pad_data'):
             self.validate_metadata()
             if not self._pads:
@@ -637,16 +637,22 @@ class TensorGeometry:
         displacement = nodes[:, None, :, :].float() - poses[..., None, :3]
         local = displacement @ _rotation_xyzw(poses)
         lattice = (local - origin[:, None, :]) / spacing[:, None, None]
-        inside = ((lattice >= 0) & (lattice < (shape - 1)[:, None, :])).all(-1)
-        safe = torch.where(inside[..., None], lattice, 0)
-        index = safe.long()
+        upper = (shape - 1)[:, None, :]
+        inside = ((lattice >= 0) & (lattice < upper)).all(-1)
+        finite = torch.isfinite(lattice).all(-1)
+        coordinate = torch.where(finite[..., None], lattice, 0)
+        safe = torch.minimum(coordinate.clamp_min(0), upper)
+        index = torch.minimum(safe.long(), upper - 1)
         fraction = safe - index
         flat = (index * stride[:, None, :]).sum(-1) + offsets[:, None]
         values = grid[flat[..., None] + corners[:, None, :]].unflatten(-1, (2, 2, 2))
         x = torch.lerp(values[..., 0, :, :], values[..., 1, :, :], fraction[..., 0, None, None])
         y = torch.lerp(x[..., 0, :], x[..., 1, :], fraction[..., 1, None])
         phi = torch.lerp(y[..., 0], y[..., 1], fraction[..., 2])
-        return phi - radii[:, None, None].to(phi.dtype), inside
+        gap = phi - radii[:, None, None].to(phi.dtype)
+        outside = ((coordinate - safe) * spacing[:, None, None]).norm(dim=-1)
+        approach_gap = torch.where(inside, gap, gap.clamp_min(0) + outside)
+        return approach_gap.masked_fill(~finite, float('inf')), inside
 
     def _separation(self, minimum, maximum):
         low = [minimum[:, ids].amin(1) for ids in self._side_ids]

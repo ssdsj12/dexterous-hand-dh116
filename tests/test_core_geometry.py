@@ -74,6 +74,45 @@ def test_fp32_training_pad_sampling_uses_only_locked_lattice():
     assert valid[0].all() and not valid[1].any()
 
 
+def test_approach_distance_is_continuous_at_the_locked_lattice_face():
+    from types import SimpleNamespace
+    from dh116.physics.runtime import NativeTensorPhysicsRuntime
+
+    owner = _capture_owner(_grid())
+    nodes = torch.zeros((3, 41, 3), dtype=torch.float32)
+    nodes[..., 2] = .6
+    offsets = nodes.new_tensor((-.0001, 0., .0001, .001))
+    inherited_x = .02 + offsets
+    nodes[0, :4, 0] = inherited_x
+    nodes[1, :, 0] = -.021
+    # Let every node of each lane cross the same face to exercise the reward source.
+    approach_nodes = nodes.new_zeros((4, 41, 3))
+    approach_nodes[..., 0] = inherited_x[:, None]
+    approach_nodes[..., 2] = .6
+    runtime = SimpleNamespace(nodes=approach_nodes, state={'link_pose_xyzw': _poses(4).float()},
+                              full_grasp=True, radii=nodes.new_full((4,), .005),
+                              device='cpu', geometry=owner)
+    distance = NativeTensorPhysicsRuntime.distance(runtime, stamp=None)
+    torch.testing.assert_close(distance, (.0228 + offsets).double(), atol=1e-7, rtol=0)
+    assert not runtime._pad_backface.any() and not runtime._soft_pad_depth.any()
+
+    nodes[2, :, 1] = torch.nan
+    gaps, valid = owner.policy_pad_gaps(_poses(3).float(), nodes, nodes.new_full((3,), .005))
+    assert valid[0, 0, :4].tolist() == [True, False, False, False]
+    torch.testing.assert_close(gaps[0, :, :4], (.0228 + offsets).expand(2, -1), atol=1e-7, rtol=0)
+    assert not valid[1].any()
+    torch.testing.assert_close(gaps[1], nodes.new_full((2, 41), .001), atol=1e-7, rtol=0)
+    assert torch.isposinf(gaps[2]).all() and not valid[2].any()
+
+    # A nearer exterior node still guides the policy when a farther node is in the box.
+    approach_nodes[:, :, 0] = 0.
+    approach_nodes[:, 10, 0] = nodes.new_tensor((-.0199, -.0201, -.0211, -.0221))
+    distance = NativeTensorPhysicsRuntime.distance(runtime, stamp=None)
+    torch.testing.assert_close(distance, nodes.new_tensor((0., .0001, .0011, .0021)).double(),
+                               atol=1e-7, rtol=0)
+    assert runtime._pad_backface.tolist() == [True, False, False, False]
+
+
 def test_pose_transform_and_full_vertex_bounds_match_frozen_oracle():
     m = _math()
     pose = np.array([0.137, -0.293, 0.619, 1, 2, 3, 4], dtype=float)

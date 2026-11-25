@@ -1,5 +1,12 @@
 # Changelog
 
+## Continuous pre-contact distances — 2026-11-25
+
+- Extend approach distances from the locked SDF boundary. Keep signed in-lattice gaps and their masks for the original depth guards. Nonfinite coordinates do not index the grid or count as approach.
+- Replay the same 0.2 mm crossing against six locked pad and palm grids. Changes in the approach distance stay below 0.2 mm after the fix. Keep the original CUDA binary and update the verified source manifest.
+- Complete R7's 512-environment PPO comparisons. Pinch reaches brief bilateral opposition. None of the three grasps reaches qualified detached lift.
+- Pass 227 CPU tests, 13 CUDA tests and naturally exiting 512-environment native probes for the corrected recipe.
+
 ## Measured opposition and bilateral lift reward — 2026-11-25
 
 - Use simultaneous load-weighted normal directions for continuous Pinch and Tripod opposition. Separate Power finger and palm opposition. Preserve the existing discrete contact checks.
