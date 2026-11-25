@@ -1348,8 +1348,50 @@ class TripodSupportGuard:
                     rod_near[rows_part, col] = gap <= threshold[rows_part, col]
         return support_near & active[:, None], rod_near
 
+    def _cuda_support_failures(self, points, world, triangles, edges, low, high, selected):
+        # Preserve the original positive Euclidean AABB branch, including its
+        # positive-but-failed interval below the SAT cutoff.
+        aabb_gap = torch.maximum(low - world.amax(1)[:, None],
+                                 world.amin(1)[:, None] - high).clamp_min(0).norm(dim=-1)
+        failures = selected[:, None] & (aabb_gap > 0) & (aabb_gap <= _TRIPOD_SUPPORT_LIMIT_M)
+        rows, boxes = (selected[:, None] & (aabb_gap == 0)).nonzero().unbind(1)
+        if not len(rows):
+            return failures.any(-1)
+
+        basis_axes = torch.eye(3, dtype=points.dtype, device=points.device)
+        n_axes = 3 + len(triangles) + 3 * len(edges)
+        n_vertices = world.shape[1]
+        max_values = (16 << 20) // world.element_size()
+        pair_batch = max(1, max_values // (n_vertices * min(n_axes, 256)))
+        for pairs, slots in zip(rows.split(pair_batch), boxes.split(pair_batch), strict=True):
+            local = points[pairs]
+            polygons = local[:, triangles]
+            normals = torch.linalg.cross(polygons[:, :, 1] - polygons[:, :, 0],
+                                         polygons[:, :, 2] - polygons[:, :, 0])
+            directions = local[:, edges[:, 1]] - local[:, edges[:, 0]]
+            cross = torch.linalg.cross(directions[:, :, None], basis_axes[None, None]).flatten(1, 2)
+            axes = torch.cat((basis_axes.expand(len(pairs), -1, -1), normals, cross), 1)
+            lengths = axes.norm(dim=-1, keepdim=True)
+            unit = axes / torch.where(lengths > 0, lengths, 1)
+            keep = lengths.squeeze(-1) > 1e-12
+            keep[:, 3:3 + len(triangles)] = normals.square().sum(-1) > 0
+
+            lo, hi = low[pairs, slots], high[pairs, slots]
+            center, half = (lo + hi) / 2, (hi - lo) / 2
+            shifted = world[pairs] - center[:, None]
+            width = max(1, max_values // (len(pairs) * n_vertices))
+            gap = world.new_full((len(pairs),), -torch.inf)
+            for start in range(0, n_axes, width):
+                end = start + width
+                directions = unit[:, start:end].transpose(1, 2)
+                proj = shifted @ directions
+                radius = (half[:, None] @ directions.abs()).squeeze(1)
+                bounds = torch.maximum(proj.amin(1) - radius, -radius - proj.amax(1))
+                gap = torch.maximum(gap, bounds.masked_fill(~keep[:, start:end], -torch.inf).amax(-1))
+            failures[pairs, slots] = gap <= _TRIPOD_SUPPORT_LIMIT_M
+        return failures.any(-1)
+
     def _cuda_failures(self, poses, rod, support_near, rod_near, box_low, box_high, failures):
-        axes = torch.eye(3, dtype=poses.dtype, device=poses.device)
         near = support_near | rod_near
         for column in near.any(0).nonzero().flatten().tolist():
             side, link, _, vertices, target = self._shapes[column]
@@ -1367,30 +1409,9 @@ class TripodSupportGuard:
                 world = points + pose[:, None, :3]
                 supports = support_near[batch, column]
                 if bool(supports.any()):
-                    # The raw quaternion transform can differ from a rotation.
-                    # Compute each face/edge axis from the actual transformed vertices.
-                    polygons = points[:, triangles]
-                    normals = torch.linalg.cross(polygons[:, :, 1] - polygons[:, :, 0],
-                                                polygons[:, :, 2] - polygons[:, :, 0])
-                    edges_world = points[:, edges[:, 1]] - points[:, edges[:, 0]]
-                    cross_axes = torch.linalg.cross(edges_world[:, :, None], axes[None, None]).flatten(1, 2)
-                    basis = torch.cat((axes.expand(len(batch), -1, -1), normals, cross_axes), 1)
-                    lengths = basis.norm(dim=-1, keepdim=True)
-                    # Legacy box_relation filters unnormalized edges, and unit face normals.
-                    face_slice = slice(3, 3 + len(faces))
-                    unit = basis / torch.where(lengths > 0, lengths, 1)
-                    keep = lengths.squeeze(-1) > 1e-12
-                    keep[:, face_slice] = normals.square().sum(-1) > 0
-                    low, high = box_low[batch], box_high[batch]
-                    center, half = (low + high) / 2, (high - low) / 2
-                    proj = (world[:, None] - center[:, :, None]) @ unit.transpose(1, 2)[:, None]
-                    radius = half @ unit.abs().transpose(1, 2)
-                    gaps = torch.maximum(proj.amin(2) - radius, -radius - proj.amax(2))
-                    sat_gap = gaps.masked_fill(~keep[:, None], -torch.inf).amax(-1)
-                    aabb_gap = torch.maximum(low - world.amax(1)[:, None],
-                                             world.amin(1)[:, None] - high).clamp_min(0).norm(dim=-1)
-                    bound = torch.where(aabb_gap > 0, aabb_gap, sat_gap)
-                    failures[batch] |= supports & (bound <= _TRIPOD_SUPPORT_LIMIT_M).any(-1)
+                    failures[batch] |= self._cuda_support_failures(
+                        points, world, triangles, edges, box_low[batch], box_high[batch], supports,
+                    )
                 check = rod_near[batch, column] & ~failures[batch]
                 if not bool(check.any()):
                     continue

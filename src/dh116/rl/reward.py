@@ -734,6 +734,9 @@ class TensorTrainingReward:
         if self.full:
             (present, d, u, ref, rt) = anchors
             contact = (v['coverage_left'] == 1) & (v['coverage_right'] == 1) & v['opposed_left'] & v['opposed_right']
+            if self.config.profile == train_rewar__GOAL_FULL:
+                # Acquire only at qualified load; retain contact history after anchoring.
+                contact &= present | v['bilateral_support']
             cs = torch.where(contact, torch.where(self._contact_start[ids] < 0, tick, self._contact_start[ids]), -1)
             contact_s = torch.where(cs < 0, 0.0, (tick - cs).to(torch.float64) / tenso_train_rewar__PHYSICS_HZ)
             slip_observed = (present & contact & v['bilateral_support']
