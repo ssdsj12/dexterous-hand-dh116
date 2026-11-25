@@ -175,10 +175,12 @@ def goal_full_setup(*, defer_checks=True, first_contact=1):
 @pytest.mark.parametrize('defer_checks', (False, True))
 def test_goal_full_rewards_light_contact_and_continuous_measured_lift(defer_checks):
     reward, schemas, endpoint = goal_full_setup(defer_checks=defer_checks, first_contact=9)
-    phases = (dict(touch=.25), dict(carried=True, min_z=.005),
-              dict(carried=True, upward=.8, min_z=-.001),
-              dict(carried=True, upward=.8, min_z=.005),
-              dict(carried=True, upward=.8, min_z=.005, detached=True), {})
+    phases = (
+        dict(touch=.25), dict(touch=1., carried=True, min_z=.005),
+        dict(touch=.55), dict(touch=1., carried=True, upward=.8, min_z=.005),
+        dict(touch=1., carried=True, upward=.8, min_z=.005, detached=True),
+        dict(touch=.55), dict(touch=.55), dict(touch=.55), {},
+    )
     packets = []
     for index, phase in enumerate(phases):
         token = f'w{index}'
@@ -188,18 +190,31 @@ def test_goal_full_rewards_light_contact_and_continuous_measured_lift(defer_chec
             if index == 0:
                 measured.fields['load_progress_left'][0] = 0.50
                 measured.fields['load_progress_right'][0] = 0.0
+            if index in (2, 5, 6, 7):
+                measured.fields['hand_lift_load'].fill_(.8)
+                measured.fields['support_unload'].fill_(.8)
+                measured.fields['min_z'].fill_(-.019)
+                measured.fields['median_z'].fill_(-.009)
+                measured.fields['off_table'].fill_(index != 6)
+                if index == 5:
+                    measured.fields['load_progress_right'].zero_()
+                if index == 7:
+                    measured.fields['soft_non_target_contact'][0] = .1
+                    measured.fields['soft_reaction_force'][1] = 1.0
             reward.observe(measured)
         packets.append(reward.settle_once((token, token)))
 
     progress = packets[0].terms['load_progress']['contribution']
     assert progress[1] > progress[0] > 0
-    for packet in packets[1:3]:
-        assert not packet.terms['prelift']['contribution'].any()
-    assert (packets[3].terms['prelift']['contribution'] > 0).all()
+    for index in (0, 1, 5, 6, 7, 8):
+        assert not packets[index].terms['prelift']['contribution'].any()
+    transfer = packets[2].terms['prelift']['contribution']
+    assert (transfer > 0).all()
+    assert not packets[2].terms['lift']['contribution'].any()
+    assert (packets[3].terms['prelift']['contribution'] > transfer).all()
     for name in ('prelift', 'lift'):
         torch.testing.assert_close(packets[3].terms[name]['contribution'],
                                    packets[4].terms[name]['contribution'], atol=0., rtol=0.)
-    assert not packets[5].terms['prelift']['contribution'].any()
     assert all(not packet.terminated.any() for packet in packets)
 
 def test_goal_full_clean_contact_and_unsaturated_force_are_required_at_success_boundary():

@@ -1,5 +1,11 @@
 # Changelog
 
+## Support-to-hand lift transfer reward — 2026-11-25
+
+- Shape early progress using measured upward hand load, measured unloading of the supports and the less-loaded hand. Keep the lower of median and minimum rod displacement as the lift height.
+- Keep strict contact, detached lift, Hold and Slip qualification. Detect invalid table, non-target and excessive reaction cases in the reward regression.
+- Pass 224 CPU tests, 13 CUDA tests and naturally exiting 512-environment probes for all three grasps. Train this recipe as a candidate. Its prelift signal can still reward asymmetric support transfer or a catch at a low height.
+
 ## Balanced grasp pressure — 2026-11-25
 
 - Shape approach progress toward the least-loaded required finger and the less-loaded hand. Preserve the force, opposing contact, support, lift, hold and slip criteria.

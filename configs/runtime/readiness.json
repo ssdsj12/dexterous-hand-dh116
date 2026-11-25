@@ -961,5 +961,50 @@
       "teacher": false,
       "grasp": false
     }
+  },
+  "grasp_lift_transfer_r6": {
+    "baseline_commit": "3f63db0af746edc4add0d71355f5c2584afecdc3",
+    "reward_profile": "goal_full",
+    "tests": {
+      "cpu_passed": 224,
+      "cpu_skipped": 12,
+      "cuda_passed": 13
+    },
+    "source_sha256": "80900296705ecb099c99481727b2d99b9fd04ec35b4cabe4940926de442153ed",
+    "probes": {
+      "pinch": {
+        "receipt_sha256": "c3746b39c2c490215f8194956afb60f183d664e171c6e9453bb4c7ae51d20507",
+        "recipe_sha256": "c1fea06101c9d69035702e998466bc91889b5d6b620e8f204327f6d560f45d70",
+        "controls": 2,
+        "environments": 512,
+        "updates": 0,
+        "exit_code": 0
+      },
+      "tripod": {
+        "receipt_sha256": "c5da0914e9da6c5671af515614c9d86d2bb865ccc0b6fb122b2ba0d37a0d5211",
+        "recipe_sha256": "01d976c381b574c9e3ed92ad3362054a5e5b64d2e7fbd1954e6c0e5366a35034",
+        "controls": 2,
+        "environments": 512,
+        "updates": 0,
+        "exit_code": 0
+      },
+      "power": {
+        "receipt_sha256": "b315d6dbe1657e3eb3f6fe7fa79987824fe7e9a43e348e7940bb298e77642d18",
+        "recipe_sha256": "ae7629cb77b692967bd149499b06f50a800223b4d1c556a0a1f05a61c487bd73",
+        "controls": 2,
+        "environments": 512,
+        "updates": 0,
+        "exit_code": 0
+      }
+    },
+    "scope": "native training candidate",
+    "qualification": {
+      "grasp": false,
+      "teacher": false
+    },
+    "open_shaping_checks": [
+      "very low unsupported catches may retain prelift potential",
+      "weaker-hand normal load has no signed upward component"
+    ]
   }
 }

@@ -253,7 +253,7 @@ def _profile_spec(profile):
     long_rollout = full and profile != train_rewar__GOAL_FULL
     weights = {'distance': 2.0, 'contact': 2.0, 'persistence': 0.5, 'geometry': 1.0, 'lift': 4.0, 'hold': 4.0} if full else {'distance': 2.0}
     if profile == train_rewar__GOAL_FULL:
-        weights.update(lift=3.2, prelift=0.8, load_progress=1.0)
+        weights.update(lift=3.2, prelift=2.4, load_progress=1.0)
     if profile == train_rewar__CONTACT:
         weights = {'distance': 2.0, 'contact': 2.0, 'persistence': 0.5, 'geometry': 1.0}
     slip_cost = 0.25 if profile == train_rewar__CURRICULUM else 1.0 if profile in (train_rewar__FULL, train_rewar__GOAL_FULL) else None
@@ -757,14 +757,20 @@ class TensorTrainingReward:
                 lift_ok = v['bilateral_support'] & v['no_external_support'] & ~v['prohibited_support']
                 pl = torch.where(lift_ok, ((md + mn) * 0.5 / success['net_lift_m']).clamp(0, 1), 0)
             elif self.config.profile == train_rewar__GOAL_FULL:
-                carrying = torch.minimum(v['support_unload'], v['hand_lift_load'])
-                carrying = carrying.masked_fill(~(self._opposed_contact(v) & v['bilateral_support'])
-                                                | v['prohibited_support'], 0)
-                pl = carrying * (torch.minimum(md, mn) / success['net_lift_m']).clamp(0, 1)
-                prelift = carrying * (md / 0.015).clamp(0, 1) * (1 + mn / 0.0005).clamp(0, 1)
-                terms['prelift'] = self.config.weights['prelift'] * prelift
+                net_lift = torch.minimum(md, mn) / success['net_lift_m']
+                transfer = torch.minimum(v['support_unload'], v['hand_lift_load'])
+                carrying = transfer.masked_fill(~(self._opposed_contact(v) & v['bilateral_support'])
+                                                 | v['prohibited_support'], 0)
+                pl = carrying * net_lift.clamp(0, 1)
                 left, right = v['load_progress_left'], v['load_progress_right']
-                bilateral_progress = (left + right + 2 * torch.minimum(left, right)) * 0.25
+                weaker_hand = torch.minimum(left, right)
+                # Transfer can start while the sagging rod is below its reset height.
+                clean = (v['off_table'] & ~v['prohibited_support']
+                         & (v['soft_non_target_contact'] == 0) & (v['soft_reaction_force'] < 1))
+                recovery = (1 + net_lift).clamp(0, 1)
+                prelift = (weaker_hand * transfer * (0.5 + 0.5 * recovery)).masked_fill(~clean, 0)
+                terms['prelift'] = self.config.weights['prelift'] * prelift
+                bilateral_progress = (left + right + 2 * weaker_hand) * 0.25
                 terms['load_progress'] = self.config.weights['load_progress'] * bilateral_progress
             else:
                 pl = torch.where(self._genuine_contact(v),
