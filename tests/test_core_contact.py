@@ -231,6 +231,27 @@ def test_flat_reward_readout_separates_light_contact_from_vertical_carry():
     nodes[0, 8, 1] = 0.15  # A left material node displaced into the right world half.
     assert readout(packet, nodes)['load_progress_left'][0] == 0
 
+def test_grasp_contact_progress_prefers_load_shared_across_required_pads():
+    from dh116.physics.runtime import GraspContactReadout
+
+    names = ('left.finger14_link', 'left.finger23_link', 'right.finger14_link',
+             'right.finger23_link', 'table', 'support_0', 'support_1')
+    keys = torch.tensor([(env, step, 8, pad) for env in range(2)
+                         for step in range(12) for pad in range(2)])
+    loads = torch.tensor([0.05, 0.0] * 12 + [0.025, 0.025] * 12, dtype=torch.float64)
+    vectors = torch.zeros((len(keys), 12), dtype=loads.dtype)
+    vectors[:, 3] = 1 - 2 * keys[:, 3]
+    vectors[:, 6] = vectors[:, 3] * loads
+    nodes = torch.zeros(2, 41, 3, dtype=loads.dtype)
+    nodes[..., 1] = torch.linspace(-0.25, 0.25, 41)
+    grasp = GraspContactReadout('pinch', names, device='cpu')
+    result = grasp(dict(env_ids=keys[:, 0], indices=keys[:, 1:],
+                        vectors=vectors, normal_force=loads), nodes)
+
+    assert result['load_progress_left'][1] > result['load_progress_left'][0] > 0
+    assert not result['bilateral_support'].any()
+
+
 def test_quarantine_parks_only_the_failed_rod_without_opening_a_new_episode():
     solver, rod = owner()
     ledger = rod.advance(physics_step=3)

@@ -173,7 +173,9 @@ class GraspContactReadout:
             effective.append(opposed & loaded.all(dim=(1, 2)) &
                              (pad_loads.sum(-1) > self.MIN_HAND_LOAD_N).all(1))
             result['coverage_' + side] = loaded.all(1).double().mean(-1) * correct_side
-            pad_progress = (pad_loads / self.MIN_PAD_LOAD_N).clamp(0, 1).mean(dim=(1, 2))
+            pad_fraction = (pad_loads / self.MIN_PAD_LOAD_N).clamp(0, 1)
+            weakest_pad = pad_fraction.amin(dim=-1).mean(1)
+            pad_progress = 0.5 * (pad_fraction.mean(dim=(1, 2)) + weakest_pad)
             hand_progress = (pad_loads.sum(-1) / self.MIN_HAND_LOAD_N).clamp(0, 1).mean(1)
             result['load_progress_' + side] = 0.5 * (pad_progress + hand_progress) * correct_side
             result['opposed_' + side] = opposed

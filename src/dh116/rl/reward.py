@@ -763,8 +763,9 @@ class TensorTrainingReward:
                 pl = carrying * (torch.minimum(md, mn) / success['net_lift_m']).clamp(0, 1)
                 prelift = carrying * (md / 0.015).clamp(0, 1) * (1 + mn / 0.0005).clamp(0, 1)
                 terms['prelift'] = self.config.weights['prelift'] * prelift
-                terms['load_progress'] = self.config.weights['load_progress'] * (
-                    v['load_progress_left'] + v['load_progress_right']) * 0.5
+                left, right = v['load_progress_left'], v['load_progress_right']
+                bilateral_progress = (left + right + 2 * torch.minimum(left, right)) * 0.25
+                terms['load_progress'] = self.config.weights['load_progress'] * bilateral_progress
             else:
                 pl = torch.where(self._genuine_contact(v),
                                  (torch.minimum(md, mn) / success['net_lift_m']).clamp(0, 1), 0)

@@ -1,5 +1,12 @@
 # Changelog
 
+## Balanced grasp pressure — 2026-11-25
+
+- Shape approach progress toward the least-loaded required finger and the less-loaded hand. Preserve the force, opposing contact, support, lift, hold and slip criteria.
+- Pass 224 CPU tests and 13 CUDA tests. Each grasp completes two native control windows with 512 environments and natural exit 0.
+- A paired diagnostic sustains Pinch bilateral contact for 30 fixed-wrist windows. The lifted comparison loses bilateral contact in its first lift window. Tripod sustains contact for at most one window. No lift qualifies.
+- Read eight live Power middle-link PhysX hulls. Both finger52 controls reproduce the locked SDF values exactly. The six new candidate SDFs and the pose fit remain offline evidence.
+
 ## Anatomical grasp scenes and first-person stereo — 2026-11-25
 
 - Rebuild Pinch, Tripod and Power resets and references with the left wrist at −Y, right wrist at +Y, and thumbs inward. Verify actual PhysX link positions at startup and after a local Reset.

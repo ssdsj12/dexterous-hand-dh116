@@ -184,10 +184,15 @@ def test_goal_full_rewards_light_contact_and_continuous_measured_lift(defer_chec
         token = f'w{index}'
         begin(reward, schemas, tick=8 * index, token=token)
         for tick in range(8 * index + 1, 8 * index + 9):
-            reward.observe(endpoint(tick, **phase))
+            measured = endpoint(tick, **phase)
+            if index == 0:
+                measured.fields['load_progress_left'][0] = 0.50
+                measured.fields['load_progress_right'][0] = 0.0
+            reward.observe(measured)
         packets.append(reward.settle_once((token, token)))
 
-    assert (packets[0].terms['load_progress']['contribution'] > 0).all()
+    progress = packets[0].terms['load_progress']['contribution']
+    assert progress[1] > progress[0] > 0
     for packet in packets[1:3]:
         assert not packet.terms['prelift']['contribution'].any()
     assert (packets[3].terms['prelift']['contribution'] > 0).all()

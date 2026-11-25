@@ -889,5 +889,77 @@
         }
       }
     }
+  },
+  "balanced_grasp_pressure_r2": {
+    "baseline_commit": "3bf87caabb49795e0dbf383f8148c45fbcaebd9c",
+    "reward_mode": "goal_full",
+    "tests": {
+      "cpu_passed": 224,
+      "cpu_skipped": 12,
+      "cuda_passed": 13
+    },
+    "runtime_source_sha256": {
+      "src/dh116/physics/runtime.py": "c1c29d45e805cf6dbf8587e88e30ebd8dc50482a4fb41db74e43c1bbf9c01faa",
+      "src/dh116/rl/reward.py": "5bf1ccbfb0f7a4ba1c3868c250ea431becc8eb3721bf758bc558c2642075a318"
+    },
+    "native_probe": {
+      "environments": 512,
+      "control_windows": 2,
+      "updates": 0,
+      "natural_exit_code": 0,
+      "by_grasp": {
+        "pinch": {
+          "sha256": "02dc162e4e54976de79b9fe33dce13cabb8d42a9eb5fc6f4b00fb2f23c1cffaa",
+          "recipe_sha256": "4ef2a6cbe4ed6da1fca975cc59e4f7bb6a7721ef1d85dff3e1500daa67a54c32"
+        },
+        "tripod": {
+          "sha256": "06bc3e4064c2b7e4bdea2604b2eb986a38ca79864b69fdf8c247fe8a1959975b",
+          "recipe_sha256": "67132b77205fa34aa5f982996a8da1b08ec4ab3675db291c863b1759cb2714a6"
+        },
+        "power": {
+          "sha256": "ebab57817c0d009a486c3425752678a6ce1c71f7acd192c39f90801e9836941b",
+          "recipe_sha256": "cf051b145bbfb8628a97ab95bd9e74fae8f9aed1a7fe7a7e7aa2827a01211d96"
+        }
+      }
+    },
+    "wrist_lift_diagnostic": {
+      "pinch": {
+        "sha256": "91ba5e1826df39b6562a4c6aa518232b96c380e9052cdd28a7d7c6ae780e02ff",
+        "environments": 2,
+        "updates": 0,
+        "longest_bilateral_windows": [
+          30,
+          8
+        ],
+        "splitting_window": 141
+      },
+      "tripod": {
+        "sha256": "2904c0f07f932e8ed41281fbcc687a450164ba6c155e6630ed9a1f089a85b100",
+        "environments": 2,
+        "updates": 0,
+        "longest_bilateral_windows": [
+          1,
+          1
+        ],
+        "splitting_window": null
+      }
+    },
+    "power_middle_link_geometry": {
+      "native_exit_code": 0,
+      "setup_sdk_steps": 2,
+      "measured_links": 8,
+      "additional_links": 6,
+      "scene_queries_enabled": false,
+      "live_sha256": "f41cc5545d36347fe4e650e8083075ab30b0161154a4f28ac766e0e43728658d",
+      "sdf_bake_sha256": "31805318835c5375c7dd01f08b125cb1b5913cd1b57ca365d7a04fb27eed7aa2",
+      "grouped_pose_search_sha256": "a19010d5a6316a130d990e7acd542ddd1052285a1dffd80b8203b7e4f170dc90",
+      "finger52_controls_identical": true,
+      "grouped_pose_qualified": false,
+      "production_registration": false
+    },
+    "qualification": {
+      "teacher": false,
+      "grasp": false
+    }
   }
 }
