@@ -138,8 +138,8 @@ BOUNDARY_VERSION = 'dh116-pinch-import-boundary-v3'
 
 def scene_lanes(count, table_size):
     size = np.asarray(table_size, dtype=float)
-    if count not in (2, 32, 64, 128, 512, 1024) or size.shape != (3,) or (not np.isfinite(size).all()) or (size <= 0).any():
-        raise ValueError('2, 32, 64, 128, 512 or 1024 lanes and a positive original table size required')
+    if count not in (2, 32, 64, 128, 512, 1024, 2048) or size.shape != (3,) or (not np.isfinite(size).all()) or (size <= 0).any():
+        raise ValueError('2, 32, 64, 128, 512, 1024 or 2048 lanes and a positive original table size required')
     columns = nativ_sessi__math.ceil(nativ_sessi__math.sqrt(count))
     spacing = float(max(size[:2]) + 1.0)
     width = max(3, len(str(count - 1)))

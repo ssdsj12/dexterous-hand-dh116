@@ -1191,5 +1191,72 @@
       "teacher": false,
       "grasp": false
     }
+  },
+  "teacher_2048_grasp_training": {
+    "baseline_sha": "5bc762bf2962e5d0c6ffbf6fd57feb7f0f9c23d3",
+    "cpu_tests_passed": 234,
+    "cuda_tests_passed": 13,
+    "grasps": {
+      "pinch": {
+        "gpu": 1,
+        "probe_sha256": "c4e250de343e23990379fd46cd0e019211399c4047905f88fbd242fdb2ea43fb",
+        "recipe_sha256": "f121017cf7fe8df935f9a4d482dc755777956bb8f0d33d20316d22c0ff2304bd",
+        "probe_exit_code": 0,
+        "probe_controls": 2,
+        "probe_window_seconds": [
+          0.8648629349190742,
+          0.5479884059168398
+        ],
+        "updates_requested": 2000,
+        "samples_per_update": 65536,
+        "initial_iteration_seconds": [
+          19.31035657809116,
+          18.94091800507158
+        ],
+        "initial_checkpoint_sha256": "10ecb7498990ded78ac97f68afb88072d5b74449da4585a1e3e979b21fa80636",
+        "live_success_qualified": false
+      },
+      "tripod": {
+        "gpu": 2,
+        "probe_sha256": "e4fd7b307589298dca7951f1fd3a77915e329aceb9555728ccdec7548d4e47de",
+        "recipe_sha256": "22da25dfae344a7de28d2885033744bcc2b3744b49a7b286c2973920c724b7af",
+        "probe_exit_code": 0,
+        "probe_controls": 2,
+        "probe_window_seconds": [
+          0.9938518891576678,
+          0.5957585049327463
+        ],
+        "updates_requested": 2000,
+        "samples_per_update": 65536,
+        "initial_iteration_seconds": [
+          19.783373584970832,
+          19.301172962179407
+        ],
+        "initial_checkpoint_sha256": "e565547ccb2e51095653477671ddb136b0247240bafc61e068bd9e9ec40b98e4",
+        "live_success_qualified": false
+      },
+      "power": {
+        "gpu": 3,
+        "probe_sha256": "4b89349fc7b34e8448e6b68b7ccd0841761d5d020880c7ef065a6f38221b6e97",
+        "recipe_sha256": "16ffa0829032356e369aa71322b85dda10c62a2c34484aaf274a0afd2538d8fb",
+        "probe_exit_code": 0,
+        "probe_controls": 2,
+        "probe_window_seconds": [
+          0.9711481069680303,
+          0.5951752120163292
+        ],
+        "updates_requested": 2000,
+        "samples_per_update": 65536,
+        "initial_iteration_seconds": [
+          19.31451530009508,
+          18.682219753041863
+        ],
+        "initial_checkpoint_sha256": "9c9c7083c9c087b2ee278cdebe4d76a31d8a21f1a4cb901335d2f4f1e4a6bdc8",
+        "live_success_qualified": false
+      }
+    },
+    "same_success_criteria": true,
+    "grasp_qualified": false,
+    "flat_pair_parity_sha256": "aeadb3fc58b5272d343735df8469d38ae1e949c7d4f18fbabdd6f3ca303ab258"
   }
 }

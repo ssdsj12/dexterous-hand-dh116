@@ -301,11 +301,11 @@ def limited_step(action, rate, dt):
     norm = action.norm(dim=-1, keepdim=True).clamp_min(1.0)
     return action / norm * (rate * dt)
 
-def wrist_requested_targets(palms, angles, actions, rates, dt):
+def wrist_requested_targets(palms, angles, actions, rates, dt, *, palm_lower_m=None, palm_upper_m=None):
     CONTRACT = contr_math__CONTRACT
     n = actions.shape[0]
-    lo = actions.new_tensor(CONTRACT['palm_lower_m'])
-    hi = actions.new_tensor(CONTRACT['palm_upper_m'])
+    lo = actions.new_tensor(CONTRACT['palm_lower_m'] if palm_lower_m is None else palm_lower_m)
+    hi = actions.new_tensor(CONTRACT['palm_upper_m'] if palm_upper_m is None else palm_upper_m)
     palms = (palms + limited_step(actions[:, 12:18].reshape(n, 2, 3), rates['wrist_rate_m_s'], dt)).maximum(lo).minimum(hi)
     angles = (angles + limited_step(actions[:, 18:24].reshape(n, 2, 3), rates['rotation_rate_rad_s'], dt)).clamp(-comma_kerne__math.pi / 2, comma_kerne__math.pi / 2)
     return (palms, angles)
@@ -368,7 +368,8 @@ tenso_wrist_proje__SOURCE = defor_wrist_proje__SOURCE
 
 def project_tensor_policy_wrist_targets(*, root_seed_w, measured_base_w, common_lift_offset_m,
                                         measured_clearance_m, palm_offsets_m, requested_palm_offsets_m,
-                                        angles_rad, requested_angles_rad, allowed, live, validate_values=True):
+                                        angles_rad, requested_angles_rad, allowed, live, validate_values=True,
+                                        palm_lower_m=None, palm_upper_m=None):
     """Project same-device wrist targets.
 
     Set validate_values=False only when the caller has validated or sanitized
@@ -393,8 +394,8 @@ def project_tensor_policy_wrist_targets(*, root_seed_w, measured_base_w, common_
         nonzero = (seed_scale > 0).all()
         if not bool(finite & unit & angles_valid & nonzero):
             raise ValueError('finite wrist inputs, unit WXYZ quaternions and original intrinsic XYZ limits required')
-    lower = root_seed_w.new_tensor(tenso_wrist_proje__WRIST['palm_lower_m'])
-    upper = root_seed_w.new_tensor(tenso_wrist_proje__WRIST['palm_upper_m'])
+    lower = root_seed_w.new_tensor(tenso_wrist_proje__WRIST['palm_lower_m'] if palm_lower_m is None else palm_lower_m)
+    upper = root_seed_w.new_tensor(tenso_wrist_proje__WRIST['palm_upper_m'] if palm_upper_m is None else palm_upper_m)
     (palms, pre_projection, reasons) = tenso_wrist_proje__palm_transport(palm_offsets_m, requested_palm_offsets_m, measured_clearance_m, tenso_wrist_proje__CLEARANCE_M, ACTION_CONTRACT['translation_rate_m_s'], tenso_wrist_proje__DT, lower, upper, allowed, live, vector_norm=True)
     (projected_z, safe_z) = tenso_wrist_proje__per_hand_safe_z(palms, measured_base_w, root_seed_w, common_lift_offset_m, measured_clearance_m, tenso_wrist_proje__CLEARANCE_M)
     clipped = live[:, None] & ((projected_z - palms[:, :, 2]).abs() > 1e-12)

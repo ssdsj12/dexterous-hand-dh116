@@ -338,7 +338,7 @@ def test_native_session_restores_arguments_and_closes_after_post_launch_import_f
     assert events == [('launch', ('teacher',)), ('close', {'wait_for_replicator': False})]
 
 
-@pytest.mark.parametrize(('count', 'columns', 'width'), [(512, 23, 3), (1024, 32, 4)])
+@pytest.mark.parametrize(('count', 'columns', 'width'), [(512, 23, 3), (1024, 32, 4), (2048, 46, 4)])
 def test_scene_lanes_order_and_stage_paths(count, columns, width):
     from dh116.env.lifecycle import scene_lanes
 
@@ -353,7 +353,7 @@ def test_scene_lanes_order_and_stage_paths(count, columns, width):
         scene_lanes(1025, (1.5, 1.0, 0.1))
 
 
-def test_1024_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch):
+def test_2048_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch):
     from dh116.env import scene
     from dh116.env.lifecycle import NativeOwners, scene_lanes
     from dh116.hand.articulation import prepare_regex_task
@@ -367,7 +367,7 @@ def test_1024_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch):
     monkeypatch.setattr(scene, 'spawn_parameters', stop_at_scene_inputs)
     sim = SimpleNamespace(current_time_step_index=0)
     archive = SimpleNamespace(style='pinch', scene_inputs={})
-    lanes = scene_lanes(1024, (1.5, 1.0, 0.1))
+    lanes = scene_lanes(2048, (1.5, 1.0, 0.1))
     with pytest.raises(ReachedAuthoring):
         prepare_regex_task(sim, NativeOwners(), None, tmp_path, {}, archive, lanes)
     with pytest.raises(ValueError, match='original physical lanes'):

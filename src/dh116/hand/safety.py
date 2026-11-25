@@ -622,6 +622,8 @@ class TensorControl:
             self._mimic_ratios = t.tensor(ratios, device=self.device, dtype=t.float32)
             self._mimic_offsets = t.tensor(offsets, device=self.device, dtype=t.float32)
         self.fixed_fingers = ()
+        self._palm_lower_m = (-0.09, -0.09, -0.09) if self.soft_constraints else None
+        self._palm_upper_m = (0.09, 0.09, 0.09) if self.soft_constraints else None
         self._failed = False
 
     def invalidate(self, env_ids=None):
@@ -689,13 +691,33 @@ class TensorControl:
         (_, target) = surface_final_guard(command, target, self.low, self.high, DT)
         if self.fixed_fingers:
             target[:, self.fixed_fingers] = command[:, self.fixed_fingers]
-        (palm, angle) = wrist_requested_targets(self.palms, self.angles, action, self.rates, DT)
-        projection = project_tensor_policy_wrist_targets(root_seed_w=self.roots, measured_base_w=base_poses_wxyz.double(), common_lift_offset_m=self.roots.new_zeros(self.n), measured_clearance_m=clearance_m.double(), palm_offsets_m=self.palms, requested_palm_offsets_m=palm, angles_rad=self.angles, requested_angles_rad=angle, allowed=~halted, live=~halted, validate_values=not self.soft_constraints)
+        (palm, angle) = wrist_requested_targets(self.palms, self.angles, action, self.rates, DT, palm_lower_m=self._palm_lower_m, palm_upper_m=self._palm_upper_m)
+        projection = project_tensor_policy_wrist_targets(root_seed_w=self.roots, measured_base_w=base_poses_wxyz.double(), common_lift_offset_m=self.roots.new_zeros(self.n), measured_clearance_m=clearance_m.double(), palm_offsets_m=self.palms, requested_palm_offsets_m=palm, angles_rad=self.angles, requested_angles_rad=angle, allowed=~halted, live=~halted, validate_values=not self.soft_constraints, palm_lower_m=self._palm_lower_m, palm_upper_m=self._palm_upper_m)
         anchors = state['root_pose_wxyz'].double()
         local = tenso_contr__torch.stack([local_translation(projection['projected_root_poses'][:, s], anchors[:, s]) for s in (0, 1)], 1)
-        if self.soft_constraints:
-            local = local.clamp(-MOUNT['limit_m'], MOUNT['limit_m'])
         bad = (local.abs() > MOUNT['limit_m']).any((1, 2)) & ~halted
+        if self.soft_constraints:
+            limit = MOUNT['limit_m']
+            local = local.clamp(-limit, limit)
+            rotation = anchors[..., 3:]
+            inverse = tenso_contr__torch.cat((rotation[..., :1], -rotation[..., 1:]), dim=-1)
+            up = local.new_tensor((0.0, 0.0, 1.0)).expand_as(local)
+            local_up = _rotate(inverse, up)
+            floor = self.roots[..., 2] + projection['safe_z_offset_m']
+            # Increase world Z within the actual mount box when clipping an
+            # oblique local drive would otherwise undo the table projection.
+            upper = local_up.sign() * limit
+            for _ in range(3):
+                height = anchors[..., 2] + (local_up * local).sum(-1)
+                free_up = local_up.masked_fill((upper - local) * local_up <= 0, 0.0)
+                rise = (floor - height + 1e-8).clamp_min(0.0)
+                step = rise / free_up.square().sum(-1).clamp_min(1e-15)
+                local = (local + free_up * step[..., None]).clamp(-limit, limit)
+            local = local.float().double()
+            issued = anchors[..., :3] + _rotate(rotation, local)
+            bad = (issued[..., 2] < floor - 1e-8).any(-1) & ~halted
+            projection['projected_root_poses'][..., :3] = issued
+            projection['palm_offsets_m'] = issued - self.roots[..., :3]
         if not self.isolate_constraints and bool(bad.any()):
             raise ValueError('original mount translation hard limit')
         expected = []
@@ -747,7 +769,7 @@ class TensorControl:
                 for values in (*forces, *torques, *transaction['expected']):
                     submit_valid = submit_valid & tenso_contr__torch.isfinite(values).flatten(1).all(1)
                 transaction['submit_valid'] = submit_valid
-                isolated = transaction['halted'] | ~submit_valid
+                isolated = transaction['halted'] | transaction['constraint_failure'] | ~submit_valid
                 for s in (0, 1):
                     previous = state['backend_targets'][:, s, self.write_ids[s]]
                     transaction['expected'][s] = tenso_contr__torch.where(isolated[:, None], previous, transaction['expected'][s])

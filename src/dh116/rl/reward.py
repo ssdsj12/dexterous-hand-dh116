@@ -29,6 +29,7 @@ train_rewar__CONTACT = 'approach_contact_prelift_v1'
 train_rewar__SMOKE = 'approach_wiring_smoke_v1'
 train_rewar__FULL = 'flexible_train_r1_full'
 train_rewar__GOAL_FULL = 'flexible_train_goal_full_v3'
+GOAL_PROGRESS_WEIGHTS = dict(distance=0.5, finger_goal=0.5, load_progress=1.0, prelift=3.0, lift=8.0, hold=6.0)
 GOAL_SHAPING_FIELDS = ('load_progress_left', 'load_progress_right', 'support_unload', 'hand_lift_load',
                        'balanced_hand_lift_load')
 GOAL_TERMINATIONS = ('cable_fall', 'joint_dislocation', 'pad_backface')
@@ -610,6 +611,7 @@ class TensorTrainingReward:
         self.full = self.config.profile in _FULL_PROFILES
         self.schemas = [None] * num_envs
         self._tokens = [set() for _ in range(num_envs)]
+        self._shared_tokens = set()
         self._episodes = [set() for _ in range(num_envs)]
         self._pending = None
         self._poisoned_lanes = set()
@@ -635,6 +637,8 @@ class TensorTrainingReward:
         self._terminal = self._b()
         self._terms = {}
         self._last_values = {}
+        self._goal_progress_peak = torch.zeros((self.n, len(GOAL_PROGRESS_WEIGHTS)), dtype=torch.float64,
+                                               device=self.device)
 
     @property
     def native_ready(self):
@@ -924,6 +928,8 @@ class TensorTrainingReward:
         self._guard(~torch.isfinite(phi) | state.get('_derived_bad', torch.zeros_like(bad)), 'reset finite derived source required')
         active = torch.ones_like(bad)
         self._commit(ids, active, phi, terms, state, tick, time, values, anchors)
+        if self.config.profile == train_rewar__GOAL_FULL:
+            self._goal_progress_peak[ids] = self._goal_progress(terms, values)
         self._previous[ids] = previous
         self._closed[ids] = False
         self._terminal[ids] = False
@@ -965,9 +971,11 @@ class TensorTrainingReward:
             self._quarantined[:] = True
             self._poisoned_lanes = set(range(self.n))
             raise
-        for (lane, token) in enumerate(tokens):
-            if token in self._tokens[lane]:
-                raise RuntimeError('request token already reserved/settled')
+        common = all(token == tokens[0] for token in tokens)
+        if (common and tokens[0] in self._shared_tokens) or any(
+                token in self._tokens[lane] or (not common and token in self._shared_tokens)
+                for lane, token in enumerate(tokens)):
+            raise RuntimeError('request token already reserved/settled')
         if type(remaining_substeps) is int:
             if remaining_substeps < tenso_train_rewar__WINDOW_SUBSTEPS:
                 raise ValueError('eight (8) budgeted substeps required')
@@ -983,8 +991,11 @@ class TensorTrainingReward:
         self._window_anchors = torch.tensor([bool(s.anchor_specs) for s in schemas], device=self.device)
         self._native_float32_clock = torch.tensor([s.scope == 'unqualified_source' and s.source in ('policy_owned_pinch_endpoint_v1', 'policy_owned_tripod_endpoint_v1', 'policy_owned_power_endpoint_v1') for s in schemas], device=self.device)
         (self._pending, self._policies) = (tokens, policy_uids)
-        for (lane, token) in enumerate(tokens):
-            self._tokens[lane].add(token)
+        if common:
+            self._shared_tokens.add(tokens[0])
+        else:
+            for lane, token in enumerate(tokens):
+                self._tokens[lane].add(token)
         self._request = action.clone()
         self._qcmd = (((action - self._previous) / 2.0) ** 2).sum(dim=1) / 24.0
         self._phi_pre = self._phi.clone()
@@ -1113,6 +1124,18 @@ class TensorTrainingReward:
         self._terms = terms
         self._observations_finalized = True
 
+    def _goal_progress(self, terms, values):
+        detached = self._genuine_contact(values) & (values['soft_non_target_contact'] == 0)
+        detached &= values['soft_reaction_force'] < 1.0
+        return torch.stack((
+            terms['distance'] / self.config.weights['distance'],
+            terms['finger_goal'],
+            terms['load_progress'] / self.config.weights['load_progress'],
+            terms['prelift'] / self.config.weights['prelift'],
+            torch.where(detached, terms['lift'] / self.config.weights['lift'], 0.0),
+            terms['hold'] / self.config.weights['hold'],
+        ), dim=1).clamp(0, 1)
+
     def settle_once(self, tokens, *, truncated=None, buffer_full=None):
         if self._poisoned_lanes:
             raise tenso_train_rewar__SourceFailure('quarantined rollout has no usable PPO packet')
@@ -1132,6 +1155,12 @@ class TensorTrainingReward:
         intervals = torch.arange(8, device=self.device)[None, :] < self._count[:, None]
         integrated = torch.where(intervals, self._costs, 0.0).sum(dim=1) / tenso_train_rewar__PHYSICS_HZ
         endpoint_phi = torch.where(self._terminal, 0.0, self._phi)
+        if self.config.profile == train_rewar__GOAL_FULL:
+            progress = self._goal_progress(self._terms, self._last_values)
+            gain = (progress - self._goal_progress_peak).clamp_min(0.0)
+            weights = progress.new_tensor(tuple(GOAL_PROGRESS_WEIGHTS.values()))
+            progress_bonus = torch.where(self._terminal, 0.0, gain @ weights)
+            event += progress_bonus
         reward = self.config.gamma * endpoint_phi - self._phi_pre - integrated + event
         numerical = ~torch.isfinite(reward) | ~torch.isfinite(integrated)
         if bool((incomplete | boundary | numerical).any()):
@@ -1144,6 +1173,9 @@ class TensorTrainingReward:
             raise tenso_train_rewar__SourceFailure('finite integrated reward required')
         if self.config.finger_goal is not None:
             self._arrived |= arrived
+        if self.config.profile == train_rewar__GOAL_FULL:
+            self._goal_progress_peak = torch.where(
+                self._terminal[:, None], self._goal_progress_peak, self._goal_progress_peak.maximum(progress))
         context = self._context()
         term_payload = self._term_payload()
         event_terms = {'trusted_constraint_failure': self._term(self._event < 0, 'dimensionless', 'derived:original_failure_predicates', torch.where((self._event < 0) & (self._event != -50.0), self._event, 0.0))}
@@ -1153,6 +1185,9 @@ class TensorTrainingReward:
             event_terms.update(prohibited_support=self._excluded(), success=self._excluded())
         if self.config.finger_goal is not None:
             event_terms['finger_goal_arrived_once'] = self._term(arrived, 'dimensionless', 'derived:measured_bilateral_active_joint_goal', arrived.to(torch.float64) * self.config.finger_goal.arrival_reward)
+        if self.config.profile == train_rewar__GOAL_FULL:
+            event_terms['grasp_progress'] = self._term(progress_bonus, 'dimensionless',
+                                                       'derived:per_episode_grasp_progress', progress_bonus)
         contribution = lambda value: torch.where(intervals, value, torch.nan)
         substep_terms = {'command_rate': self._term(contribution(self._qcmd[:, None]), 'dimensionless', 'submitted_request', contribution(0.05 * self._qcmd[:, None] / tenso_train_rewar__PHYSICS_HZ), applicable=intervals), 'time': self._term(contribution(torch.full_like(self._costs, 1.0 / tenso_train_rewar__PHYSICS_HZ)), 's', 'actual_endpoint_clock', contribution(torch.full_like(self._costs, 0.1 / tenso_train_rewar__PHYSICS_HZ)), applicable=intervals)}
         if self.full:

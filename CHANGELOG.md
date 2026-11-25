@@ -1,5 +1,11 @@
 # Changelog
 
+## 2048-environment Teacher grasp training — 2026-11-25
+
+- Score newly achieved per-episode grasp progress using measured contact, support transfer, detached lift and continuous hold. Remove the time-proportional reward for maintaining a stationary grasp on the supports.
+- Keep commanded world wrist poses consistent with issued mount targets when local travel clips the request. Reapply the original table clearance in the mount frame.
+- Validate all three grasps in a 2048-environment headless Isaac probe with natural exit 0. Rebuild the bounded flat CUDA contact allocation for 2048 environments and retain the exact pair export and reset checks.
+
 ## 1024-environment native PPO — 2026-11-25
 
 - Support 1024 native rows through scene naming, batch articulation, contact capture, shared observations, Teacher training and frozen actor loading. Keep lane names ordered at four digits for the 1024-row scene.

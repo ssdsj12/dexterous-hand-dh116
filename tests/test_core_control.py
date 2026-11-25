@@ -267,3 +267,29 @@ def test_soft_training_caps_submitted_force_without_altering_evidence_or_termina
     state['q'][:, 0, joint] = torch.tensor([-1.24, -1.26])
     assert control.finish(transaction, state, stamp=after).tolist() == [False, True]
     assert transaction['soft_joint_limit'].tolist() == [1.0, 1.0]
+
+
+def test_wrist_projection_matches_issued_mount_targets_at_rotated_hard_stop():
+    control, stamp, state, _, _, _, _ = control_fixture(soft_constraints=True)
+    control.invalidate()
+    # 45 degrees about Y means that independently clipping the local X
+    # drive reduces world Z for this target.
+    angle = torch.tensor(torch.pi / 8, dtype=torch.float64)
+    anchors = state['root_pose_wxyz']
+    anchors[..., 3] = angle.cos()
+    anchors[..., 5] = angle.sin()
+    control.palms[:] = torch.tensor([-0.089, 0., 0.089])
+    base = anchors.clone()
+    base[..., :3] += control.palms
+    transaction = control.prepare(torch.zeros(2, 24), state, torch.full((2, 2), 0.0021, dtype=torch.float64),
+                                  base, stamp=stamp)
+    local = torch.stack([x[:, 6:9].double() for x in transaction['expected']], dim=1)
+    c = s = 2 ** -0.5
+    world = anchors[..., :3] + torch.stack((local[..., 0] * c + local[..., 2] * s, local[..., 1],
+                                           -local[..., 0] * s + local[..., 2] * c), dim=-1)
+    projection = transaction['projection']
+    assert local.abs().max() <= 0.100000002
+    assert not transaction['constraint_failure'].any()
+    assert (world[..., 2] >= base[..., 2] - 1e-8).all()
+    torch.testing.assert_close(projection['projected_root_poses'][..., :3], world, atol=1e-9, rtol=0)
+    torch.testing.assert_close(projection['palm_offsets_m'], world - control.roots[..., :3], atol=1e-9, rtol=0)

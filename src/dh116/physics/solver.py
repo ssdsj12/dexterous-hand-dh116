@@ -68,7 +68,7 @@ def validate_snapshot(packet, *, expected_num_envs, expected_nodes, expected_tim
 import json as tenso_backe_profi__json
 
 def tensor_pair_capture(raw, *, n, vertices, meshes, substeps, device):
-    if raw.get('schema') != 'dh116.sdf_pair_device.v1' or raw['substeps'] != substeps or raw['num_envs'] != n or (raw['mesh_count'] != meshes) or (not 2 <= n <= 1024) or (raw['last_error'] != 0) or (raw['owner_time_s_before'] != raw['owner_time_s_after']) or (not tenso_pair_captu__math.isfinite(raw['owner_time_s_before'])):
+    if raw.get('schema') != 'dh116.sdf_pair_device.v1' or raw['substeps'] != substeps or raw['num_envs'] != n or (raw['mesh_count'] != meshes) or (not 2 <= n <= 2048) or (raw['last_error'] != 0) or (raw['owner_time_s_before'] != raw['owner_time_s_after']) or (not tenso_pair_captu__math.isfinite(raw['owner_time_s_before'])):
         raise ValueError('source-qualified current device contact ABI required')
     counts = tenso_pair_captu__torch.as_tensor(raw['counts'], device=device)
     samples = tenso_pair_captu__torch.as_tensor(raw['samples'], device=device)
@@ -126,7 +126,7 @@ def compact_pair_capture(packet, *, dt_s, device):
     if not batch_pair_captu__math.isclose(dt_s, 1 / 480, abs_tol=1e-12, rel_tol=0):
         raise ValueError('expected the 480 Hz exchange clock')
     lanes = packet.get('lanes', ())
-    if packet.get('schema') != 'dh116.sdf_pair_samples_batch.v1' or not 2 <= len(lanes) <= 1024:
+    if packet.get('schema') != 'dh116.sdf_pair_samples_batch.v1' or not 2 <= len(lanes) <= 2048:
         raise ValueError('complete shared solver batch required')
     nodes = batch_pair_captu__torch.as_tensor(packet['node_forces_on_rod_world_n'], dtype=batch_pair_captu__torch.float64, device=device)
     wrenches = batch_pair_captu__torch.as_tensor(packet['mesh_wrenches_on_mesh_world'], dtype=batch_pair_captu__torch.float64, device=device)
@@ -366,7 +366,7 @@ class TensorRodOwner:
 
     def __init__(self, solver, *, run_uuid, physics_step, episodes, mesh_names, solver_substeps=12, device='cuda:0'):
         n = solver.num_envs
-        if not 2 <= n <= 1024 or solver.last_error != 0 or len(episodes) != n or (len(set(episodes)) != n) or (len(set(mesh_names)) != len(mesh_names)) or (solver_substeps != 12) or (type(physics_step) is not int) or (physics_step < 0):
+        if not 2 <= n <= 2048 or solver.last_error != 0 or len(episodes) != n or (len(set(episodes)) != n) or (len(set(mesh_names)) != len(mesh_names)) or (solver_substeps != 12) or (type(physics_step) is not int) or (physics_step < 0):
             raise ValueError('complete healthy source-owned shared solver required')
         self.solver = solver
         self.run_uuid = run_uuid

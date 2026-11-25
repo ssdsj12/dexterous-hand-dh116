@@ -142,8 +142,8 @@ def prepare_regex_task(sim, owners, trace, project, prepared, archive, lanes, se
     from dh116.env.scene import spawn_parameters
     lanes = tuple(lanes)
     origins = regex_task_setup__np.asarray([origin for (_, origin) in lanes], dtype=regex_task_setup__np.float64)
-    if sim.current_time_step_index != 0 or not 2 <= len(lanes) <= 1024 or origins.shape != (len(lanes), 3) or (not regex_task_setup__np.isfinite(origins).all()) or regex_task_setup__np.any(origins[:, 2] != 0) or (archive.style not in ('pinch', 'tripod', 'power')):
-        raise ValueError('fresh 480Hz Sim and 2..1024 original physical lanes required')
+    if sim.current_time_step_index != 0 or not 2 <= len(lanes) <= 2048 or len({path for path, _ in lanes}) != len(lanes) or origins.shape != (len(lanes), 3) or (not regex_task_setup__np.isfinite(origins).all()) or regex_task_setup__np.any(origins[:, 2] != 0) or (archive.style not in ('pinch', 'tripod', 'power')):
+        raise ValueError('fresh 480Hz Sim and 2..2048 original physical lanes required')
     (args, layout, sources) = spawn_parameters(archive.scene_inputs, project)
     if archive.style == 'pinch' and archive.task is None:
         seed = _seed(archive.pair['reset_seed'])
@@ -310,13 +310,17 @@ def _actual_bindings(batch, archived):
     from dh116.env.scene import contact_links
     contact_links(archived)
     result = regex_task_setup__deepcopy(archived)
+    view_rows = {
+        side: (owner.row_indices.detach().cpu().tolist(), owner.hand.root_physx_view.link_paths)
+        for side, owner in batch.sides.items()
+    }
     for (key, row) in result.items():
         (side, name) = (row['side'], row['body_name'])
         owner = batch.sides[side]
         if key != side + '.' + name or owner.body_names.index(name) != row['body_index']:
             raise ValueError('actual original contact-link body ordering differs from source archive')
-        rows = owner.row_indices.detach().cpu().tolist()
-        paths = tuple((owner.hand.root_physx_view.link_paths[index][row['body_index']] for index in rows))
+        indices, links = view_rows[side]
+        paths = tuple(links[index][row['body_index']] for index in indices)
         expected = tuple((prefix + '/' + side + 'Hand/' + name for prefix in batch.prefixes))
         if paths != expected:
             raise ValueError('actual original contact link paths differ from authored task lanes')

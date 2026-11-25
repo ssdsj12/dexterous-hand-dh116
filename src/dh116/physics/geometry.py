@@ -898,7 +898,7 @@ class TensorGeometry:
         """
         self.frame = self.result = None
         self.validate_metadata()
-        if frame is None or not isinstance(poses, tenso_geome__torch.Tensor) or poses.device != self.device or (poses.ndim != 4) or (poses.shape[1:] != (2, 23, 7)) or (not 1 <= len(poses) <= 1024) or (poses.dtype not in (tenso_geome__torch.float32, tenso_geome__torch.float64)) or (not isinstance(nodes, tenso_geome__torch.Tensor)) or (nodes.device != self.device) or (nodes.shape != (len(poses), 41, 3)) or (nodes.dtype not in (tenso_geome__torch.float32, tenso_geome__torch.float64)):
+        if frame is None or not isinstance(poses, tenso_geome__torch.Tensor) or poses.device != self.device or (poses.ndim != 4) or (poses.shape[1:] != (2, 23, 7)) or (not 1 <= len(poses) <= 2048) or (poses.dtype not in (tenso_geome__torch.float32, tenso_geome__torch.float64)) or (not isinstance(nodes, tenso_geome__torch.Tensor)) or (nodes.device != self.device) or (nodes.shape != (len(poses), 41, 3)) or (nodes.dtype not in (tenso_geome__torch.float32, tenso_geome__torch.float64)):
             raise ValueError('complete same-device floating native poses/material41 and frame required')
         if isinstance(radius, tenso_geome__torch.Tensor):
             if radius.device != self.device or radius.dtype not in (tenso_geome__torch.float32, tenso_geome__torch.float64):
@@ -1327,7 +1327,7 @@ class TripodSupportGuard:
         self.geometry = geometry
         self.device = geometry.device
         self.origins = torch.as_tensor(env_origins, device=self.device, dtype=torch.float64).detach().clone()
-        if (self.origins.ndim != 2 or self.origins.shape[1] != 3 or not 1 <= len(self.origins) <= 1024
+        if (self.origins.ndim != 2 or self.origins.shape[1] != 3 or not 1 <= len(self.origins) <= 2048
                 or not bool(torch.isfinite(self.origins).all()) or bool((self.origins[:, 2] != 0).any())):
             raise ValueError('finite horizontal actual environment origins required')
         if (len(supports) != 2 or any(type(box['name']) is not str or not box['name'] for box in supports)

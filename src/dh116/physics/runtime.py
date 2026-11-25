@@ -847,8 +847,10 @@ class NativeTensorPhysicsRuntime:
             soft = dict.fromkeys(GOAL_SOFT_COSTS, torch.zeros_like(distance))
             if soft_costs is not None:
                 soft.update({name: value.to(distance.dtype) for name, value in soft_costs.items()})
-            fields = dict(distance=distance, numerical_health=healthy,
-                          constraint_failure=torch.stack(tuple(hard.values())).any(0), **hard, **soft)
+            failed = torch.stack(tuple(hard.values())).any(0)
+            if constraint is not None:
+                failed |= constraint
+            fields = dict(distance=distance, numerical_health=healthy, constraint_failure=failed, **hard, **soft)
         else:
             guard = self.ctrl.joint_failures(self.state) if constraint is None else constraint
             fields = dict(distance=distance, numerical_health=healthy, constraint_failure=guard,
@@ -1137,7 +1139,8 @@ class NativeTensorPhysicsRuntime:
                         soft_mimic=trans['soft_mimic'], soft_joint_limit=trans['soft_joint_limit'],
                         soft_reaction_force=self._reaction_force_cost(capture['mesh_wrenches']))
             self.last = self.frame(post, distance, capture=capture, suppress_contact=halted,
-                                   hard_causes=hard, soft_costs=soft, numerical_ok=numerical_ok)
+                                   constraint=trans['constraint_failure'], hard_causes=hard,
+                                   soft_costs=soft, numerical_ok=numerical_ok)
         else:
             guard |= joint_bad | self._geometry_bad
             if self.geometry is not None:

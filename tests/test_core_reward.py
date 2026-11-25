@@ -297,3 +297,27 @@ def test_wrist_reference_is_invariant_to_lane_origin_and_rod_yaw():
     moved_position, moved_rotation = rod_local_wrists(rod @ yaw.T + origin, shifted, ids)
     torch.testing.assert_close(moved_position, position, rtol=0, atol=1e-13)
     torch.testing.assert_close(moved_rotation, rotation, rtol=0, atol=1e-13)
+
+
+def test_goal_full_rewards_new_progress_without_paying_for_static_support_or_regrasp():
+    reward, schemas, endpoint = goal_full_setup()
+    carried = dict(touch=1., carried=True, upward=0.8, min_z=0.015, median_z=0.015)
+    phases = (carried, carried, {}, carried, {**carried, 'detached': True}, carried)
+    packets = []
+    for w, phase in enumerate(phases):
+        token = f'progress-{w}'
+        begin(reward, schemas, tick=8 * w, token=token)
+        for tick in range(8 * w + 1, 8 * w + 9):
+            measured = endpoint(tick, **phase)
+            if w == 5 and tick == 42:
+                measured.fields['constraint_failure'][0] = True
+            reward.observe(measured)
+        packets.append(reward.settle_once((token, token)))
+    steady = packets[1]
+    torch.testing.assert_close(steady.reward, steady.gamma * steady.endpoint_phi - steady.phi_pre - steady.integrated_cost + steady.event)
+    bonus = [p.event_terms['grasp_progress']['contribution'] for p in packets]
+    assert (bonus[0] > 0).all()
+    assert all(not bonus[w].any() for w in (1, 2, 3, 5))
+    assert (bonus[4] > 0).all()
+    failed = packets[5]
+    assert failed.terminated[0] and failed.event[0] == -40.0 and failed.reward[0] < -40.0

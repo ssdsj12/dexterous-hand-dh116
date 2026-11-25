@@ -250,7 +250,7 @@ from dh116.physics.runtime import require_substep_guard
 def train_teacher_main(argv=None):
     parser = teach_train__argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--grasp', choices=('pinch', 'tripod', 'power'), required=True)
-    parser.add_argument('--num-envs', type=int, choices=(2, 128, 512, 1024), required=True)
+    parser.add_argument('--num-envs', type=int, choices=(2, 128, 512, 1024, 2048), required=True)
     parser.add_argument('--gpu', type=int, required=True)
     parser.add_argument('--scene-build-mode', choices=('reference', 'clone', 'replicated'), default=None)
     parser.add_argument('--outer-timeout-s', type=int, default=900)

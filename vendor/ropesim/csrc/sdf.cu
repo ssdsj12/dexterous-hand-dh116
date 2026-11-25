@@ -272,9 +272,9 @@ void SdfStore::enable_forces(bool on) {
 }
 
 void SdfStore::enable_pair_capture(int capacity, bool batched) {
-    // Budget the full DH116 flat ledger at 1024 environments: 41 nodes, 17 meshes, 12 substeps.
-    constexpr int64_t maxBatchedSamples = 1024LL * 41 * 17 * 12;
-    if ((!batched && N != 1) || (batched && (N < 2 || N > 1024 || (int64_t)N * capacity > maxBatchedSamples)) || !forcesOn || !count() || pairCapacity || capacity < 1 || capacity > 1048576)
+    constexpr int64_t maxBatchedEnvironments = 2048;
+    constexpr int64_t maxBatchedSamples = maxBatchedEnvironments * 41 * 17 * 12;
+    if ((!batched && N != 1) || (batched && (N < 2 || N > maxBatchedEnvironments || (int64_t)N * capacity > maxBatchedSamples)) || !forcesOn || !count() || pairCapacity || capacity < 1 || capacity > 1048576)
         throw std::invalid_argument("pair capture requires one rope, mesh forces, and a bounded one-time allocation");
     try {
         check(cudaMalloc(&d_pairCount, sizeof(int) * N), "cudaMalloc(pair count)");
