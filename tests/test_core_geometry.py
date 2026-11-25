@@ -78,7 +78,16 @@ def test_approach_distance_is_continuous_at_the_locked_lattice_face():
     from types import SimpleNamespace
     from dh116.physics.runtime import NativeTensorPhysicsRuntime
 
-    owner = _capture_owner(_grid())
+    from dh116.physics.runtime import GraspContactReadout
+
+    contact = GraspContactReadout(
+        'pinch',
+        [f'{side}.{pad}' for side in ('left', 'right') for pad in GraspContactReadout.PADS[:2]]
+        + list(GraspContactReadout.SUPPORTS), device='cpu',
+    )
+    pads = [(i, 0, name, _grid()) for i, (_, names) in enumerate(contact.required) for name in names]
+    shapes = [(i, 0, 'cooked:pad', np.zeros((1, 3))) for i in (0, 1)]
+    owner = _math().TensorGeometry(shapes, pads, device='cpu')
     nodes = torch.zeros((3, 41, 3), dtype=torch.float32)
     nodes[..., 2] = .6
     offsets = nodes.new_tensor((-.0001, 0., .0001, .001))
@@ -91,26 +100,72 @@ def test_approach_distance_is_continuous_at_the_locked_lattice_face():
     approach_nodes[..., 2] = .6
     runtime = SimpleNamespace(nodes=approach_nodes, state={'link_pose_xyzw': _poses(4).float()},
                               full_grasp=True, radii=nodes.new_full((4,), .005),
-                              device='cpu', geometry=owner)
+                              device='cpu', geometry=owner, contact=contact)
     distance = NativeTensorPhysicsRuntime.distance(runtime, stamp=None)
-    torch.testing.assert_close(distance, (.0228 + offsets).double(), atol=1e-7, rtol=0)
+    torch.testing.assert_close(distance, (.0278 + offsets).double(), atol=1e-7, rtol=0)
     assert not runtime._pad_backface.any() and not runtime._soft_pad_depth.any()
 
     nodes[2, :, 1] = torch.nan
     gaps, valid = owner.policy_pad_gaps(_poses(3).float(), nodes, nodes.new_full((3,), .005))
     assert valid[0, 0, :4].tolist() == [True, False, False, False]
-    torch.testing.assert_close(gaps[0, :, :4], (.0228 + offsets).expand(2, -1), atol=1e-7, rtol=0)
+    torch.testing.assert_close(gaps[0, :, :4], (.0228 + offsets).expand(4, -1), atol=1e-7, rtol=0)
     assert not valid[1].any()
-    torch.testing.assert_close(gaps[1], nodes.new_full((2, 41), .001), atol=1e-7, rtol=0)
+    torch.testing.assert_close(gaps[1], nodes.new_full((4, 41), .001), atol=1e-7, rtol=0)
     assert torch.isposinf(gaps[2]).all() and not valid[2].any()
 
     # A nearer exterior node still guides the policy when a farther node is in the box.
     approach_nodes[:, :, 0] = 0.
     approach_nodes[:, 10, 0] = nodes.new_tensor((-.0199, -.0201, -.0211, -.0221))
     distance = NativeTensorPhysicsRuntime.distance(runtime, stamp=None)
-    torch.testing.assert_close(distance, nodes.new_tensor((0., .0001, .0011, .0021)).double(),
+    torch.testing.assert_close(distance, nodes.new_tensor((.005, .0051, .0061, .0071)).double(),
                                atol=1e-7, rtol=0)
     assert runtime._pad_backface.tolist() == [True, False, False, False]
+
+
+@pytest.mark.parametrize('device', ['cpu', pytest.param('cuda', marks=pytest.mark.skipif(
+    not torch.cuda.is_available(), reason='CUDA unavailable'))])
+def test_approach_prefers_opposed_pads_at_the_same_distance(device):
+    from types import SimpleNamespace
+
+    from dh116.physics.runtime import GraspContactReadout, NativeTensorPhysicsRuntime
+
+    contact = GraspContactReadout(
+        'pinch',
+        [f'{side}.{pad}' for side in ('left', 'right') for pad in GraspContactReadout.PADS[:2]]
+        + list(GraspContactReadout.SUPPORTS),
+        device=device,
+    )
+    x = np.indices((5, 5, 5))[0] * .01 - .02
+    grid = dict(values=.005 + x, origin=np.full(3, -.02), spacing=np.array(.01))
+    pads = [(i, j, name, grid) for i, (_, names) in enumerate(contact.required)
+            for j, name in enumerate(names)]
+    shapes = [(i, 0, 'cooked:pad', np.zeros((1, 3))) for i in (0, 1)]
+    owner = _math().TensorGeometry(shapes, pads, device=device, backend='eager')
+    poses = _poses(7).to(device)
+    poses[:, 0, :2, 1] = -.04
+    poses[:, 1, :2, 1] = .04
+    poses[..., 0] = -.002
+    # Each candidate is 2 mm away. Only these rows face their thumb with the index.
+    for row, hand in [(i, k) for i in (0, 2, 3, 4, 5) for k in (0, 1)] + [(6, 0)]:
+        poses[row, hand, 1, 0] = .002
+        poses[row, hand, 1, 5:7] = poses.new_tensor((1., 0.))
+    poses[2, :, :2, 1] *= -1
+    poses[4, :, :2, 0] *= 4
+    poses[5, :, :2, 0] *= -3
+    nodes = poses.new_zeros((7, 41, 3))
+    nodes[..., 1] = torch.linspace(-.08, .08, 41, dtype=nodes.dtype, device=device)
+    nodes[..., 2] = .6
+    nodes[3] = nodes[3].flip(0)
+    radii = nodes.new_full((7,), .005)
+    runtime = SimpleNamespace(nodes=nodes, state={'link_pose_xyzw': poses}, full_grasp=True,
+                              radii=radii, device=device, geometry=owner, contact=contact)
+
+    distance = NativeTensorPhysicsRuntime.distance(runtime, stamp=None)
+
+    assert distance[0] < distance[6] < distance[1]
+    torch.testing.assert_close(distance, radii.new_tensor((.004, .007, .007, .007, .013, .005, .00625)),
+                               atol=1e-7, rtol=0)
+    assert runtime._pad_backface.tolist() == [False] * 5 + [True, False]
 
 
 def test_pose_transform_and_full_vertex_bounds_match_frozen_oracle():

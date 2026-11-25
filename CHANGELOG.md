@@ -1,5 +1,12 @@
 # Changelog
 
+## Opposed pad approach shaping — 2026-11-25
+
+- Estimate near-surface approach directions from the original trilinear pad and palm grids, on the correct material and world half. Use the existing grasp-specific opposition geometry to distinguish equally close, same-facing and opposed pads. Near-surface guidance decays to zero one rod radius away from the surface.
+- Continue to derive contact, load, detachment, Lift, Hold and Slip qualification from the native physical state and force readout.
+- Complete the previous 512-environment run set, with 64 Pinch, 32 Tripod and 16 Power updates and natural exit 0. Peak contact rates were 22.42%, 63.93% and 0% respectively. No grasp reached qualifying detached Lift. Each Power update stopped after its first minibatch.
+- Pass 228 CPU tests and 15 tests in the CUDA session, including both devices for the new regression. All three grasps pass two native control windows at 512 environments and exit naturally.
+
 ## Continuous pre-contact distances — 2026-11-25
 
 - Extend approach distances from the locked SDF boundary. Keep signed in-lattice gaps and their masks for the original depth guards. Nonfinite coordinates do not index the grid or count as approach.

@@ -611,8 +611,8 @@ class TensorGeometry:
         self.validate_metadata(bindings=bindings, body_names=body_names)
         return self.result
 
-    def policy_pad_gaps(self, poses, nodes, radii):
-        """Return signed lattice gaps and continuous approach distances outside it."""
+    def policy_pad_gaps(self, poses, nodes, radii, *, approach_normals=False):
+        """Return signed gaps and optionally near-surface normals for approach shaping."""
         if not hasattr(self, '_policy_pad_data'):
             self.validate_metadata()
             if not self._pads:
@@ -627,15 +627,17 @@ class TensorGeometry:
                                   device=self.device)
             self._policy_pad_data = (
                 [pad[0] for pad in self._pads], [pad[1] for pad in self._pads],
+                torch.tensor([2 * pad[0] - 1 for pad in self._pads], device=self.device),
                 torch.cat([grid.flatten() for grid in grids]),
                 torch.stack([pad[5].float() for pad in self._pads]),
                 torch.stack([pad[6].float() for pad in self._pads]),
                 shape, stride, offsets, (stride[:, None, :] * corner[None, :, :]).sum(-1),
             )
-        sides, links, grid, origin, spacing, shape, stride, offsets, corners = self._policy_pad_data
+        sides, links, signs, grid, origin, spacing, shape, stride, offsets, corners = self._policy_pad_data
         poses = poses[:, sides, links].float()
+        rotation = _rotation_xyzw(poses)
         displacement = nodes[:, None, :, :].float() - poses[..., None, :3]
-        local = displacement @ _rotation_xyzw(poses)
+        local = displacement @ rotation
         lattice = (local - origin[:, None, :]) / spacing[:, None, None]
         upper = (shape - 1)[:, None, :]
         inside = ((lattice >= 0) & (lattice < upper)).all(-1)
@@ -651,8 +653,37 @@ class TensorGeometry:
         phi = torch.lerp(y[..., 0], y[..., 1], fraction[..., 2])
         gap = phi - radii[:, None, None].to(phi.dtype)
         outside = ((coordinate - safe) * spacing[:, None, None]).norm(dim=-1)
-        approach_gap = torch.where(inside, gap, gap.clamp_min(0) + outside)
-        return approach_gap.masked_fill(~finite, float('inf')), inside
+        approach_gap = torch.where(inside, gap, gap.clamp_min(0) + outside).masked_fill(~finite, float('inf'))
+        if not approach_normals:
+            return approach_gap, inside
+
+        # Use only the assigned material half and world half for approach guidance.
+        y_world = nodes[..., 1]
+        center = (y_world[:, 0] + y_world[:, -1]) * 0.5
+        side = signs[:, None]
+        node_index = torch.arange(nodes.shape[1], device=self.device)
+        eligible = inside & (y_world[:, -1] > y_world[:, 0])[:, None, None]
+        eligible &= ((node_index - nodes.shape[1] // 2) * side > 0)
+        eligible &= ((y_world - center[:, None])[:, None, :] * side > 0)
+        surface_distance = gap.abs().masked_fill(~eligible, float('inf'))
+        nearest, node = surface_distance.min(-1, keepdim=True)
+        # Differentiate the same trilinear interpolation at the chosen point.
+        f = fraction.gather(2, node[..., None].expand(-1, -1, -1, 3)).squeeze(2)
+        v = values.gather(2, node[..., None, None, None].expand(-1, -1, -1, 2, 2, 2)).squeeze(2)
+        at_x = x.gather(2, node[..., None, None].expand(-1, -1, -1, 2, 2)).squeeze(2)
+        at_xy = y.gather(2, node[..., None].expand(-1, -1, -1, 2)).squeeze(2)
+        dx = v[..., 1, :, :] - v[..., 0, :, :]
+        dx = torch.lerp(dx[..., 0, :], dx[..., 1, :], f[..., 1, None])
+        dy = at_x[..., 1, :] - at_x[..., 0, :]
+        gradient = torch.stack((torch.lerp(dx[..., 0], dx[..., 1], f[..., 2]),
+                                torch.lerp(dy[..., 0], dy[..., 1], f[..., 2]),
+                                at_xy[..., 1] - at_xy[..., 0]), -1) / spacing[:, None]
+        length = gradient.norm(dim=-1)
+        normal_valid = torch.isfinite(length) & (length > 1e-12)
+        direction = ((gradient / length.clamp_min(1e-12)[..., None]).unsqueeze(-2)
+                     @ rotation.transpose(-1, -2)).squeeze(-2)
+        proximity = (1.0 - nearest.squeeze(-1) / radii[:, None].to(gap.dtype)).clamp(0, 1)
+        return approach_gap, inside, direction.masked_fill(~normal_valid[..., None], 0), proximity.masked_fill(~normal_valid, 0)
 
     def _separation(self, minimum, maximum):
         low = [minimum[:, ids].amin(1) for ids in self._side_ids]

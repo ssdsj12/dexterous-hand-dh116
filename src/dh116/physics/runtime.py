@@ -106,11 +106,9 @@ class GraspContactReadout:
              for name in self.mesh_names], device=self.device,
         )
 
-    def _opposed(self, normals, lengths):
+    def _opposed(self, normals, available, fraction):
         cosine = normals @ normals.transpose(-1, -2)
-        available = lengths > 1e-12
         opposed = (cosine <= self.MAX_OPPOSITION_COS) & available[..., :, None] & available[..., None, :]
-        fraction = (lengths / self.MIN_PAD_LOAD_N).clamp(0, 1).masked_fill(~available, 0)
         angular = ((0.5 - cosine) / (0.5 - self.MAX_OPPOSITION_COS)).clamp(0, 1)
         if self.grasp == 'tripod':
             thumb, index, middle = normals.unbind(-2)
@@ -180,7 +178,9 @@ class GraspContactReadout:
             lengths = pad_normals.norm(dim=-1)
             directions = pad_normals / lengths.clamp_min(1e-12)[..., None]
             loaded = pad_loads > self.MIN_PAD_LOAD_N
-            opposed_steps, opposition_progress = self._opposed(directions, lengths)
+            available = lengths > 1e-12
+            fraction = (lengths / self.MIN_PAD_LOAD_N).clamp(0, 1).masked_fill(~available, 0)
+            opposed_steps, opposition_progress = self._opposed(directions, available, fraction)
             opposed = opposed_steps.all(1) & correct_side
             effective.append(opposed & loaded.all(dim=(1, 2)) &
                              (pad_loads.sum(-1) > self.MIN_HAND_LOAD_N).all(1))
@@ -513,6 +513,9 @@ class NativeTensorPhysicsRuntime:
             if len(runtime.mesh_names) != 17 or archive.task is None:
                 raise ValueError('complete grasp reward requires the original supported 17-mesh scene')
             self.contact = GraspContactReadout(self.style, runtime.mesh_names, device=self.device)
+            pad_order = tuple((i, name) for i, (_, names) in enumerate(self.contact.required) for name in names)
+            if tuple(self.geometry.pad_columns) != pad_order:
+                raise ValueError('approach and native contact pad identities differ')
             inverse_mass = np.asarray(parameters['inverse_masses_kg_inv'], dtype=np.float64)
             weight = (1.0 / inverse_mass).sum(1) * -float(parameters['gravity_world_m_s2'][2])
             if weight.shape != (self.n,) or not (np.isfinite(weight) & (weight > 0)).all():
@@ -789,7 +792,8 @@ class NativeTensorPhysicsRuntime:
         poses = self.state['link_pose_xyzw'][subset]
         self._geometry_bad = torch.zeros(len(p), dtype=torch.bool, device=self.device)
         if self.full_grasp:
-            gaps, valid = self.geometry.policy_pad_gaps(poses, p, self.radii[subset])
+            radii = self.radii[subset]
+            gaps, valid, normals, proximity = self.geometry.policy_pad_gaps(poses, p, radii, approach_normals=True)
             nearest = gaps.masked_fill(~valid, float('inf')).amin(-1)
             min_gap = nearest.amin(-1)
             if not reset:
@@ -797,8 +801,13 @@ class NativeTensorPhysicsRuntime:
                 self._soft_pad_depth = ((-0.0008 - min_gap) / 0.0022).clamp(0, 1)
             else:
                 require_substep_guard(min_gap < -0.003, 'Reset pad is behind its native SDF surface')
-            # Boundary extension is used only for the approach potential.
-            return gaps.amin(-1).clamp_min(0).mean(-1).double()
+            # Reward facing pads before they load. Only native forces can qualify contact.
+            normals = normals.reshape(len(p), 2, -1, 3)
+            proximity = proximity.reshape(len(p), 2, -1)
+            _, alignment = self.contact._opposed(normals, proximity > 0, proximity)
+            balanced = (alignment.sum(-1) + 2 * alignment.amin(-1)) * 0.25
+            distance = gaps.amin(-1).clamp_min(0).mean(-1)
+            return distance.double() + radii * (1.0 - balanced.double())
         power_distance = None
         if self.style == 'power':
             rows = torch.arange(len(p), device=self.device)[:, None]
