@@ -125,9 +125,16 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
                     summary = torch.stack(rollout_stats).cpu()
                     names = ('return', 'contact_rate', 'opposed_rate', 'detached_lift_m', 'hold_s', 'successes', 'constraint_failures')
                     record['grasp_metrics'] = dict(zip(names, torch.cat((
-                        summary[:, :3].mean(0), summary[:, 3:5].amax(0), summary[:, 5:].sum(0)
+                        summary[:, :3].mean(0), summary[:, 3:5].amax(0), summary[:, 5:7].sum(0)
                     )).tolist()))
-                    record['grasp_metrics']['last_detached_lift_m'] = float(summary[-1, 3])
+                    record['grasp_metrics'].update(
+                        last_detached_lift_m=float(summary[-1, 3]),
+                        bilateral_support_rate=record['grasp_metrics']['opposed_rate'],
+                        arrival_rate=float(summary[:, 7].mean()),
+                        light_contact_progress=float(summary[:, 8].mean()),
+                        prelift_potential=float(summary[:, 9].amax()),
+                        supported_median_lift_m=float(summary[:, 10].amax()),
+                    )
                     score = (float(summary[:, 5].sum()), float(summary[:, 4].max()),
                              float(summary[:, 3].max()), float(summary[:, 2].mean()))
                 else:
@@ -238,7 +245,7 @@ def train_teacher_main(argv=None):
     if args.outer_timeout_s < 240 or (args.probe_control_windows and args.outer_timeout_s > 900):
         parser.error('outer timeout must be at least 240 seconds, with a 900-second ceiling for a two-window probe')
     if args.episode_windows is None:
-        args.episode_windows = 480 if args.full_grasp else 32
+        args.episode_windows = 720 if args.full_grasp else 32
     if args.full_grasp and args.episode_windows <= 300:
         parser.error('full grasp needs a longer episode than the 300-window Hold alone')
     if args.episode_windows < 1:
@@ -389,10 +396,14 @@ class NativeTensorCollector(NativeTensorPhysicsRuntime):
             contacted = (v['coverage_left'] > 0) & (v['coverage_right'] > 0)
             detached = v['bilateral_support'] & v['no_external_support'] & v['off_table']
             lift = packet.terms['lift']['raw'].masked_fill(~detached, 0)
+            supported = v['bilateral_support'] & v['off_table'] & ~v['no_external_support'] & ~v['prohibited_support']
+            supported_height = (v['median_z'] - packet.post_context['reset_median_z_m']).masked_fill(~supported, 0)
             self.training_stats = tenso_colle__torch.stack((
                 packet.reward.mean(), contacted.double().mean(), v['bilateral_support'].double().mean(),
                 lift.clamp_min(0).amax(), packet.post_context['hold_s'].amax(),
                 (packet.event == 100).sum().double(), (packet.event == -40).sum().double(),
+                self.reward._arrived.double().mean(), packet.terms['load_progress']['raw'].mean(),
+                packet.terms['prelift']['contribution'].amax(), supported_height.clamp_min(0).amax(),
             ))
         self.snapshot('window_' + str(self.controls), dict(schemas=tuple(self.reward.schemas), packet=packet, post_value=value, actions=actions))
         self.timings['value_and_reward_settlement'] = tenso_colle__perf_counter() - phase_start

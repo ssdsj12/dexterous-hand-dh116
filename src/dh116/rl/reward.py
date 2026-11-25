@@ -28,7 +28,8 @@ train_rewar__SUCCESS = train_rewar__MappingProxyType({'net_lift_m': 0.03, 'hold_
 train_rewar__CONTACT = 'approach_contact_prelift_v1'
 train_rewar__SMOKE = 'approach_wiring_smoke_v1'
 train_rewar__FULL = 'flexible_train_r1_full'
-train_rewar__GOAL_FULL = 'flexible_train_goal_full_v1'
+train_rewar__GOAL_FULL = 'flexible_train_goal_full_v2'
+GOAL_SHAPING_FIELDS = ('load_progress_left', 'load_progress_right', 'support_unload', 'hand_lift_load')
 train_rewar__CURRICULUM = 'flexible_train_curriculum_v1'
 _SCOPES = ('cpu_fixture', 'unqualified_source')
 _FULL_PROFILES = (train_rewar__FULL, train_rewar__CURRICULUM, train_rewar__GOAL_FULL)
@@ -241,6 +242,8 @@ def _profile_spec(profile):
     full = profile in _FULL_PROFILES
     long_rollout = full and profile != train_rewar__GOAL_FULL
     weights = {'distance': 2.0, 'contact': 2.0, 'persistence': 0.5, 'geometry': 1.0, 'lift': 4.0, 'hold': 4.0} if full else {'distance': 2.0}
+    if profile == train_rewar__GOAL_FULL:
+        weights.update(lift=3.2, prelift=0.8, load_progress=1.0)
     if profile == train_rewar__CONTACT:
         weights = {'distance': 2.0, 'contact': 2.0, 'persistence': 0.5, 'geometry': 1.0}
     slip_cost = 0.25 if profile == train_rewar__CURRICULUM else 1.0 if profile in (train_rewar__FULL, train_rewar__GOAL_FULL) else None
@@ -658,8 +661,10 @@ class TensorTrainingReward:
             units.update(((name, 'dimensionless') for name in names if name.startswith('original_guard_')))
             if self.config.finger_goal is not None:
                 units.update(((name, 'rad') for name in tenso_train_rewar__ERROR_FIELDS))
-            if self.config.profile == train_rewar__GOAL_FULL and s.scope == 'unqualified_source':
-                units.update(wrist_goal_m='m', wrist_goal_rad='rad')
+            if self.config.profile == train_rewar__GOAL_FULL:
+                units.update(dict.fromkeys(GOAL_SHAPING_FIELDS, 'dimensionless'))
+                if s.scope == 'unqualified_source':
+                    units.update(wrist_goal_m='m', wrist_goal_rad='rad')
             if any((name not in names for name in units)):
                 raise tenso_train_rewar__SourceFailure('missing applicable original reward field')
             if any((name in units and unit != units[name] for (name, unit, source) in s.field_specs)):
@@ -706,8 +711,9 @@ class TensorTrainingReward:
             rt = self._tensor(frame.anchor_reference_tick, (k, 4), integer=True)
             available = torch.tensor([bool(s.anchor_specs) for s in schemas], device=self.device) if anchor_available is None else anchor_available
             bad |= present & (~available | (~torch.isfinite(drift) | ~torch.isfinite(uncertainty) | (drift < 0) | (uncertainty < 0) | ~torch.isfinite(drift + uncertainty) | ~torch.isfinite(drift - uncertainty)).any(dim=1) | ~torch.isfinite(ref).all(dim=(1, 2)))
-            for n in ('coverage_left', 'coverage_right'):
-                bad |= (values[n] < 0) | (values[n] > 1)
+            for n in ('coverage_left', 'coverage_right', *GOAL_SHAPING_FIELDS):
+                if n in values:
+                    bad |= (values[n] < 0) | (values[n] > 1)
             anchors = (present, drift, uncertainty, ref, rt)
         return (tick, time, values, anchors, bad)
 
@@ -764,7 +770,18 @@ class TensorTrainingReward:
                 hold_s = torch.where(hs < 0, 0.0, (tick - hs).to(torch.float64) / tenso_train_rewar__PHYSICS_HZ)
             pc = (v['coverage_left'] + v['coverage_right']) / 2.0
             geom = (v['opposed_left'].to(torch.float64) + v['opposed_right'].to(torch.float64)) / 2.0
-            terms.update(contact=2.0 * pc, persistence=0.5 * (contact_s / 0.25).clamp(0.0, 1.0), geometry=geom, lift=4.0 * pl, hold=4.0 * (hold_s / success['hold_s']).clamp(0.0, 1.0))
+            if self.config.profile == train_rewar__GOAL_FULL:
+                # One potential through loss of external contact. Strict lift,
+                # hold and success still require the original genuine predicate.
+                carrying = torch.minimum(v['support_unload'], v['hand_lift_load'])
+                carrying = carrying.masked_fill(~(contact & v['bilateral_support']) | v['prohibited_support'], 0)
+                pl = carrying * (h / success['net_lift_m']).clamp(0, 1)
+                prelift = carrying * (md / 0.015).clamp(0, 1) * (1 + mn / 0.0005).clamp(0, 1)
+                terms['prelift'] = self.config.weights['prelift'] * prelift
+                terms['load_progress'] = self.config.weights['load_progress'] * (
+                    v['load_progress_left'] + v['load_progress_right']) * 0.5
+                phi = phi + terms['prelift'] + terms['load_progress']
+            terms.update(contact=2.0 * pc, persistence=0.5 * (contact_s / 0.25).clamp(0.0, 1.0), geometry=geom, lift=self.config.weights['lift'] * pl, hold=4.0 * (hold_s / success['hold_s']).clamp(0.0, 1.0))
             phi = phi + terms['contact'] + terms['persistence'] + terms['geometry'] + terms['lift'] + terms['hold']
             state.update(_contact_start=cs, _contact_s=contact_s, _hold_start=hs, _hold_s=hold_s, _slip=slip, _slip_status=status, _ever_bilateral=self._ever_bilateral[ids] | contact, _anchor_latched=self._anchor_latched[ids] | present)
             state['_derived_bad'] |= ~torch.isfinite(md) | ~torch.isfinite(mn) | ~torch.isfinite(hold_s) | ~torch.isfinite(contact_s)
@@ -1084,6 +1101,12 @@ class TensorTrainingReward:
         if self.full:
             v = self._last_values
             terms.update(contact=self._term((v['coverage_left'] + v['coverage_right']) / 2.0, 'coverage_fraction', self._sources('coverage_left', 'coverage_right'), self._terms['contact']), persistence=self._term(self._contact_s, 's', 'derived:continuous_required_bilateral_original_opposed', self._terms['persistence']), geometry=self._term((v['opposed_left'].double() + v['opposed_right'].double()) / 2.0, 'dimensionless', self._sources('opposed_left', 'opposed_right'), self._terms['geometry']), lift=self._term(torch.minimum(v['median_z'] - self._median, v['min_z'] - self._min), 'm', self._sources('median_z', 'min_z'), self._terms['lift']), hold=self._term(self._hold_s, 's', 'derived:continuous_instantaneous_hold', self._terms['hold']), prohibited_support=self._term(v['prohibited_support'], 'dimensionless', self._sources('prohibited_support')), slip=self._term(self._slip, 'm', tuple((';'.join((a[1] for a in s.anchor_specs)) for s in self.schemas)), torch.where(torch.isnan(self._slip), 0.0, (self._slip / 0.0005).clamp(0.0, 2.0)), applicable=~torch.isnan(self._slip), history_reason='no_bilateral_contact_since_reset'))
+        if self.config.profile == train_rewar__GOAL_FULL:
+            for name, sources in (('load_progress', GOAL_SHAPING_FIELDS[:2]),
+                                  ('prelift', ('median_z', 'min_z', *GOAL_SHAPING_FIELDS[2:]))):
+                contribution = self._terms[name]
+                terms[name] = self._term(contribution / self.config.weights[name], 'dimensionless',
+                                         self._sources(*sources), contribution)
         for (name, unit, source) in self.schemas[0].field_specs:
             raw = self._slip if self.full and name == 'slip' else self._last_values[name]
             if self.full and name == 'slip':

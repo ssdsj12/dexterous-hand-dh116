@@ -30,7 +30,7 @@ from dh116.rl.reward import TensorRewardFrame
 from dh116.rl.reward import TensorTrainingReward
 from dh116.rl.reward import measured_finger_errors
 from dh116.rl.reward import train_rewar__ERROR_FIELDS as ERROR_FIELDS
-from dh116.rl.reward import load_config, train_rewar__GOAL_FULL
+from dh116.rl.reward import GOAL_SHAPING_FIELDS, load_config, train_rewar__GOAL_FULL
 SIDES = ('left', 'right')
 _MEASURED_FIELDS = ('q', 'qd', 'backend_targets', 'root_pose_wxyz', 'root_pose_xyzw', 'root_velocity', 'link_pose_wxyz', 'link_pose_xyzw', 'body_com_velocity_w', 'body_com_pose_w', 'base_link_pose_w', 'base_link_com_velocity_w')
 
@@ -136,6 +136,10 @@ class GraspContactReadout:
         loads = loads.view(batch, 12, meshes)
         weighted_normal = weighted_normal.view(batch, 12, meshes, 3)
         support_loads = force_magnitude.view(batch, 12, meshes)[:, :, self.support_slots]
+        # Signed world-Z force on the rod, from the same reconciled contact pairs.
+        vertical = loads.new_zeros(batch * 12 * meshes)
+        vertical.index_add_(0, row, vectors[:, 8])
+        vertical = vertical.view(batch, 12, meshes)
 
         y = nodes[..., 1]
         center = (y[:, 0] + y[:, -1]) * 0.5
@@ -167,6 +171,9 @@ class GraspContactReadout:
             effective.append(opposed & loaded.all(dim=(1, 2)) &
                              (pad_loads.sum(-1) > self.MIN_HAND_LOAD_N).all(1))
             result['coverage_' + side] = loaded.all(1).double().mean(-1) * correct_side
+            pad_progress = (pad_loads / self.MIN_PAD_LOAD_N).clamp(0, 1).mean(dim=(1, 2))
+            hand_progress = (pad_loads.sum(-1) / self.MIN_HAND_LOAD_N).clamp(0, 1).mean(1)
+            result['load_progress_' + side] = 0.5 * (pad_progress + hand_progress) * correct_side
             result['opposed_' + side] = opposed
             required_slot = torch.zeros(meshes, dtype=torch.bool, device=self.device)
             required_slot[list(slots)] = True
@@ -178,6 +185,9 @@ class GraspContactReadout:
         result['off_table'] = (support_loads[:, :, 0] <= self.SUPPORT_LOAD_LIMIT_N).all(1)
         result['no_external_support'] = (support_loads <= self.SUPPORT_LOAD_LIMIT_N).all(dim=(1, 2))
         result['support_load_n'] = support_loads.amax(1)
+        result['support_vertical_n'] = vertical[:, :, self.support_slots].clamp_min(0).sum(-1).amax(1)
+        hand_slots = self.pad_slots[0] + self.pad_slots[1]
+        result['hand_vertical_n'] = vertical[:, :, hand_slots].sum(-1).amin(1) * correct_side
         return result
 
 
@@ -393,7 +403,8 @@ class NativeTensorPhysicsRuntime:
         self.raw_clearance = RawTableClearance(prepared, names, self.device)
         self.bridge = TensorMeshBridge(runtime.mesh_names, bindings, initial['mesh_positions_world_m'], initial['mesh_quaternions_xyzw'])
         mesh_reset(runtime.solver, self.bridge, initial, self.ids)
-        self.radius = float(runtime.solver.parameter_snapshot()['contact_radius_m'])
+        parameters = runtime.solver.parameter_snapshot()
+        self.radius = float(parameters['contact_radius_m'])
         self.radii = torch.full((self.n,), self.radius, dtype=torch.float64, device=self.device)
         self.geometry = None
         self.support_geometry = None
@@ -479,6 +490,11 @@ class NativeTensorPhysicsRuntime:
             if len(runtime.mesh_names) != 17 or archive.task is None:
                 raise ValueError('complete grasp reward requires the original supported 17-mesh scene')
             self.contact = GraspContactReadout(self.style, runtime.mesh_names, device=self.device)
+            inverse_mass = np.asarray(parameters['inverse_masses_kg_inv'], dtype=np.float64)
+            weight = (1.0 / inverse_mass).sum(1) * -float(parameters['gravity_world_m_s2'][2])
+            if weight.shape != (self.n,) or not (np.isfinite(weight) & (weight > 0)).all():
+                raise ValueError('finite positive native rod weight required for lift shaping')
+            self.rod_weight_n = torch.as_tensor(weight, device=self.device)
             self.anchors = FixedGraspAnchors(self.n, self.device)
             self._lift_reached = torch.zeros(self.n, dtype=torch.bool, device=self.device)
             self._hold_position = torch.full((self.n, 41, 3), torch.nan, dtype=torch.float64, device=self.device)
@@ -798,15 +814,18 @@ class NativeTensorPhysicsRuntime:
                 off_table=zeros, no_external_support=zeros,
                 contact_nodes=torch.zeros((self.n, 2), device=self.device, dtype=torch.long),
             )
+            contact.update({name: torch.zeros_like(distance) for name in GOAL_SHAPING_FIELDS})
         else:
             if capture['pair_owner_time_s'] != stamp.solver_time_s:
                 raise ValueError('grasp contact does not belong to the elapsed solver boundary')
             contact = self.contact(capture, nodes)
+            contact['support_unload'] = (1 - contact.pop('support_vertical_n') / self.rod_weight_n).clamp(0, 1)
+            contact['hand_lift_load'] = (contact.pop('hand_vertical_n') / self.rod_weight_n).clamp(0, 1)
         fields.update({key: val for key, val in contact.items() if key not in ('contact_nodes', 'support_load_n')})
         if suppress_contact is not None:
             # A parked pose is infrastructure, not task contact evidence.
             for key in ('coverage_left', 'coverage_right', 'opposed_left', 'opposed_right',
-                        'bilateral_support', 'off_table', 'no_external_support'):
+                        'bilateral_support', 'off_table', 'no_external_support', *GOAL_SHAPING_FIELDS):
                 fields[key] = fields[key].masked_fill(suppress_contact, 0)
         present = fields['bilateral_support']
         fields['prohibited_support'] = self._lift_reached & ~fields['no_external_support'] if capture is not None else torch.zeros_like(present)
@@ -899,6 +918,7 @@ class NativeTensorPhysicsRuntime:
             }
             specs += tuple((key, unit, frame_sources.get(key, contact_source))
                            for key, unit in train_rewar___FULL_UNITS.items())
+            specs += tuple((key, 'dimensionless', contact_source) for key in GOAL_SHAPING_FIELDS)
             specs += (('slip', 'm', 'derived:fixed_material_and_tangential_anchors'),
                       ('wrist_goal_m', 'm', self.config.finger_goal.reference_sha256),
                       ('wrist_goal_rad', 'rad', self.config.finger_goal.reference_sha256))

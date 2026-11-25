@@ -618,5 +618,48 @@
       }
     },
     "maximum_rollout_episode_time_s": 1.0666666666666667
+  },
+  "teacher_reward_v2": {
+    "profile": "flexible_train_goal_full_v2",
+    "cpu_tests": 195,
+    "cuda_tests": 13,
+    "probe_envs": 512,
+    "probe_controls": 2,
+    "probe_updates": 0,
+    "episode_windows": 720,
+    "rollout_steps": 32,
+    "probe_by_grasp": {
+      "pinch": {
+        "physical_gpu": 1,
+        "exit_code": 0,
+        "windows": [
+          0.8431532618124038,
+          0.6336138350889087
+        ],
+        "recipe_sha256": "b847a6166019ea7ab3487c5ccf5545af130c309a21dd279810f3f17acf95b422",
+        "native_result_sha256": "892c219bbe1342bca08fcf8c9cc526b317abc171552f33bdadcc0160027d5c3a"
+      },
+      "tripod": {
+        "physical_gpu": 2,
+        "exit_code": 0,
+        "windows": [
+          0.8240884370170534,
+          0.6635856670327485
+        ],
+        "recipe_sha256": "cd3f30e853cbf84ecf5f60014d47d056ef0045bbae640b9abcae93315f189a88",
+        "native_result_sha256": "ec78acbcf4a52d5c82957c9eb123d9354f34852a37955c2093a5984fabbdac41"
+      },
+      "power": {
+        "physical_gpu": 3,
+        "exit_code": 0,
+        "windows": [
+          0.7771688019856811,
+          0.6247650641016662
+        ],
+        "recipe_sha256": "fae65fc4e62b77a1dbaee020fe65e29484f17afef8bf43b8d8eff67b05360c52",
+        "native_result_sha256": "7ed9578730a094d11e1d7a4fbfdfbb7afef849b8e1466fe489099ebb61ed0987"
+      }
+    },
+    "grasp_success_verified": false
   }
 }

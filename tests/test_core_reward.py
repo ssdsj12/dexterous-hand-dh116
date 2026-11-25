@@ -122,6 +122,74 @@ def test_goal_full_recipe_preserves_hold_standard_and_a_32_window_rollout():
         assert config.events['trusted_constraint_failure'] == -40
         assert dict(config.success) == {'net_lift_m': 0.03, 'hold_s': 5.0, 'max_slip_m': 0.0005}
 
+
+def test_goal_full_rewards_light_contact_and_continuous_measured_lift():
+    from dh116.rl.reward import train_rewar___FULL_UNITS
+
+    config = load_config(ROOT / 'configs/training/reward_pinch.json', full_grasp=True)
+    reward = TensorTrainingReward(config, num_envs=2, device='cpu')
+    units = {**train_rewar___FULL_UNITS, 'load_progress_left': 'dimensionless',
+             'load_progress_right': 'dimensionless', 'support_unload': 'dimensionless',
+             'hand_lift_load': 'dimensionless', 'slip': 'm'}
+    specs = (*((name, 'rad', 'fixture') for name in ERROR_FIELDS),
+             ('distance', 'm', 'fixture'),
+             *((name, 'dimensionless', 'fixture') for name in
+               ('numerical_health', 'constraint_failure', GUARD)),
+             *((name, unit, 'fixture') for name, unit in units.items()))
+    schemas = tuple(TensorLaneSchema(
+        f'ep-{i}', i, f'reset-{i}', f'rod-{i}', 'cpu_fixture', 'fixture', ('0', '1'), specs,
+        required_pad_ids=(('left', ('thumb', 'index')), ('right', ('thumb', 'index'))),
+        anchor_specs=tuple((f'{i}:{anchor}', 'drift', 'uncertainty') for anchor in range(4)),
+    ) for i in range(2))
+
+    def endpoint(tick, *, touch=0., carried=False, detached=False, upward=0., min_z=0.):
+        base = frame(tick)
+        fields = dict(base.fields)
+        for name, unit in units.items():
+            if name != 'slip':
+                dtype = (torch.float64 if unit == 'm' or name.startswith(('load_progress', 'coverage'))
+                         or name in ('support_unload', 'hand_lift_load') else torch.bool)
+                fields[name] = torch.zeros(2, dtype=dtype)
+        fields['load_progress_left'].fill_(touch)
+        fields['load_progress_right'].fill_(touch)
+        if carried:
+            for name in ('coverage_left', 'coverage_right', 'bilateral_support', 'opposed_left', 'opposed_right', 'off_table'):
+                fields[name].fill_(1)
+            fields['support_unload'].fill_(0.8)
+            fields['hand_lift_load'].fill_(upward)
+            fields['median_z'].fill_(0.01)
+            fields['min_z'].fill_(min_z)
+            fields['no_external_support'].fill_(detached)
+        return replace(base, fields=fields, anchor_present=torch.full((2,), tick >= 9),
+                       anchor_drift=torch.zeros((2, 4), dtype=torch.float64),
+                       anchor_uncertainty=torch.zeros((2, 4), dtype=torch.float64),
+                       anchor_reference=torch.zeros((2, 4, 1), dtype=torch.float64),
+                       anchor_reference_tick=torch.full((2, 4), 9, dtype=torch.long))
+
+    reward.reset_selected((0, 1), schemas, endpoint(0), previous_request=torch.zeros(2, 24),
+                          tokens=('reset', 'reset'), policy_uids=('policy', 'policy'))
+    phases = (dict(touch=.25), dict(carried=True, min_z=.005),
+              dict(carried=True, upward=.8, min_z=-.001),
+              dict(carried=True, upward=.8, min_z=.005),
+              dict(carried=True, upward=.8, min_z=.005, detached=True), {})
+    packets = []
+    for index, phase in enumerate(phases):
+        token = f'w{index}'
+        begin(reward, schemas, tick=8 * index, token=token)
+        for tick in range(8 * index + 1, 8 * index + 9):
+            reward.observe(endpoint(tick, **phase))
+        packets.append(reward.settle_once((token, token)))
+
+    assert (packets[0].terms['load_progress']['contribution'] > 0).all()
+    for packet in packets[1:3]:
+        assert not packet.terms['prelift']['contribution'].any()
+    assert (packets[3].terms['prelift']['contribution'] > 0).all()
+    for name in ('prelift', 'lift'):
+        torch.testing.assert_close(packets[3].terms[name]['contribution'],
+                                   packets[4].terms[name]['contribution'], atol=0., rtol=0.)
+    assert not packets[5].terms['prelift']['contribution'].any()
+    assert all(not packet.terminated.any() for packet in packets)
+
 def test_wrist_reference_is_invariant_to_lane_origin_and_rod_yaw():
     from dh116.physics.runtime import rod_local_wrists
     rod = torch.zeros((1, 41, 3), dtype=torch.float64)

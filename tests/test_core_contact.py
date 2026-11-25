@@ -164,6 +164,34 @@ def test_grasp_contact_requires_each_substep_and_counts_uncancelled_support_load
     assert result['off_table'].tolist() == [True, True]
     assert result['no_external_support'].tolist() == [False, True]
 
+
+def test_flat_reward_readout_separates_light_contact_from_vertical_carry():
+    from dh116.physics.runtime import GraspContactReadout
+
+    names = ('left.finger14_link', 'left.finger23_link',
+             'right.finger14_link', 'right.finger23_link', 'table', 'support_0', 'support_1')
+    indices = [(0, 0, 32, 0), (0, 0, 20, 5), (1, 0, 8, 0)]
+    vectors = [[0, 0, 0, 1, 0, 0, 0.025, 0, 0, 0, 0, 0],
+               [0, 0, 0, 1, 0, 0, 0.100, 0, 0, 0, 0, 0],
+               [0, 0, 0, 1, 0, 0, 0.025, 0, 0, 0, 0, 0]]
+    for step in range(12):
+        indices.extend(((2, step, 32, 0), (2, step, 8, 2), (2, step, 20, 5)))
+        vectors.extend(([0, 0, 0, 1, 0, 0, 0.1, 0, 0.04, 0, 0, 0],
+                        [0, 0, 0, 1, 0, 0, 0.1, 0, 0.02, 0, 0, 0],
+                        [0, 0, 0, 0, 0, 1, 0, 0, 0.12, 0, 0, 0]))
+    indices, vectors = torch.tensor(indices), torch.tensor(vectors, dtype=torch.float64)
+    packet = dict(env_ids=indices[:, 0], indices=indices[:, 1:], vectors=vectors,
+                  normal_force=(vectors[:, 3:6] * vectors[:, 6:9]).sum(-1))
+    nodes = torch.zeros((3, 41, 3), dtype=torch.float64)
+    nodes[:, :, 1] = torch.arange(41)
+    result = GraspContactReadout('pinch', names, device='cpu')(packet, nodes)
+    assert 0 < result['load_progress_left'][0] < 1
+    assert result['load_progress_left'][1] == 0
+    assert not result['bilateral_support'].any()
+    assert result['no_external_support'].tolist() == [False, True, False]
+    torch.testing.assert_close(result['support_vertical_n'], nodes.new_tensor([0, 0, 0.12]))
+    torch.testing.assert_close(result['hand_vertical_n'], nodes.new_tensor([0, 0, 0.06]))
+
 def test_quarantine_parks_only_the_failed_rod_without_opening_a_new_episode():
     solver, rod = owner()
     ledger = rod.advance(physics_step=3)

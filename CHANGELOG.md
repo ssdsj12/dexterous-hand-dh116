@@ -1,5 +1,12 @@
 # Changelog
 
+## Teacher grasp reward — 2026-11-25
+
+- Add bounded light-contact and assisted-lift potential from owned DeformX contact pairs for Pinch, Tripod and Power.
+- Separate signed vertical loads from strict external contact magnitudes. Preserve geometry guards, 24D actions and the fully detached 30 mm Lift, 5 s Hold and 0.5 mm Slip criteria.
+- Default full-grasp episodes to 720 control windows and retain the 32-window PPO rollout. Record arrival, light contact, supported height and prelift progress in each update.
+- Verify 195 CPU and 13 CUDA tests. The three native 512-environment, two-window probes exit naturally with code 0 and perform zero PPO updates.
+
 ## SCENE-INIT-SPEEDUP R1 — 2026-11-24
 
 - Clone one fully authored/validated USD template into the shared Teacher/Student batch; retain the independent reference builder for numerical comparisons.
