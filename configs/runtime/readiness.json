@@ -1353,5 +1353,82 @@
         "first_best_sha256": "5244416f43d42bf9894e947e561e5bbb496fbc018fccc533e022ff989306a966"
       }
     }
+  },
+  "tripod_power_grasp_references": {
+    "baseline_sha": "1120200a25625ee99490298cfed743a26d91ff0c",
+    "cpu_tests": {
+      "passed": 235,
+      "skipped": 1
+    },
+    "cuda_tests": {
+      "passed": 13,
+      "physical_gpu": 2
+    },
+    "fit": {
+      "historical_rod_frames_per_grasp": 239,
+      "translation_perturbations_per_grasp": 12,
+      "fixed_wrist_closing_samples": 61,
+      "reference_frame": "rod_local_material_station",
+      "source": "original_cooked_pad_sdf_and_USD_forward_kinematics"
+    },
+    "native_scope": "two_lanes_two_windows_and_selected_lane_reset_only",
+    "tripod_original_failure": {
+      "completed_ppo_updates": 303,
+      "sdk_step": 77826,
+      "worker_exit_code": -11,
+      "window_rejection_exact_cause_confirmed": false,
+      "cleanup_sdk_time_s": 162.13750845612958,
+      "cleanup_expected_rational_time_s": 162.1375,
+      "cleanup_difference_us": 8.4561295921,
+      "cleanup_existing_tolerance_us": 2.0,
+      "sdk_time_matches_float32_dt": true,
+      "shared_cleanup_code_changed": false
+    },
+    "grasp_qualified": false,
+    "detached_lift_measured": false,
+    "by_grasp": {
+      "tripod": {
+        "reference_sha256": "ac7be209bd3ba4c547a98070c6697ab466ac8cce79a3da2649102b570c8b3a0a",
+        "scene_sha256": "3432220ce4edd52a3419a831f3b013ea0f9f9b9da1de9231a2e757ece60bbfbf",
+        "previous_worst_gap_mm": 3.513325,
+        "candidate_worst_gap_mm": 0.517191,
+        "previous_min_table_clearance_mm": 43.223341,
+        "candidate_closing_min_table_clearance_mm": 33.938814,
+        "candidate_closing_min_pad_gap_mm": -0.032343,
+        "environments": 2,
+        "control_windows": 2,
+        "sdk_steps": 18,
+        "updates": 0,
+        "reset_ids": [
+          1,
+          2
+        ],
+        "natural_exit_code": 0,
+        "recipe_sha256": "6f39a74f837773cf53876f6ee8a4f30d1099ca7d3c60a5b21753f3eac074dbfe",
+        "receipt_sha256": "c49f1c73c09e5e9da2efb20429169966a729c06a342ab90885655416f4b55f50",
+        "receipt": "runs/grasp-reference-fit-final-20261126-015604/tripod-probe/native_result.json"
+      },
+      "power": {
+        "reference_sha256": "69a76f8b9abc3ecf648fba110560051ca44406cb4abd669bfb742e2a51820407",
+        "scene_sha256": "de61cfb85d344ab76f4fcd00e4fcc9d23e64a0966de95ae4b05e678835de6bbf",
+        "previous_worst_gap_mm": 7.700028,
+        "candidate_worst_gap_mm": 1.579736,
+        "previous_min_table_clearance_mm": -5.792705,
+        "candidate_closing_min_table_clearance_mm": 9.455,
+        "candidate_closing_min_pad_gap_mm": -0.389337,
+        "environments": 2,
+        "control_windows": 2,
+        "sdk_steps": 18,
+        "updates": 0,
+        "reset_ids": [
+          1,
+          2
+        ],
+        "natural_exit_code": 0,
+        "recipe_sha256": "b6e8d2d4c90e239f221a6e4173926f8c48714341eadd1454c8cdddcaf5b65ed1",
+        "receipt_sha256": "8e3d742dec4ab9518093458da4002699f21e867e4522c2f8f257185b01cdb9a6",
+        "receipt": "runs/grasp-reference-fit-final-20261126-015604/power-probe/native_result.json"
+      }
+    }
   }
 }

@@ -2,7 +2,7 @@
   "version": "dh116-deformable-privileged-teacher-config-v1",
   "task_kind": "deformable_rod",
   "grasp": "power",
-  "task_config_sha256": "8b4f7f8d3fb96c12b9794a7c5daaa2b65f9231699348d5635044bd3f5ac75d63",
+  "task_config_sha256": "74f32645b7dbfe72786280bb5f0960422184442924c8151f52c179abc8465fb5",
   "checkpoint_namespace": "deformable_teacher_power_v1",
   "model": {
     "common_size": 371,

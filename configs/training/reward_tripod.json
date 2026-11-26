@@ -53,6 +53,6 @@
   "finger_goal": {
     "schema": "dh116-teacher-finger-goal-v1",
     "grasp": "tripod",
-    "reference_sha256": "5e54678899eefcca9d9d2233607a4e7d497a4f8672f97b7778b8661a53b9a93f"
+    "reference_sha256": "ac7be209bd3ba4c547a98070c6697ab466ac8cce79a3da2649102b570c8b3a0a"
   }
 }

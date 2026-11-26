@@ -44,8 +44,8 @@
   },
   "material_status": "explicit_candidate_inherits_P0_solver_coefficients_not_measured_task_material",
   "scene_input": {
-    "path": "build/scene_bundle/anatomical/power/scene.json",
-    "sha256": "ccff43f45855417fe5012f317974612ab9d3e6122bc01754e029fe6642d1ca8f",
+    "path": "build/scene_bundle/anatomical/power/scene-69a76f8b9abc.json",
+    "sha256": "de61cfb85d344ab76f4fcd00e4fcc9d23e64a0966de95ae4b05e678835de6bbf",
     "source_scene": {
       "path": "build/scene_bundle/power/scene.json",
       "sha256": "081018119e60ff42f46083425836a62565996c35e54f7e4117b11103c7bacb48"
@@ -54,7 +54,7 @@
       33,
       8
     ],
-    "reference_sha256": "7277991c97aa2c77c4dc9b91c152df3654d205a4b78324b7b7e57266e8aa5150"
+    "reference_sha256": "69a76f8b9abc3ecf648fba110560051ca44406cb4abd669bfb742e2a51820407"
   },
   "qualification": {
     "teacher": false,
