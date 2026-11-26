@@ -1,5 +1,38 @@
 # Changelog
 
+## Contact-guided finger closure
+
+Gated Teacher grasp/lift now uses posture and measured pad load guidance with a bounded residual policy. Added a two-lane controller-only reachability check.
+
+## Episode-based Teacher curriculum
+
+Three consecutive qualifying episodes promote each lane at its own reset boundary. Checkpoints preserve lane levels and streaks.
+
+## Graded Teacher grasp curriculum
+
+- Unlock four ordered, once-per-episode objectives for gated Teacher training, from two-hand pad contact to continuous 15 mm detached lift. Track lesson attainment independently of final success.
+
+## Grip-preserving, coordinated Teacher lift
+
+- Keep independent wrist-Z exploration until stable bilateral contact. Preserve measured finger posture with bounded trim and use one world-Z lift increment across both rotated mounts.
+- Pause lift on contact loss, release finger trim for regrasp, and recapture measured posture after a new stable clamp.
+
+## Teacher PPO grip-force balance
+
+- Keep normal-load balance shaping active with the per-hand force band disabled in all three training recipes.
+- Score required-pad normal-load balance per DeformX substep. Target 50/50 in Pinch, 50/25/25 in Tripod, and left/right total balance in all grasps.
+- Add a configurable exploratory per-hand force band and record its score and the measured hand totals in PPO logs.
+
+## Teacher PPO scale and Power reset
+
+- Verify 4096 physical environments per grasp with the shared CUDA contact buffer and unchanged per-lane admission checks.
+- Start Power with the palms near the wire and wider finger clearance for the closing motion.
+
+## Reduced-DoF Teacher and native lifecycle
+
+- Use a measured near-wire reset for reduced-DoF Teacher runs. Enable bidirectional wrist Z from the first grasp-lift window, with optional contact gating, per-window PPO masks, and verified model-only warm start.
+- Record per-pad load diagnostics, distinguish isolated contact rows from invalid shared indices/counts, and accept the observed float32 SDK period at normal cleanup.
+
 ## Teacher PPO KL acceptance and checkpoint selection
 
 - Verify post-step exact KL on the full rollout before keeping an Adam step. Restore policy, optimizer and RNG on rejection, with the configured learning-rate backtracking.

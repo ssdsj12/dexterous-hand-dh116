@@ -338,7 +338,7 @@ def test_native_session_restores_arguments_and_closes_after_post_launch_import_f
     assert events == [('launch', ('teacher',)), ('close', {'wait_for_replicator': False})]
 
 
-@pytest.mark.parametrize(('count', 'columns', 'width'), [(512, 23, 3), (1024, 32, 4), (2048, 46, 4)])
+@pytest.mark.parametrize(('count', 'columns', 'width'), [(512, 23, 3), (1024, 32, 4), (2048, 46, 4), (4096, 64, 4)])
 def test_scene_lanes_order_and_stage_paths(count, columns, width):
     from dh116.env.lifecycle import scene_lanes
 
@@ -353,7 +353,8 @@ def test_scene_lanes_order_and_stage_paths(count, columns, width):
         scene_lanes(1025, (1.5, 1.0, 0.1))
 
 
-def test_2048_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch):
+@pytest.mark.parametrize("count", [2048, 4096])
+def test_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch, count):
     from dh116.env import scene
     from dh116.env.lifecycle import NativeOwners, scene_lanes
     from dh116.hand.articulation import prepare_regex_task
@@ -367,7 +368,7 @@ def test_2048_physical_lanes_reach_regex_scene_authoring(tmp_path, monkeypatch):
     monkeypatch.setattr(scene, 'spawn_parameters', stop_at_scene_inputs)
     sim = SimpleNamespace(current_time_step_index=0)
     archive = SimpleNamespace(style='pinch', scene_inputs={})
-    lanes = scene_lanes(2048, (1.5, 1.0, 0.1))
+    lanes = scene_lanes(count, (1.5, 1.0, 0.1))
     with pytest.raises(ReachedAuthoring):
         prepare_regex_task(sim, NativeOwners(), None, tmp_path, {}, archive, lanes)
     with pytest.raises(ValueError, match='original physical lanes'):
@@ -465,3 +466,15 @@ def test_native_gpu_lock_releases_both_locks_on_occupied_gpu(physical_gpus, monk
     physical_gpus.memory[gpu_uuid] = 512
     with native_gpu_lock(0) as verified:
         assert verified == gpu_uuid
+
+
+
+def test_cleanup_clock_accepts_installed_float32_sdk_step_without_accepting_neighbor():
+    import struct
+    from dh116.env.lifecycle import _clock
+    dt = struct.unpack('f', struct.pack('f', 1 / 480))[0]
+    step = 77826
+    row = dict(sdk_step=step, sdk_time_s=step * dt, app_update_number=4)
+    assert _clock(lambda: row, step) == row
+    with pytest.raises(ValueError):
+        _clock(lambda: dict(row, sdk_time_s=(step + 1) * dt), step)

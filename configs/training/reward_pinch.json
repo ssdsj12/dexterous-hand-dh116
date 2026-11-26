@@ -21,6 +21,7 @@
     "remaining_s": null
   },
   "gamma_source": "ppo.gamma",
+  "grip_balance_enabled": true,
   "legacy_r1_enabled": false,
   "legacy_r2_enabled": false,
   "potential_weights": {

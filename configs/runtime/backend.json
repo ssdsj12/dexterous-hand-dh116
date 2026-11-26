@@ -3,15 +3,15 @@
   "upstream_commit": "96b8514c7c55c724f1abba1fbf6ed6642b7db72b",
   "flat_abi": "contact_pair_samples_flat_cuda_v1",
   "source_lock": "configs/runtime/ropesim_source_lock.json",
-  "source_lock_sha256": "7b689d56ff2aec11f1a2e96fce28227687436cf8953834e45674a02a14802857",
-  "binary_path": "build/ropesim-2048/python/ropesim/_ropesim.cpython-310-x86_64-linux-gnu.so",
-  "binary_sha256": "86366adddc22b4a31bc77b0d5565b1489b81563bab80b221d6955773a15a9eff",
+  "source_lock_sha256": "c50ed89e32dddb4f79f0a14e30ac44ed63bd2457b34f30960815b5b1bdf76b63",
+  "binary_path": "build/ropesim-4096/python/ropesim/_ropesim.cpython-310-x86_64-linux-gnu.so",
+  "binary_sha256": "a07b79832f167e9aa73b15cf96de303914cb7bb5dd0864004df0d2f2066ae03d",
   "parity_evidence": {
-    "path": "build/ropesim-2048/flat_parity.json",
-    "sha256": "aeadb3fc58b5272d343735df8469d38ae1e949c7d4f18fbabdd6f3ca303ab258"
+    "path": "build/ropesim-4096/flat_parity.json",
+    "sha256": "f02e28e24321945bb4c173bc0e29ec87a627f8983fbb960116e44d48e439db8b"
   },
-  "build_manifest": "build/ropesim-2048/build_manifest.json",
-  "build_manifest_sha256": "a2a19425b8f911b850c991f40571e8bee700c24617975c84b0a60d92d4948875",
+  "build_manifest": "build/ropesim-4096/build_manifest.json",
+  "build_manifest_sha256": "002c7b4a6ab93694caf24f82712daae7e02b89ea016dbcd56dab3ccb4e86fdb0",
   "patch_sha256": "4d3f4a723f1238072bbabd1450460616517bbfb576b5d9751ca1187ac91360e2",
   "cuda_architectures": [
     89

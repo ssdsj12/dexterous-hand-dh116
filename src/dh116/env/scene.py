@@ -646,7 +646,58 @@ def verify_material_properties(properties, profile, expected_shapes):
     return dict(shapes=expected_shapes, static_friction=values[0, :, 0].tolist(), dynamic_friction=values[0, :, 1].tolist(), restitution=values[0, :, 2].tolist())
 ERROR_FIELDS = tuple(('finger_goal_max_error_' + side for side in teach_pose_goal__SIDES))
 
-def load_task_scene(grasp, *, root=ROOT, full_grasp=False):
+def _near_wire_receipt(source_sha256, candidate):
+    if (not isinstance(candidate, dict)
+            or set(candidate) != {'source_scene_sha256', 'root_pose_wxyz', 'active_q_rad'}
+            or candidate['source_scene_sha256'] != source_sha256):
+        raise ValueError('near-wire Reset must identify its source scene')
+    return _digest(dict(schema='dh116-near-wire-reset-v1', candidate=candidate))
+
+
+def task_scene_sha256(task, *, full_grasp, near_wire=False):
+    spec = task.get('full_scene_input', task['scene_input']) if full_grasp else task['scene_input']
+    if not near_wire:
+        return spec['sha256']
+    if not full_grasp:
+        raise ValueError('near-wire Reset requires the full-grasp scene')
+    return _near_wire_receipt(spec['sha256'], task.get('near_wire_reset'))
+
+
+def near_wire_scene_inputs(inputs, candidate):
+    '''Bind measured pre-grasp roots and finger angles to the unchanged supported wire.'''
+    receipt = _near_wire_receipt(inputs['manifest_sha256'], candidate)
+    original = _seed(inputs['authored_seed'])
+    archive = dict(inputs['archive'])
+    if archive['task'] is None or inputs.get('anatomical_placement') is None:
+        raise ValueError('near-wire Reset requires the original anatomical supported scene')
+    poses = _array(candidate['root_pose_wxyz'], (2, 7), 'near-wire world wrist pose')
+    _require_anatomical_hand_positions(poses, inputs['authored_rod_nodes'][20])
+    active = _array(candidate['active_q_rad'], (2, 6), 'near-wire active angles')
+    roots = poses.copy()
+    roots[:, :3] -= original['origin']
+    roots[:, :2] -= original['root_xy']
+    roots[:, 2] -= original['initial_offset_m']
+    seed = prepare_reset_state(
+        hand_roots=dict(zip(ANATOMICAL_SIDES, roots, strict=True)), origin=original['origin'],
+        root_xy=original['root_xy'], initial_offset_m=original['initial_offset_m'],
+        joint_positions=[expand(row).tolist() for row in active], joint_velocities=[[0.] * 11 for _ in roots],
+        source_description=receipt,
+    )
+    layout = dict(inputs['author_layout'], hand_roots={}, active_joints={})
+    hands = {}
+    for i, side in enumerate(ANATOMICAL_SIDES):
+        root = scene_input__np.asarray(seed['authored_root_seed_w'][i]).copy()
+        root[2] -= BUILDER_OFFSET_M
+        layout['hand_roots'][side] = root
+        layout['active_joints'][side] = active[i]
+        hands[side] = dict(archive['task']['hands'][side], pose_wxyz=seed['reset_root_pose_w'][i])
+    archive['task'] = dict(archive['task'], hands=hands)
+    archive['task_seed_sha256'] = seed['sha256']
+    return dict(inputs, manifest_sha256=receipt, archive=archive, author_layout=layout,
+                authored_seed=seed, reset=dict(inputs['reset'], seed=seed))
+
+
+def load_task_scene(grasp, *, root=ROOT, full_grasp=False, near_wire=False):
     from types import SimpleNamespace
     root = scene_input__Path(root)
     task = scene_input__json.loads((root / 'configs/tasks' / (grasp + '.json')).read_text())
@@ -654,6 +705,9 @@ def load_task_scene(grasp, *, root=ROOT, full_grasp=False):
     inputs = load_scene_inputs(root / spec['path'], spec['sha256'], root=root)
     if inputs['grasp'] != grasp:
         raise ValueError('independent grasp scene identity differs')
+    if near_wire:
+        task_scene_sha256(task, full_grasp=full_grasp, near_wire=True)
+        inputs = near_wire_scene_inputs(inputs, task['near_wire_reset'])
     archive = SimpleNamespace(**inputs['archive'])
     archive.scene_inputs = inputs
     return (archive, inputs['reset'])

@@ -5,6 +5,50 @@ import torch as surfa_force_shari__torch
 import math as surfa_succe__math
 import math as tenso_contr__math
 
+def guided_closure_action(request, command, goal, loads, grasp, enabled):
+    """Blend the reference/force controller with the bounded policy request.
+
+    Columns 1..5 are flexors. Thumb opposition tracks its reference. The Power
+    palm is a measured support and has no actuator. Full policy authority at
+    either endpoint lets the policy reverse any guide or change grip strength.
+    """
+    import torch
+    digits = {'pinch': 2, 'tripod': 3, 'power': 5}[grasp]
+    q = command.reshape(-1, 2, 6)
+    guide = torch.zeros_like(q)
+    guide[..., 0] = ((goal[..., 0] - q[..., 0]) * 8).clamp(-0.45, 0.45)
+    flex = slice(1, 1 + digits)
+    force = loads[..., :digits]
+    # Equal hand targets track the measured mean. A starting preload prevents
+    # a zero-force equilibrium. This is a servo reference, not an action limit.
+    seek_range = 0.12
+    if grasp == 'power':
+        # Keep wrapping gently while the palm is still unloaded.
+        palm = (loads[..., 5:6] / 0.05).clamp(0, 1)
+        seek_range = 0.06 + 0.06 * palm
+        total = force.sum(-1).mean(1, keepdim=True).clamp(0.75, 3.0)
+        target = (total / digits).unsqueeze(-1)
+    else:
+        share = (0.5, 0.5) if digits == 2 else (0.5, 0.25, 0.25)
+        total = force.sum(-1).mean(1, keepdim=True).clamp(0.60, 3.0)
+        target = total.unsqueeze(-1) * q.new_tensor(share)
+    lower, upper = target * 0.8, target * 1.2
+    force_error = (lower - force).clamp_min(0) - (force - upper).clamp_min(0)
+    seek = ((goal[..., flex] + seek_range - q[..., flex]) * 7).clamp(-0.45, 0.45)
+    correction = (force_error / target).clamp(-1, 1) * 0.40
+    guide[..., flex] = torch.where(force >= 0.02, correction, seek)
+    guide = guide.flatten(1).masked_fill(~enabled[:, None], 0)
+    action = request.clone()
+    action[:, :12] += (1 - request[:, :12].abs()) * guide
+    return action
+
+
+def stable_clamp_step(ticks, bilateral_safe, *, required_steps):
+    '''Count consecutive verified samples and revoke lift on any loss.'''
+    ticks = (ticks + 1).clamp_max(required_steps).masked_fill(~bilateral_safe, 0)
+    return ticks, ticks >= required_steps
+
+
 def hold_window_step(duration, anchor, latched, relative_samples, physical_ok, dt, *, slip_tolerance_m=0.0005):
     """Update a continuous stable-lift window from ALL raw substep positions.
 
@@ -565,6 +609,24 @@ from dh116.hand.kinematics import ANGULAR_JOINT_NAMES
 from dh116.hand.kinematics import palm_mount__CONTRACT as MOUNT
 DT = 1 / 480
 
+def _coordinated_wrist_motion(base_local, local_up, world_z, floor, palm_room, requested, step_cap):
+    """Intersect both rotated mount boxes with one upward world-Z ray."""
+    t = tenso_contr__torch
+    limit = MOUNT['limit_m']
+    moves = local_up.abs() > 1e-12
+    direction = t.where(moves, local_up, 1.0)
+    a, b = (-limit - base_local) / direction, (limit - base_local) / direction
+    lo = t.minimum(a, b).masked_fill(~moves, -t.inf).amax((1, 2))
+    hi = t.maximum(a, b).masked_fill(~moves, t.inf).amin((1, 2))
+    lo = lo.maximum((floor - world_z).amax(1)).clamp_min(0)
+    hi = hi.minimum(palm_room.amin(1)).minimum(step_cap)
+    # The next drive targets are float32; allow their existing mount and floor
+    # rounding tolerances and check both reconstructed world targets afterwards.
+    valid = ((moves | (base_local.abs() <= limit + 2e-9)).all((1, 2)) & (lo <= hi + 1e-8))
+    delta = requested.minimum(hi).maximum(lo).masked_fill(~valid, 0)
+    delta = delta.minimum(step_cap)
+    return delta, valid
+
 class TensorControl:
 
     def __init__(self, batch, root_seed_w, bindings, mesh_names, *, isolate_constraints=False, soft_constraints=False):
@@ -655,7 +717,8 @@ class TensorControl:
             raise ValueError('nonfinite native q or qd')
         return ((active < self.low - 0.02) | (active > self.high + 0.02)).any(1) | (mimic.abs() > 0.02).any(1)
 
-    def prepare(self, actions, state, clearance_m, base_poses_wxyz, *, stamp, halted=None):
+    def prepare(self, actions, state, clearance_m, base_poses_wxyz, *, stamp, halted=None,
+                grasp_lift=None, closure_guide=None):
         if self._failed:
             raise ValueError('failed control owner requires a new native scope')
         if self.pending is not None:
@@ -687,11 +750,33 @@ class TensorControl:
         if halted is None:
             halted = tenso_contr__torch.zeros(self.n, device=self.device, dtype=tenso_contr__torch.bool)
         action = actions.double()
+        if closure_guide is not None:
+            action = guided_closure_action(action, command, *closure_guide)
         target = finger_pre_guard(command, action, actual, None, self.low, self.high, DT, self.rates, policy_owned=True)
         (_, target) = surface_final_guard(command, target, self.low, self.high, DT)
+        wrist_action = action
+        if grasp_lift is not None:
+            t = tenso_contr__torch
+            coordinated, reference, raise_allowed = grasp_lift
+            coordinated = coordinated & ~halted
+            holding = coordinated[:, None] & t.isfinite(reference)
+            if self.fixed_fingers:
+                holding[:, self.fixed_fingers] = False
+            lo = t.where(holding, reference - 0.04, self.low).maximum(self.low)
+            hi = t.where(holding, reference + 0.04, self.high).minimum(self.high)
+            in_band = (command >= lo - 1e-7) & (command <= hi + 1e-7)
+            measured_in_band = (actual >= lo - 1e-7) & (actual <= hi + 1e-7)
+            shape_ready = (~holding | (in_band & measured_in_band)).all(1) & holding.any(1)
+            slow = self.rates['joint_rate_rad_s'] * DT
+            target_step = t.where(in_band, 0.25 * slow, slow)
+            bounded = target.maximum(lo).minimum(hi)
+            residual = (bounded - command).clamp(-target_step, target_step)
+            target = t.where(holding, (command + residual).maximum(self.low).minimum(self.high), target)
+            wrist_action = action.clone()
+            wrist_action[:, 12:] = wrist_action[:, 12:].masked_fill(coordinated[:, None], 0)
         if self.fixed_fingers:
             target[:, self.fixed_fingers] = command[:, self.fixed_fingers]
-        (palm, angle) = wrist_requested_targets(self.palms, self.angles, action, self.rates, DT, palm_lower_m=self._palm_lower_m, palm_upper_m=self._palm_upper_m)
+        (palm, angle) = wrist_requested_targets(self.palms, self.angles, wrist_action, self.rates, DT, palm_lower_m=self._palm_lower_m, palm_upper_m=self._palm_upper_m)
         projection = project_tensor_policy_wrist_targets(root_seed_w=self.roots, measured_base_w=base_poses_wxyz.double(), common_lift_offset_m=self.roots.new_zeros(self.n), measured_clearance_m=clearance_m.double(), palm_offsets_m=self.palms, requested_palm_offsets_m=palm, angles_rad=self.angles, requested_angles_rad=angle, allowed=~halted, live=~halted, validate_values=not self.soft_constraints, palm_lower_m=self._palm_lower_m, palm_upper_m=self._palm_upper_m)
         anchors = state['root_pose_wxyz'].double()
         local = tenso_contr__torch.stack([local_translation(projection['projected_root_poses'][:, s], anchors[:, s]) for s in (0, 1)], 1)
@@ -715,7 +800,26 @@ class TensorControl:
                 local = (local + free_up * step[..., None]).clamp(-limit, limit)
             local = local.float().double()
             issued = anchors[..., :3] + _rotate(rotation, local)
+            if grasp_lift is not None:
+                base = self.roots[..., :3] + self.palms
+                base_local = _rotate(inverse, base - anchors[..., :3])
+                step_cap = (raise_allowed & shape_ready).double() * (self.rates['wrist_rate_m_s'] * DT)
+                requested = action[:, (14, 17)].mean(1).clamp_min(0) * step_cap
+                delta, feasible = _coordinated_wrist_motion(
+                    base_local, local_up, base[..., 2], floor,
+                    self._palm_upper_m[2] - self.palms[..., 2], requested, step_cap,
+                )
+                shared = (base_local + delta[:, None, None] * local_up).float().double()
+                shared_world = anchors[..., :3] + _rotate(rotation, shared)
+                feasible &= (shared.abs() <= limit + 2e-9).all((1, 2))
+                feasible &= (shared_world[..., 2] >= floor - 1e-8).all(1)
+                use_shared = coordinated & feasible
+                local = t.where(use_shared[:, None, None], shared, local)
+                issued = t.where(use_shared[:, None, None], shared_world, issued)
+                projection['coordinated_lift_delta_m'] = delta.masked_fill(~use_shared, 0)
             bad = (issued[..., 2] < floor - 1e-8).any(-1) & ~halted
+            if grasp_lift is not None:
+                bad |= coordinated & ~feasible
             projection['projected_root_poses'][..., :3] = issued
             projection['palm_offsets_m'] = issued - self.roots[..., :3]
         if not self.isolate_constraints and bool(bad.any()):

@@ -51,11 +51,11 @@ def test_native_training_flat_capture_reuses_bound_reductions():
     assert rejected['valid'].tolist() == [True, False]
     raw['lane_meta_gpu'][1, 1] = 0
     raw['indices_gpu'][0, 0] = -1
-    malformed = flat_cuda_pair_capture(
-        raw, n=2, vertices=41, meshes=2, substeps=12, device='cpu',
-        expected_owner_time_s=0.1, strict_audit=False,
-    )
-    assert malformed['valid'].tolist() == [False, False]
+    with pytest.raises(ValueError, match='indices'):
+        flat_cuda_pair_capture(
+            raw, n=2, vertices=41, meshes=2, substeps=12, device='cpu',
+            expected_owner_time_s=0.1, strict_audit=False,
+        )
     raw['indices_gpu'][0, 0] = 0
     raw['node_forces_gpu'][1, 0, 0] += 0.002
     rejected = flat_cuda_pair_capture(
@@ -347,3 +347,73 @@ def test_native_float_clock_uses_exact_advance_once_ulp_is_large():
     assert solver_clock_matches(float(old), float(known), steps=1)
     assert not solver_clock_matches(float(old), float(known + dt), steps=1)
     assert not solver_clock_matches(float(old), float(old), steps=1)
+
+
+
+def test_flat_global_count_mismatch_and_local_nonfinite_are_distinct():
+    raw = flat()
+    options = dict(n=2, vertices=41, meshes=2, substeps=12, device='cpu',
+                   expected_owner_time_s=0.1, strict_audit=False)
+    raw['indices_gpu'][3, 0] = 0
+    with pytest.raises(ValueError, match='lane counts'):
+        flat_cuda_pair_capture(raw, **options)
+    raw['indices_gpu'][3, 0] = 1
+    raw['vectors_gpu'][3, 7] = float('nan')
+    packet = flat_cuda_pair_capture(raw, **options)
+    assert packet['valid'].tolist() == [True, False]
+    assert packet['lane_failure_bits'].tolist() == [0, 2]
+    assert packet['env_ids'].tolist() == [0, 0, 0]
+    assert not packet['mesh_wrenches'][1].any()
+    assert not packet['node_forces'][1].any()
+
+
+@pytest.mark.parametrize('force_band_n', (None, (.4, 2.5)))
+def test_grip_balance_uses_substep_normal_loads_and_grasp_specific_ratios(force_band_n):
+    from dh116.physics.runtime import GraspContactReadout
+
+    for grasp, target in (('pinch', (.4, .4)), ('tripod', (.4, .2, .2)),
+                          ('power', (.06, .12, .12, .12, .12, .26))):
+        count = len(target)
+        pads = (*GraspContactReadout.PADS, 'base_link')[:count]
+        names = tuple(f'{side}.{pad}' for side in ('left', 'right') for pad in pads)
+        names += GraspContactReadout.SUPPORTS
+        loads = torch.tensor(target, dtype=torch.float64).expand(9, 12, 2, count).clone()
+        loads[1, :, 1] *= .5
+        loads[2, :, :, 0] += .05
+        loads[2, :, :, 1] -= .05
+        loads[3, :, :, -1] = 0
+        loads[4] *= 5
+        loads[5, 1:] = 0
+        loads[6] = 0
+        if grasp == 'tripod':
+            loads[7, :, :, 1] += .09
+            loads[7, :, :, 2] -= .09
+        keys = torch.tensor([(env, step, node, side * count + pad)
+                             for env in range(len(loads)) for step in range(12)
+                             for side, node in enumerate((8, 32)) for pad in range(count)])
+        force = loads.flatten()
+        vectors = force.new_zeros((len(keys), 12))
+        positive = (keys[:, 3] % count == 0)
+        if grasp == 'power':
+            positive |= keys[:, 3] % count == 5
+        vectors[:, 3] = torch.where(positive | (keys[:, 0] == 8), 1., -1.)
+        vectors[:, 6] = force * vectors[:, 3]
+        nodes = force.new_zeros((len(loads), 41, 3))
+        nodes[..., 1] = torch.linspace(-.25, .25, 41)
+        readout = GraspContactReadout(grasp, names, device='cpu', balance_enabled=True,
+                                      force_band_n=force_band_n)
+        result = readout(dict(env_ids=keys[:, 0], indices=keys[:, 1:],
+                              vectors=vectors, normal_force=force), nodes)
+        score = result['grip_balance']
+        assert score[0] == 1
+        assert 0 < score[1] < score[0]
+        if grasp != 'power':
+            assert 0 < score[2] < score[0]
+        else:
+            assert score[2] == score[0]
+        if grasp == 'tripod':
+            assert 0 < score[7] < score[0]
+        assert score[3] == score[6] == score[8] == 0
+        assert result['bilateral_support'][4]
+        torch.testing.assert_close(score[4], score.new_tensor(1.0 if force_band_n is None else .4))
+        torch.testing.assert_close(score[5], score[0] / 12)

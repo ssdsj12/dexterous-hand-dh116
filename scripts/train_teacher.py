@@ -83,7 +83,7 @@ def _checkpoint(args, scene_sha256, profile):
 
     packet = torch.load(io.BytesIO(checked_file(args.preview_checkpoint, args.preview_checkpoint_sha256)),
                         map_location='cpu', weights_only=True)
-    if not isinstance(packet, dict) or packet.keys() != _KEYS or packet['version'] != tenso_check__VERSION:
+    if not isinstance(packet, dict) or set(packet) not in (_KEYS, _KEYS | {'mastery'}) or packet['version'] != tenso_check__VERSION:
         raise ValueError('current native Teacher checkpoint required')
     identity = packet['identity']
     update = packet['counters']['updates']
@@ -96,22 +96,36 @@ def _checkpoint(args, scene_sha256, profile):
     expected = {name: file_sha256(source_file(name)) for name in (*_SOURCES, 'rl/training.py')}
     if identity['source_sha256'] != expected or identity['backend_profile'] != asdict(profile):
         raise ValueError('frozen Teacher execution sources or backend differ from the current runtime')
-    _, native_sha = native_recipe(
+    from dh116.rl.reward import load_config
+    from dh116.rl.training import dof_action_indices
+    active = identity.get('policy_action_indices')
+    participating = load_config(
+        PROJECT_ROOT / 'configs/training' / f'reward_{args.grasp}.json', full_grasp=True,
+    ).finger_goal.participating
+    dof_mode = 'full24' if active is None else ('grasp_lift' if active[-2:] == [14, 17] else 'finger_only')
+    if active is not None and tuple(active) != dof_action_indices(dof_mode, participating):
+        raise ValueError('checkpoint DoF indices differ from its grasp')
+    variants = (False, True) if dof_mode == 'grasp_lift' else (False,)
+    native_shas = [native_recipe(
         args.grasp, receipt_sha256=scene_sha256, num_envs=checkpoint_lanes,
         episode_windows=_EPISODE_WINDOWS, scene_build_mode='clone', full_grasp=True,
-    )
+        dof_mode=dof_mode, gated_lift=gated,
+    )[1] for gated in variants]
     declared = SimpleNamespace(
         model=SimpleNamespace(model_identity=identity['model']),
         rollout_steps=identity['rollout_steps'], num_envs=checkpoint_lanes,
     )
-    recipe = SimpleNamespace(
-        episode_windows=_EPISODE_WINDOWS, native_recipe_sha256=native_sha,
-        receipt_sha256=scene_sha256, policy_seed=identity['policy_seed'],
-    )
-    current = _checkpoint_context(declared, recipe, profile, {'sha256': identity['seed_sha256']})
-    if identity['recipe_sha256'] != current['recipe_sha256']:
-        raise ValueError('frozen Teacher checkpoint recipe differs from the current supported scene')
-    return packet
+    for gated, native_sha in zip(variants, native_shas, strict=True):
+        recipe = SimpleNamespace(
+            episode_windows=_EPISODE_WINDOWS, native_recipe_sha256=native_sha,
+            receipt_sha256=scene_sha256, policy_seed=identity['policy_seed'],
+        )
+        current = _checkpoint_context(declared, recipe, profile, {'sha256': identity['seed_sha256']})
+        if identity['recipe_sha256'] == current['recipe_sha256']:
+            if gated != ('mastery' in packet):
+                raise ValueError('checkpoint mastery field differs from the replay recipe')
+            return dict(packet, replay_dof_mode=dof_mode, replay_gated_lift=gated)
+    raise ValueError('frozen Teacher checkpoint recipe differs from the current supported scene')
 
 
 def _author_preview(stage, batch, supports):
@@ -278,6 +292,7 @@ def _exercise_preview(sim, owners, trace, project, prepared, archive, lanes, out
     collector = NativeTensorCollector(
         project, sim, batch, prepared, archive, seed, initial, bindings, rod, profile,
         episode_windows=_EPISODE_WINDOWS, wall_cap_s=args.outer_timeout_s, full_grasp=True,
+        dof_mode=packet.get('replay_dof_mode', 'full24'), gated_lift=packet.get('replay_gated_lift', False),
     )
     model = collector.model
     weights_sha256 = freeze_replay_actor(model, packet['policy'], packet['identity']['model'])
@@ -322,6 +337,10 @@ def _exercise_preview(sim, owners, trace, project, prepared, archive, lanes, out
         for window in range(1, args.preview_windows + 1):
             collector.timings = {}
             action = model.deterministic(collector.observation())
+            if collector.trainer.action_indices is not None:
+                active = torch.zeros_like(action, dtype=torch.bool)
+                active[:, collector.trainer.action_indices] = True
+                action = action.masked_fill(~(active & collector.policy_action_mask()), 0)
             token = f'{policy_uid}:{window}'
             collector.begin_action_window(action, token=token, policy_uids=(policy_uid,) * collector.n, end=end)
             collector.advance_action_window(action, end)
@@ -362,7 +381,7 @@ def _exercise_preview(sim, owners, trace, project, prepared, archive, lanes, out
 
 def _preview_worker(args, output, scene_sha256, task):
     from dh116.env.lifecycle import native_gpu_lock, run_native_session
-    from dh116.env.scene import load_task_scene
+    from dh116.env.scene import load_task_scene, task_scene_sha256
     from dh116.hand.articulation import OWNED_NAMES
     from dh116.physics.solver import TensorBackendProfile
     from dh116.physics.vision import StereoCalibration
@@ -371,7 +390,8 @@ def _preview_worker(args, output, scene_sha256, task):
     attempt = json.loads((output / 'attempt.json').read_text())
     if (attempt['preview_source_sha256'] != file_sha256(Path(__file__))
             or attempt['camera_config_sha256'] != file_sha256(_CAMERA_CONFIG)
-            or attempt['checkpoint_sha256'] != args.preview_checkpoint_sha256):
+            or attempt['checkpoint_sha256'] != args.preview_checkpoint_sha256
+            or attempt['scene_sha256'] != scene_sha256):
         raise ValueError('preview script, camera configuration or checkpoint changed before startup')
     if (os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND') != _GEOMETRY_BACKEND
             or os.environ.get('DH116_NATIVE_READBACK_BACKEND') != _READBACK_BACKEND):
@@ -379,8 +399,11 @@ def _preview_worker(args, output, scene_sha256, task):
     validate_native_options('clone')
     profile = TensorBackendProfile.load()
     packet = _checkpoint(args, scene_sha256, profile)
-    archive, reset = load_task_scene(args.grasp, full_grasp=True)
+    near_wire = scene_sha256 != task_scene_sha256(task, full_grasp=True)
+    archive, reset = load_task_scene(args.grasp, full_grasp=True, near_wire=near_wire)
     height = task.get('full_startup_height') if 'full_scene_input' in task else task.get('startup_height')
+    if near_wire:
+        height = None
     if height is not None:
         checked_file(PROJECT_ROOT / height['evidence_path'], height['evidence_sha256'])
         height = {key: height[key] for key in ('delta_z_m', 'evidence_sha256')}
@@ -417,13 +440,22 @@ def _preview_main(argv):
     if output.relative_to(PROJECT_ROOT).parts[0] != 'runs':
         parser.error('preview output must be a new directory below runs/')
     task = json.loads((PROJECT_ROOT / f'configs/tasks/{args.grasp}.json').read_text())
-    scene_sha256 = task.get('full_scene_input', task['scene_input'])['sha256']
+    import torch
+    from dh116.env.scene import task_scene_sha256
+
+    raw = checked_file(args.preview_checkpoint, args.preview_checkpoint_sha256)
+    identity = torch.load(io.BytesIO(raw), map_location='cpu', weights_only=True)['identity']
+    scene_sha256 = identity['receipt_sha256']
+    known_scenes = {task_scene_sha256(task, full_grasp=True)}
+    if 'near_wire_reset' in task:
+        known_scenes.add(task_scene_sha256(task, full_grasp=True, near_wire=True))
+    if scene_sha256 not in known_scenes:
+        parser.error('checkpoint scene must match the current supported or near-wire Reset')
     if args.preview_worker:
         return _preview_worker(args, output, scene_sha256, task)
 
     from dh116.env.lifecycle import resolve_physical_gpu_uuid
 
-    checked_file(args.preview_checkpoint, args.preview_checkpoint_sha256)
     gpu_uuid = resolve_physical_gpu_uuid(args.gpu)
     output.mkdir(parents=True, exist_ok=False)
     (output / 'native').mkdir()

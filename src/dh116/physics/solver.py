@@ -68,7 +68,7 @@ def validate_snapshot(packet, *, expected_num_envs, expected_nodes, expected_tim
 import json as tenso_backe_profi__json
 
 def tensor_pair_capture(raw, *, n, vertices, meshes, substeps, device):
-    if raw.get('schema') != 'dh116.sdf_pair_device.v1' or raw['substeps'] != substeps or raw['num_envs'] != n or (raw['mesh_count'] != meshes) or (not 2 <= n <= 2048) or (raw['last_error'] != 0) or (raw['owner_time_s_before'] != raw['owner_time_s_after']) or (not tenso_pair_captu__math.isfinite(raw['owner_time_s_before'])):
+    if raw.get('schema') != 'dh116.sdf_pair_device.v1' or raw['substeps'] != substeps or raw['num_envs'] != n or (raw['mesh_count'] != meshes) or (not 2 <= n <= 4096) or (raw['last_error'] != 0) or (raw['owner_time_s_before'] != raw['owner_time_s_after']) or (not tenso_pair_captu__math.isfinite(raw['owner_time_s_before'])):
         raise ValueError('source-qualified current device contact ABI required')
     counts = tenso_pair_captu__torch.as_tensor(raw['counts'], device=device)
     samples = tenso_pair_captu__torch.as_tensor(raw['samples'], device=device)
@@ -126,7 +126,7 @@ def compact_pair_capture(packet, *, dt_s, device):
     if not batch_pair_captu__math.isclose(dt_s, 1 / 480, abs_tol=1e-12, rel_tol=0):
         raise ValueError('expected the 480 Hz exchange clock')
     lanes = packet.get('lanes', ())
-    if packet.get('schema') != 'dh116.sdf_pair_samples_batch.v1' or not 2 <= len(lanes) <= 2048:
+    if packet.get('schema') != 'dh116.sdf_pair_samples_batch.v1' or not 2 <= len(lanes) <= 4096:
         raise ValueError('complete shared solver batch required')
     nodes = batch_pair_captu__torch.as_tensor(packet['node_forces_on_rod_world_n'], dtype=batch_pair_captu__torch.float64, device=device)
     wrenches = batch_pair_captu__torch.as_tensor(packet['mesh_wrenches_on_mesh_world'], dtype=batch_pair_captu__torch.float64, device=device)
@@ -217,22 +217,38 @@ def flat_cuda_pair_capture(raw, *, n, vertices, meshes, substeps, device, expect
     index = ids.long()
     limits = index.new_tensor([n, substeps, vertices, meshes])
     if not strict_audit:
-        # The source-locked native ABI creates owned pair buffers. Keep the
-        # device health mask and safe gather indices until the window gate.
-        valid_indices = ((index >= 0) & (index < limits)).all()
-        index = index.clamp_min(0).minimum(limits - 1)
+        torch = tenso_pair_captu__torch
+        if bool(((index < 0) | (index >= limits)).any()):
+            raise ValueError('flat pair indices out of bounds')
+        env_ids = index[:, 0]
+        counts = torch.bincount(env_ids, minlength=n)
+        expected = torch.minimum(meta[:, 3], meta[:, 2]).long()
+        if bool((meta[:, 2] <= 0).any() | (meta[:, 3] < 0).any()) or not torch.equal(counts, expected):
+            raise ValueError('flat pair lane counts differ from the owned compact buffer')
         val = vectors.double()
         nf = (val[:, 3:6] * val[:, 6:9]).sum(-1)
-        valid = ~invalid_lane & valid_indices & (meta[:, 3].sum() == len(ids))
-        valid &= tenso_pair_captu__torch.isfinite(val).all() & (nf >= -1e-5).all()
-        valid &= tenso_pair_captu__torch.isfinite(node_forces).flatten(1).all(1)
-        valid &= tenso_pair_captu__torch.isfinite(mesh_wrenches).flatten(1).all(1)
-        balance = node_forces.double().sum(1) + mesh_wrenches[..., :3].double().sum(1)
-        valid &= balance.norm(dim=-1) <= 0.001
-        return dict(counts=meta[:, 3].long(), env_ids=index[:, 0], indices=index[:, 1:],
+        pair_fault = (~torch.isfinite(val).all(1) | ~torch.isfinite(nf) | (nf < -1e-5)
+                      | ((val[:, 3:6].norm(dim=-1) - 1).abs() > 2e-5))
+        bad_pairs = counts.new_zeros(n).index_add_(0, env_ids, pair_fault.long())
+        finite_reductions = (torch.isfinite(node_forces).flatten(1).all(1)
+                             & torch.isfinite(mesh_wrenches).flatten(1).all(1))
+        node_sum = node_forces.double().sum(1)
+        mesh_sum = mesh_wrenches[..., :3].double().sum(1)
+        balanced = (torch.isclose(node_sum, -mesh_sum, atol=0.0003, rtol=5e-5).all(1)
+                    & ((node_sum + mesh_sum).norm(dim=-1) <= 0.001))
+        failure_bits = (invalid_lane.long() | ((bad_pairs > 0).long() << 1)
+                        | ((~finite_reductions).long() << 2) | ((~balanced).long() << 3))
+        valid = failure_bits == 0
+        if not bool(valid.all()):
+            # Isolate invalid contact data before scoring or applying the next reaction.
+            keep = valid[env_ids]
+            env_ids, index, val, nf = env_ids[keep], index[keep], val[keep], nf[keep]
+            node_forces = node_forces.masked_fill(~valid[:, None, None], 0)
+            mesh_wrenches = mesh_wrenches.masked_fill(~valid[:, None, None], 0)
+        return dict(counts=counts.masked_fill(~valid, 0), env_ids=env_ids, indices=index[:, 1:],
                     vectors=val, normal_force=nf, node_forces=node_forces,
                     mesh_wrenches=mesh_wrenches, pair_lane_meta=meta, valid=valid,
-                    pair_owner_time_s=expected_owner_time_s)
+                    lane_failure_bits=failure_bits, pair_owner_time_s=expected_owner_time_s)
     if bool(invalid_lane.any()) or not bool(meta[:, 3].sum() == len(ids)):
         raise ValueError('finite capacity and matching owned lane counts required')
     env_id = index[:, 0]
@@ -366,7 +382,7 @@ class TensorRodOwner:
 
     def __init__(self, solver, *, run_uuid, physics_step, episodes, mesh_names, solver_substeps=12, device='cuda:0'):
         n = solver.num_envs
-        if not 2 <= n <= 2048 or solver.last_error != 0 or len(episodes) != n or (len(set(episodes)) != n) or (len(set(mesh_names)) != len(mesh_names)) or (solver_substeps != 12) or (type(physics_step) is not int) or (physics_step < 0):
+        if not 2 <= n <= 4096 or solver.last_error != 0 or len(episodes) != n or (len(set(episodes)) != n) or (len(set(mesh_names)) != len(mesh_names)) or (solver_substeps != 12) or (type(physics_step) is not int) or (physics_step < 0):
             raise ValueError('complete healthy source-owned shared solver required')
         self.solver = solver
         self.run_uuid = run_uuid

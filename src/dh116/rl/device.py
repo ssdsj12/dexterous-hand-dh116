@@ -152,7 +152,10 @@ class DeviceOnPolicyRollout(OnPolicyRollout):
         if row['session_id'] != self.session_id or row['policy_version'] != self.policy_version:
             raise ValueError('collection session/policy version mismatch')
         owned = dict(row)
-        for name in _NAMES:
+        names = (*_NAMES, 'active_mask') if 'active_mask' in row else _NAMES
+        if self._rows and ('active_mask' in row) != ('active_mask' in self._rows[0]):
+            raise ValueError('rollout action mask schema changed')
+        for name in names:
 
             def check(tensor):
                 if tensor.ndim < 1 or tensor.shape[0] != self.num_envs:
@@ -180,7 +183,8 @@ class DeviceOnPolicyRollout(OnPolicyRollout):
     def batch(self, *, resolve_actor=False):
         if not self._rows:
             raise RuntimeError('empty rollout')
-        result = {name: _tree(_join([row[name] for row in self._rows]), lambda t: t.detach().clone()) for name in _NAMES}
+        names = (*_NAMES, 'active_mask') if 'active_mask' in self._rows[0] else _NAMES
+        result = {name: _tree(_join([row[name] for row in self._rows]), lambda t: t.detach().clone()) for name in names}
         if resolve_actor and self.actor_storage is not None:
             result['actor_obs'] = own_device_tree(self.actor_storage.resolve(result['actor_obs'], self.device), self.device)
         if isinstance(result['critic_obs'], dict):
@@ -238,7 +242,7 @@ tenso_check___sha = check_state___sha
 tenso_check___validate_adam = check_state___validate_adam
 tenso_check___validate_rng = check_state___validate_rng
 from dh116.rl.ppo import squashed_log_prob as squashed_log_prob
-from dh116.rl.ppo import squashed_entropy as squashed_entropy
+from dh116.rl.ppo import squashed_entropy as squashed_entropy, tanh_log_det_jacobian
 from dh116.rl.ppo import latent_gaussian_kl as latent_gaussian_kl
 devic_ppo__VERSION = 'dh116-device-deformable-ppo-v1'
 BASE_PPO_SHA256 = '2175a41dde5560137bb1f1856049ec46c112c454f7acbe9e84e5e6a7654687e0'
@@ -267,12 +271,18 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
     collectors opt into a sampled KL guard before each Adam step.
     """
 
-    def __init__(self, model, config=None, *, rollout_steps=32, num_envs=1, device='cpu', fast_update=False):
+    def __init__(self, model, config=None, *, rollout_steps=32, num_envs=1, device='cpu', fast_update=False, action_indices=None):
         if not isinstance(model, devic_ppo__TensorNativeTeacher):
             raise ValueError('production tensor Teacher model required')
         if type(fast_update) is not bool:
             raise TypeError('fast_update must be a boolean')
         self._fast_update = fast_update
+        self.action_indices = None if action_indices is None else tuple(action_indices)
+        if self.action_indices is not None and (
+            not self.action_indices or len(set(self.action_indices)) != len(self.action_indices)
+            or any(type(i) is not int or not 0 <= i < 24 for i in self.action_indices)
+        ):
+            raise ValueError('action indices must select distinct coordinates from the 24D action')
         verify_base_ppo_source()
         super().__init__(model, config, rollout_steps=rollout_steps, num_envs=num_envs, device=device)
 
@@ -283,8 +293,31 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
     def _actor_mean(self, actor_obs, count):
         return self.model.latent_mean(self._actor_input(actor_obs))
 
+    def _active(self, tensor):
+        return tensor if self.action_indices is None else tensor[..., self.action_indices]
+
+    @staticmethod
+    def _log_prob(z, mu, std, mask):
+        if mask is None:
+            return squashed_log_prob(z, mu, std)
+        normal = devic_ppo__torch.distributions.Normal(mu, std)
+        result = (normal.log_prob(z) - tanh_log_det_jacobian(z)).masked_fill(~mask, 0).sum(-1)
+        _finite('masked policy log probability', result)
+        return result
+
+    def _kl(self, batch, indices, mu, std):
+        old_mu, old_std = self._active(batch['old_mu'][indices]), self._active(batch['old_std'][indices])
+        mu, std = self._active(mu), self._active(std)
+        if 'active_mask' not in batch:
+            return latent_gaussian_kl(old_mu, old_std, mu, std)
+        mask = batch['active_mask'][indices]
+        kl = (std / old_std).log() + (old_std.square() + (old_mu - mu).square()) / (2 * std.square()) - 0.5
+        result = kl.masked_fill(~mask, 0).sum(-1)
+        _finite('masked analytic KL', result)
+        return result
+
     @devic_ppo__torch.no_grad()
-    def collect_step(self, actor_obs, critic_obs):
+    def collect_step(self, actor_obs, critic_obs, *, action_mask=None):
         if self._pending is not None:
             raise RuntimeError('pending transition must be recorded before another sample')
         if self.rollout.full:
@@ -302,14 +335,29 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
         if mu.shape != (self.num_envs, 24):
             raise ValueError('policy latent mean must be [N,24]')
         std = self.model.log_std.exp().expand_as(mu)
-        z = mu + std * devic_ppo__torch.randn_like(mu)
-        (actions, log_prob) = (z.tanh(), squashed_log_prob(z, mu, std))
+        active_mu, active_std = self._active(mu), self._active(std)
+        active_mask = None
+        if action_mask is not None:
+            if action_mask.shape != mu.shape or action_mask.dtype != devic_ppo__torch.bool or action_mask.device != mu.device:
+                raise ValueError('policy action mask must be same-device boolean [N,24]')
+            active_mask = self._active(action_mask).clone()
+        draw = active_mu + active_std * devic_ppo__torch.randn_like(active_mu)
+        if active_mask is not None:
+            draw = draw.masked_fill(~active_mask, 0)
+        log_prob = self._log_prob(draw, active_mu, active_std, active_mask)
+        z = draw
+        if self.action_indices is not None:
+            z = devic_ppo__torch.zeros_like(mu)
+            z[:, self.action_indices] = draw
+        actions = z.tanh()
         value = self.model.value(owned_critic)
         _finite('critic value', value)
         if value.shape != (self.num_envs,):
             raise ValueError('critic value must be [N]')
         token = devic_ppo__uuid.uuid4().hex
         self._pending = dict(actor_obs=owned_actor, critic_obs=owned_critic, actions=devic_ppo__own_device_tree(actions, self.device), latent_actions=devic_ppo__own_device_tree(z, self.device), old_log_prob=devic_ppo__own_device_tree(log_prob, self.device), old_mu=devic_ppo__own_device_tree(mu, self.device), old_std=devic_ppo__own_device_tree(std, self.device), values=devic_ppo__own_device_tree(value, self.device), collection_token=token, session_id=self.session_id, policy_version=self.policy_version)
+        if active_mask is not None:
+            self._pending['active_mask'] = active_mask
         return dict(actions=actions.clone(), latent_actions=z.clone(), log_prob=log_prob.clone(), latent_mean=mu.clone(), latent_std=std.clone(), value=value.clone(), collection_token=token, policy_version=self.policy_version)
 
     def record_step(self, reward, done, next_value, *, truncated=None, bootstrap_mask=None, executed_actions=None, action_owner='policy', collection_token=None):
@@ -352,7 +400,7 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
         mu = self.model.latent_mean(self._actor_input(batch['actor_obs']))
         std = self.model.log_std.exp().expand_as(mu)
         z = batch['latent_actions']
-        actual = squashed_log_prob(z, mu, std)
+        actual = self._log_prob(self._active(z), self._active(mu), self._active(std), batch.get('active_mask'))
         errors = {}
         for (name, current, old) in (('mean', mu, batch['old_mu']), ('std', std, batch['old_std']), ('log_probability', actual, batch['old_log_prob'])):
             errors[name] = (current - old).abs().max().double()
@@ -373,7 +421,7 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
             raise ValueError('exact KL indices must remain on the policy device')
         mu = self.model.latent_mean(self._actor_input(devic_ppo___index(batch['actor_obs'], indices)))
         std = self.model.log_std.exp().expand_as(mu)
-        total = latent_gaussian_kl(batch['old_mu'][indices], batch['old_std'][indices], mu, std).clamp_min(0.0).sum()
+        total = self._kl(batch, indices, mu, std).clamp_min(0.0).sum()
         return total.double() / len(indices)
 
     def _optimizer_step(self, batch):
@@ -414,13 +462,21 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
 
     def _minibatch_policy(self, batch, indices):
         torch = devic_ppo__torch
-        entropy_noise = torch.randn(len(indices), 24, device=self.device, dtype=batch['old_mu'].dtype)
+        n_actions = 24 if self.action_indices is None else len(self.action_indices)
+        entropy_noise = torch.randn(len(indices), n_actions, device=self.device, dtype=batch['old_mu'].dtype)
         actor_obs = self._actor_input(devic_ppo___index(batch['actor_obs'], indices))
         mu = self.model.latent_mean(actor_obs)
         std = self.model.log_std.exp().expand_as(mu)
         try:
-            log_prob = squashed_log_prob(batch['latent_actions'][indices], mu, std)
-            entropy = squashed_entropy(mu, std, entropy_noise).mean()
+            active_mu, active_std, z = self._active(mu), self._active(std), self._active(batch['latent_actions'][indices])
+            mask = batch['active_mask'][indices] if 'active_mask' in batch else None
+            log_prob = self._log_prob(z, active_mu, active_std, mask)
+            if mask is None:
+                entropy = squashed_entropy(active_mu, active_std, entropy_noise).mean()
+            else:
+                normal = torch.distributions.Normal(active_mu, active_std)
+                terms = normal.entropy() + tanh_log_det_jacobian(active_mu + active_std * entropy_noise)
+                entropy = terms.masked_fill(~mask, 0).sum(-1).mean()
         except ValueError:
             if self._fast_update:
                 return None
@@ -537,7 +593,7 @@ class DeviceDeformablePPOTrainer(PPOTrainer):
                 _finite('PPO loss', loss)
                 loss.backward()
                 with devic_ppo__torch.no_grad():
-                    kl = latent_gaussian_kl(batch['old_mu'][indices], batch['old_std'][indices], mu, std).mean()
+                    kl = self._kl(batch, indices, mu, std).mean()
                     sampled_approx_kl = (devic_ppo__torch.expm1(log_ratio) - log_ratio).mean().double()
                     ratio_clipped_fraction = ((ratio - 1.0).abs() > self.config.clip).float().mean().double()
                 metrics = {name: item.detach().double() for (name, item) in (('policy_loss', policy_loss), ('value_loss', value_loss), ('entropy', entropy), ('kl', kl))}
@@ -593,7 +649,8 @@ def identity(trainer, *, recipe_sha256, receipt_sha256, backend_profile, seed_sh
             raise ValueError('tensor model dependency source SHA differs: ' + name)
     sources = {name: tenso_check__file_sha256(source_file(name)) for name in _SOURCES}
     sources['rl/training.py'] = tenso_check__file_sha256(source_file('rl/training.py'))
-    return dict(version=tenso_check__VERSION, model=model, recipe_sha256=recipe_sha256, receipt_sha256=receipt_sha256, seed_sha256=seed_sha256, policy_seed=policy_seed, backend_profile=asdict(backend_profile), ppo_config=asdict(trainer.config), ppo_update_mode='exact_kl_backtrack' if trainer._fast_update else 'audited', rollout_steps=trainer.rollout_steps, num_envs=trainer.num_envs, device_type=trainer.device.type, cuda_rng_devices=tenso_check__torch.cuda.device_count() if tenso_check__torch.cuda.is_initialized() else 0, source_sha256=sources, torch_version=str(tenso_check__torch.__version__), history_reset='clear', physical_state_saved=False, restart_requires_verified_reset=True, teacher_admission=False, grasp_qualified=False)
+    reduced_action = {} if trainer.action_indices is None else {'policy_action_indices': list(trainer.action_indices)}
+    return dict(**reduced_action, version=tenso_check__VERSION, model=model, recipe_sha256=recipe_sha256, receipt_sha256=receipt_sha256, seed_sha256=seed_sha256, policy_seed=policy_seed, backend_profile=asdict(backend_profile), ppo_config=asdict(trainer.config), ppo_update_mode='exact_kl_backtrack' if trainer._fast_update else 'audited', rollout_steps=trainer.rollout_steps, num_envs=trainer.num_envs, device_type=trainer.device.type, cuda_rng_devices=tenso_check__torch.cuda.device_count() if tenso_check__torch.cuda.is_initialized() else 0, source_sha256=sources, torch_version=str(tenso_check__torch.__version__), history_reset='clear', physical_state_saved=False, restart_requires_verified_reset=True, teacher_admission=False, grasp_qualified=False)
 
 def _same_tree(left, right):
     if isinstance(left, tenso_check__torch.Tensor):
@@ -620,9 +677,17 @@ def _validated_rng(encoded, expected_devices):
             raise ValueError('invalid tensor checkpoint CUDA RNG state') from error
     return rng
 
-def _validate(packet, trainer, expected_identity):
-    if not isinstance(packet, dict) or set(packet) != _KEYS or packet['version'] != tenso_check__VERSION or (packet['identity'] != expected_identity):
+def _validate(packet, trainer, expected_identity, *, weights_only_donor=False):
+    mastery = None if weights_only_donor else getattr(trainer, 'mastery', None)
+    keys = _KEYS if mastery is None else _KEYS | {'mastery'}
+    if not isinstance(packet, dict) or set(packet) != keys or packet['version'] != tenso_check__VERSION or (packet['identity'] != expected_identity):
         raise ValueError('tensor checkpoint source/recipe/model namespace identity differs')
+    if mastery is not None:
+        state = packet['mastery']
+        if (not isinstance(state, tenso_check__torch.Tensor) or state.dtype != tenso_check__torch.int64
+                or state.shape != (2, trainer.num_envs) or not bool(((state[0] >= 1) & (state[0] <= 5)
+                    & (state[1] >= 0) & (state[1] < 3) & ((state[0] != 5) | (state[1] == 0))).all())):
+            raise ValueError('invalid checkpoint episode mastery')
     tenso_check___finite_tree(packet)
     (counts, version) = (packet['counters'], packet['policy_version'])
     samples = trainer.num_envs * trainer.rollout_steps
@@ -677,6 +742,8 @@ def save_checkpoint(path, trainer, *, evaluated_rollout=False, **context):
     rng = tenso_check___rng_state()
     rng['cuda'] = tenso_check__torch.cuda.get_rng_state_all() if tenso_check__torch.cuda.is_initialized() else []
     packet = dict(version=tenso_check__VERSION, identity=expected, policy=tenso_check___cpu_tree(trainer.model.state_dict()), optimizer=tenso_check___cpu_tree(trainer.optimizer.state_dict()), policy_version=trainer.policy_version, counters=tenso_check__deepcopy(trainer.counters), rng=rng)
+    if getattr(trainer, 'mastery', None) is not None:
+        packet['mastery'] = trainer.mastery.detach().cpu().clone()
     _validate(packet, trainer, expected)
     path.parent.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile(dir=path.parent, delete=False) as stream:
@@ -710,6 +777,8 @@ def load_checkpoint(path, trainer, *, expected_sha256, **context):
     rng = _validate(packet, trainer, expected)
     trainer.model.load_state_dict(packet['policy'], strict=True)
     trainer.optimizer.load_state_dict(packet['optimizer'])
+    if 'mastery' in packet:
+        trainer.mastery.copy_(packet['mastery'])
     trainer.counters = tenso_check__deepcopy(packet['counters'])
     trainer.policy_version = packet['policy_version']
     (trainer.session_id, trainer._capability) = (tenso_check__uuid.uuid4().hex, object())
@@ -721,3 +790,25 @@ def load_checkpoint(path, trainer, *, expected_sha256, **context):
     if rng['cuda']:
         tenso_check__torch.cuda.set_rng_state_all(rng['cuda'])
     return dict(_report(path, packet), session_id=trainer.session_id)
+
+
+
+def warm_start_checkpoint(path, trainer, *, expected_sha256, **context):
+    '''Seed grasp_lift weights from a verified finger_only run without its optimizer or RNG.'''
+    tenso_check___clean(trainer, 'clear')
+    if trainer.counters['updates'] or trainer.counters['environment_steps'] or trainer.optimizer.state:
+        raise ValueError('warm start requires a fresh trainer')
+    indices = trainer.action_indices
+    if indices is None or indices[-2:] != (14, 17) or not all(0 <= i < 12 for i in indices[:-2]):
+        raise ValueError('grasp_lift coordinates required for finger_only warm start')
+    path = tenso_check__Path(path)
+    if not tenso_check___sha(expected_sha256) or tenso_check__file_sha256(path) != expected_sha256:
+        raise ValueError('actual complete tensor checkpoint SHA differs')
+    expected = identity(trainer, **context)
+    expected['policy_action_indices'] = list(indices[:-2])
+    packet = tenso_check__torch.load(path, map_location='cpu', weights_only=True)
+    _validate(packet, trainer, expected, weights_only_donor=True)
+    if packet['counters']['updates'] < 1:
+        raise ValueError('finger_only donor must have completed a PPO update')
+    trainer.model.load_state_dict(packet['policy'], strict=True)
+    return _report(path, packet)

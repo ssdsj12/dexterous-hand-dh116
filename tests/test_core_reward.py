@@ -133,7 +133,8 @@ def goal_full_setup(*, defer_checks=True, first_contact=1):
     reward = TensorTrainingReward(config, num_envs=2, device='cpu', defer_checks=defer_checks)
     units = {**train_rewar___FULL_UNITS, 'load_progress_left': 'dimensionless',
              'load_progress_right': 'dimensionless', 'support_unload': 'dimensionless',
-             'hand_lift_load': 'dimensionless', 'balanced_hand_lift_load': 'dimensionless', 'slip': 'm',
+             'hand_lift_load': 'dimensionless', 'balanced_hand_lift_load': 'dimensionless',
+             'grip_balance': 'dimensionless', 'slip': 'm',
              **dict.fromkeys(GOAL_SOFT_COSTS, 'dimensionless')}
     specs = (*((name, 'rad', 'fixture') for name in ERROR_FIELDS),
              ('distance', 'm', 'fixture'),
@@ -146,17 +147,18 @@ def goal_full_setup(*, defer_checks=True, first_contact=1):
         anchor_specs=tuple((f'{i}:{anchor}', 'drift', 'uncertainty') for anchor in range(4)),
     ) for i in range(2))
 
-    def endpoint(tick, *, touch=0., carried=False, detached=False, upward=0., min_z=0., median_z=0.01):
+    def endpoint(tick, *, touch=0., carried=False, detached=False, upward=0., min_z=0., median_z=0.01, balance=0.):
         base = frame(tick)
         fields = dict(base.fields)
         for name, unit in units.items():
             if name != 'slip':
                 dtype = (torch.float64 if unit == 'm' or name.startswith(('load_progress', 'coverage'))
                          or name in (*GOAL_SOFT_COSTS, 'support_unload', 'hand_lift_load',
-                                     'balanced_hand_lift_load') else torch.bool)
+                                     'balanced_hand_lift_load', 'grip_balance') else torch.bool)
                 fields[name] = torch.zeros(2, dtype=dtype)
         fields['load_progress_left'].fill_(touch)
         fields['load_progress_right'].fill_(touch)
+        fields['grip_balance'].fill_(balance)
         if carried:
             for name in ('coverage_left', 'coverage_right', 'bilateral_support', 'opposed_left', 'opposed_right', 'off_table'):
                 fields[name].fill_(1)
@@ -301,7 +303,8 @@ def test_wrist_reference_is_invariant_to_lane_origin_and_rod_yaw():
 
 def test_goal_full_rewards_new_progress_without_paying_for_static_support_or_regrasp():
     reward, schemas, endpoint = goal_full_setup()
-    carried = dict(touch=1., carried=True, upward=0.8, min_z=0.015, median_z=0.015)
+    assert not reward._last_values['grip_balance'].any()
+    carried = dict(touch=1., carried=True, upward=0.8, min_z=0.015, median_z=0.015, balance=0.75)
     phases = (carried, carried, {}, carried, {**carried, 'detached': True}, carried)
     packets = []
     for w, phase in enumerate(phases):
@@ -314,6 +317,8 @@ def test_goal_full_rewards_new_progress_without_paying_for_static_support_or_reg
             reward.observe(measured)
         packets.append(reward.settle_once((token, token)))
     steady = packets[1]
+    assert (steady.terms['grip_balance']['raw'] == 0.75).all()
+    assert not packets[2].terms['grip_balance']['raw'].any()
     torch.testing.assert_close(steady.reward, steady.gamma * steady.endpoint_phi - steady.phi_pre - steady.integrated_cost + steady.event)
     bonus = [p.event_terms['grasp_progress']['contribution'] for p in packets]
     assert (bonus[0] > 0).all()
@@ -321,3 +326,105 @@ def test_goal_full_rewards_new_progress_without_paying_for_static_support_or_reg
     assert (bonus[4] > 0).all()
     failed = packets[5]
     assert failed.terminated[0] and failed.event[0] == -40.0 and failed.reward[0] < -40.0
+
+
+
+def test_grasp_lift_prelift_shaping_requires_full_continuous_clamp():
+    reward, schemas, endpoint = goal_full_setup()
+    begin(reward, schemas, tick=0, token='grasp-lift-dwell')
+    carried = endpoint(1, touch=1., carried=True, upward=0.8, min_z=0.015, median_z=0.015)
+    ids = torch.arange(2)
+    state = dict(_contact_s=torch.ones(2), _hold_s=torch.zeros(2))
+    _, baseline = reward._shape_potential(ids, carried.fields, state)
+    assert (baseline['prelift'] > 0).all()
+    reward.prelift_dwell_steps = 96
+    reward.prelift_contact_steps = torch.tensor([95, 96])
+    _, gated = reward._shape_potential(ids, carried.fields, state)
+    assert gated['prelift'][0] == 0
+    torch.testing.assert_close(gated['prelift'][1], baseline['prelift'][1])
+    carried.fields['bilateral_support'][1] = False
+    _, lost = reward._shape_potential(ids, carried.fields, state)
+    assert not lost['prelift'].any()
+
+
+def test_ordered_grasp_curriculum_dwell_failure_reset_and_ceiling():
+    reward, schemas, endpoint = goal_full_setup()
+    reward.enable_mastery()
+    def window(start, **kwargs):
+        token = f'lesson-{start}'
+        begin(reward, schemas, tick=start, token=token)
+        for tick in range(start + 1, start + 9):
+            observation = endpoint(tick, carried=True, detached=True, min_z=0.02, median_z=0.02)
+            if kwargs.get('failure') and tick == start + 8:
+                observation.fields['constraint_failure'][1] = True
+            reward.observe(observation)
+        return reward.settle_once((token, token))
+    packet = window(0, failure=True)
+    assert packet.event_terms['curriculum']['contribution'].tolist() == [1, 0]
+    assert packet.reason_masks['success'].tolist() == [False, False]
+    assert packet.event[1] == -40
+    next_schema = replace(schemas[1], episode_uid='episode-new', reset_uid='reset-new')
+    fr = endpoint(8)
+    from dataclasses import fields
+    changes = {x.name: getattr(fr, x.name)[1:] for x in fields(fr)
+               if isinstance(getattr(fr, x.name), torch.Tensor)}
+    changes['fields'] = {k: v[1:] for k, v in fr.fields.items()}
+    changes['anchor_present'] = torch.zeros(1, dtype=torch.bool)
+    reward.reset_selected((1,), (next_schema,), replace(fr, **changes),
+                          previous_request=torch.zeros(1, 24), tokens=('reset-new',), policy_uids=('policy',))
+    assert reward._lesson.tolist() == [1, 0]
+    assert reward._mastery_ticks.tolist() == [8, 0]
+    assert reward.mastery.tolist() == [[1, 1], [0, 0]]
+    schemas = (schemas[0], next_schema)
+    # Exercise the 480 Hz state machine independently of the cost/anchor fixture.
+    v = endpoint(9, carried=True, detached=True, min_z=0.02, median_z=0.02).fields
+    active = torch.ones(2, dtype=torch.bool)
+    slip = torch.ones(2, dtype=torch.long)
+    for _ in range(100):
+        reward._advance_lesson(v, slip, active)
+    assert reward._lesson.tolist() == [1, 1]
+    reward.mastery[0].fill_(4)
+    for _ in range(95):
+        reward._advance_lesson(v, slip, active)
+    v['bilateral_support'][1] = False
+    reward._advance_lesson(v, slip, active)
+    assert reward._lesson.tolist() == [2, 1]
+    assert reward._lesson_ticks.tolist() == [0, 0]
+    slip[0] = -1
+    for _ in range(48):
+        reward._advance_lesson(v, slip, active)
+    assert reward._lesson[0] == 2
+    slip[0] = 1
+    for _ in range(288):
+        reward._advance_lesson(v, slip, active)
+    assert reward._lesson.tolist() == [4, 1]
+
+
+def test_episode_mastery_uses_terminal_dwell_and_three_distinct_ends():
+    reward, _, endpoint = goal_full_setup()
+    reward.enable_mastery()
+    active = torch.ones(2, dtype=torch.bool)
+    none = torch.zeros_like(active)
+    failed = torch.tensor([False, True])
+    slip = torch.ones(2, dtype=torch.long)
+    v = endpoint(1, carried=True, detached=True, min_z=0.02, median_z=0.02).fields
+    for episode in range(3):
+        for _ in range(8):
+            reward._advance_lesson(v, slip, active)
+        reward.finish_mastery_episodes(none, none, none)  # rollout/forced truncation
+        assert reward.mastery[1, 0] == episode
+        if episode == 1:
+            v['coverage_left'][1] = 0
+            reward._advance_lesson(v, slip, active)
+            v['coverage_left'][1] = 1
+        qualified, promoted = reward.finish_mastery_episodes(active, none, none)
+        assert qualified.tolist() == [True, episode != 1]
+        assert promoted.tolist() == [episode == 2, False]
+        reward._lesson.zero_()
+        reward._mastery_ticks.zero_()
+    assert reward.mastery.tolist() == [[2, 1], [0, 1]]
+    reward.finish_mastery_episodes(none, failed, none)
+    assert reward.mastery.tolist() == [[2, 1], [0, 0]]
+    reward.mastery[0].fill_(5)
+    reward.finish_mastery_episodes(none, none, active)
+    assert reward.mastery.tolist() == [[5, 5], [0, 0]]

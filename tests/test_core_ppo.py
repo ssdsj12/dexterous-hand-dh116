@@ -177,6 +177,8 @@ def test_checkpoint_continues_next_actual_update_with_policy_adam_rng_and_new_se
     (model, obs, profile, *_) = teacher_data(monkeypatch)
     context = checkpoint_context(profile)
     original = trainer_for(model, fast_update=fast_update)
+    if fast_update:
+        original.mastery = torch.tensor([[2, 4], [1, 2]])
     seed(101)
     collect(original, obs)
     assert original.update()['minibatch_updates'] == 1
@@ -208,10 +210,14 @@ def test_checkpoint_continues_next_actual_update_with_policy_adam_rng_and_new_se
     restored = trainer_for(model, fast_update=fast_update)
     seed(999)
     draw()
+    if fast_update:
+        restored.mastery = torch.zeros_like(original.mastery)
     destination_session = restored.session_id
     destination_capability = restored._capability
     destination_rollout = restored.rollout
     cp.load_checkpoint(path, restored, expected_sha256=report['sha256'], **context)
+    if fast_update:
+        assert torch.equal(restored.mastery, original.mastery)
     assert parameter_digest(restored.model) == before_policy and digest_tree(restored.optimizer.state_dict()) == before_adam
     assert digest_tree(rng()) == before_rng and restored.session_id not in (destination_session, old_session)
     assert restored._capability is not destination_capability and restored.rollout is not destination_rollout and restored.clean_boundary
@@ -297,3 +303,106 @@ def test_invalid_checkpoint_rejects_each_corruption_before_any_live_mutation(tmp
         cp.save_checkpoint(tmp_path / 'pending.pt', original, **context)
     with pytest.raises(RuntimeError, match='boundary'):
         cp.load_checkpoint(path, original, expected_sha256=report['sha256'], **context)
+
+
+def test_finger_only_ppo_uses_only_selected_coordinates(monkeypatch):
+    from dh116.rl.ppo import squashed_log_prob
+    model, obs, *_ = teacher_data(monkeypatch)
+    active = (0, 1, 2, 6, 7, 8)
+    inactive = sorted(set(range(24)) - set(active))
+    trainer = DeviceDeformablePPOTrainer(
+        model, PPOConfig(epochs=1, minibatches=1, target_kl=0.02, kl_backtrack_steps=2),
+        rollout_steps=2, num_envs=2, action_indices=active,
+    )
+    before = model.log_std.detach().clone()
+    for _ in range(2):
+        sample = trainer.collect_step(obs, obs)
+        assert sample['actions'].shape == (2, 24)
+        assert torch.count_nonzero(sample['actions'][:, inactive]) == 0
+        expected = squashed_log_prob(*(sample[key][:, active] for key in (
+            'latent_actions', 'latent_mean', 'latent_std',
+        )))
+        torch.testing.assert_close(sample['log_prob'], expected)
+        trainer.record_step(torch.arange(2, dtype=torch.float32), torch.zeros(2, dtype=torch.bool),
+                            sample['value'], executed_actions=sample['actions'],
+                            collection_token=sample['collection_token'])
+    batch = trainer.rollout.batch()
+    rows = torch.arange(4)
+    with torch.no_grad():
+        model.log_std[inactive] += 0.1
+    assert trainer._minibatch_exact_kl(batch, rows) < 1e-9
+    with torch.no_grad():
+        model.log_std.copy_(before)
+    assert trainer.update()['minibatch_updates'] == 1
+    torch.testing.assert_close(model.log_std[inactive], before[inactive], atol=0, rtol=0)
+
+
+
+def test_per_lane_gated_lift_masks_policy_density_and_warms_from_closure(tmp_path, monkeypatch):
+    from dh116.rl.device import load_checkpoint, save_checkpoint, warm_start_checkpoint
+    from dh116.rl.ppo import latent_gaussian_kl, squashed_log_prob
+    from dh116.rl.training import dof_action_indices
+
+    model, obs, profile, *_ = teacher_data(monkeypatch)
+    context = checkpoint_context(profile)
+    close = dof_action_indices('finger_only', (0, 1, 2))
+    lift = dof_action_indices('grasp_lift', (0, 1, 2))
+    assert close == (0, 1, 2, 6, 7, 8) and lift == (*close, 14, 17)
+    assert len(dof_action_indices('grasp_lift', (0, 1, 2, 3))) == 10
+    assert len(dof_action_indices('grasp_lift', range(6))) == 14
+    config = PPOConfig(lr=0.0001, epochs=1, minibatches=1, target_kl=0.02, kl_backtrack_steps=2)
+    donor = DeviceDeformablePPOTrainer(model, config, rollout_steps=3, num_envs=2, action_indices=close)
+    collect(donor, obs)
+    donor.update()
+    path = tmp_path / 'finger.pt'
+    info = save_checkpoint(path, donor, **context)
+    trainer = DeviceDeformablePPOTrainer(deepcopy(model), config, rollout_steps=3, num_envs=2, action_indices=lift)
+    with pytest.raises(ValueError, match='identity'):
+        load_checkpoint(path, trainer, expected_sha256=info['sha256'], **context)
+    before_rng = digest_tree(rng())
+    warm_start_checkpoint(path, trainer, expected_sha256=info['sha256'], **context)
+    assert parameter_digest(trainer.model) == parameter_digest(donor.model)
+    assert trainer.counters['updates'] == 0 and not trainer.optimizer.state
+    assert digest_tree(rng()) == before_rng
+
+    mask = torch.ones((2, 24), dtype=torch.bool)
+    mask[0, [14, 17]] = False
+    for step in range(3):
+        if step == 2:
+            mask[0] = False
+        sample = trainer.collect_step(obs, obs, action_mask=mask)
+        assert torch.count_nonzero(sample['actions'][0, [14, 17]]) == 0
+        assert torch.count_nonzero(sample['actions'][1, [14, 17]]) == 2
+        expected = squashed_log_prob(*(sample[k][1, lift][None, :] for k in (
+            'latent_actions', 'latent_mean', 'latent_std',
+        )))
+        torch.testing.assert_close(sample['log_prob'][1:], expected)
+        if step == 2:
+            assert sample['log_prob'][0] == 0
+        trainer.record_step(torch.arange(2, dtype=torch.float32), torch.zeros(2, dtype=torch.bool),
+                            sample['value'], executed_actions=sample['actions'])
+    batch = trainer.rollout.batch()
+    assert batch['active_mask'][:, -2:].tolist() == [
+        [False, False], [True, True], [False, False], [True, True], [False, False], [True, True],
+    ]
+    with torch.no_grad():
+        trainer.model.log_std[14] += 0.01
+        rows = torch.arange(len(batch['values']))
+        actual = trainer._minibatch_exact_kl(batch, rows)
+        mu = trainer.model.latent_mean(batch['actor_obs'])
+        std = trainer.model.log_std.exp().expand_as(mu)
+        per_active = batch['active_mask'][:, -2]
+        expected = latent_gaussian_kl(
+            batch['old_mu'][per_active][:, [14]], batch['old_std'][per_active][:, [14]],
+            mu[per_active][:, [14]], std[per_active][:, [14]],
+        ).clamp_min(0).sum().double() / len(rows)
+        torch.testing.assert_close(actual, expected)
+        trainer.model.log_std[14] -= 0.01
+    assert trainer.update()['minibatch_updates'] == 1
+    lift_path = tmp_path / 'lift.pt'
+    info = save_checkpoint(lift_path, trainer, **context)
+    resumed = DeviceDeformablePPOTrainer(deepcopy(model), config, rollout_steps=3, num_envs=2,
+                                         action_indices=lift)
+    load_checkpoint(lift_path, resumed, expected_sha256=info['sha256'], **context)
+    assert resumed.action_indices == lift and resumed.counters == trainer.counters
+    torch.testing.assert_close(resumed.model.log_std, trainer.model.log_std)

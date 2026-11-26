@@ -83,33 +83,119 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
         episode_windows=getattr(args, 'episode_windows', 32),
         wall_cap_s=args.outer_timeout_s if getattr(args, 'full_grasp', False) else 180.0,
         full_grasp=getattr(args, 'full_grasp', False),
+        dof_mode=args.dof_mode, gated_lift=args.gated_lift,
     )
+    controller_check = bool(getattr(args, "closure_check_windows", None))
     probe = bool(args.probe_control_windows)
     collector.prove_peer_reset = probe
     if probe and len(lanes) == 2 and getattr(args, 'retain_probe_frames', False):
         collector.arm_probe(output)
     rollout_steps = collector.trainer.rollout_steps
+    closure_setup = None
+    if collector.dof_mode != 'full24':
+        fields = collector.last.fields
+        closure_setup = dict(
+            dof_mode=collector.dof_mode, gated_lift=collector.gated_lift,
+            policy_action_indices=list(collector.trainer.action_indices),
+            reset_wrist_error_m=fields['wrist_goal_m'].max().item(),
+            reset_wrist_error_rad=fields['wrist_goal_rad'].max().item(),
+            wrist_aligned=collector._wrist_aligned.tolist(),
+        )
+        if args.near_wire_reset:
+            gaps, valid = collector.geometry.policy_pad_gaps(
+                collector.state['link_pose_xyzw'], collector.nodes, collector.radii,
+            )
+            ids = torch.arange(collector.nodes.shape[1], device=gaps.device)
+            sides = torch.stack((ids < 20, ids > 20)).repeat_interleave(gaps.shape[1] // 2, dim=0)
+            tips = gaps.masked_fill(~(valid & sides[None]), torch.inf).amin(-1)
+            if not bool(torch.isfinite(tips).all() & (tips >= 0).all()):
+                raise ValueError(f'near-wire Reset requires finite nonpenetrating native pad gaps: {tips.tolist()}')
+            closure_setup['reset_pad_gap_range_mm'] = [(tips.min() * 1000).item(), (tips.max() * 1000).item()]
+            closure_setup['reset_min_clearance_mm'] = (collector.clear.min() * 1000).item()
+        if (not probe or args.near_wire_reset) and not all(closure_setup['wrist_aligned']):
+            raise ValueError(f'reduced DoF PPO requires a measured aligned Reset: {closure_setup}')
     if args.resume is not None:
         from dh116.rl.device import load_checkpoint
         restored = load_checkpoint(args.resume, collector.trainer, expected_sha256=args.resume_sha256,
                                    **_checkpoint_context(collector.trainer, args, profile, seed))
         if restored['counters']['updates'] != args.completed_updates:
             raise ValueError('restart checkpoint update count changed')
-    total = 2 if probe else (args.updates - args.completed_updates) * rollout_steps
+    if args.warm_start is not None:
+        from dh116.rl.device import warm_start_checkpoint
+        from types import SimpleNamespace
+
+        _, donor_sha = native_recipe(
+            args.grasp, receipt_sha256=args.receipt_sha256, num_envs=args.num_envs,
+            episode_windows=args.episode_windows, scene_build_mode=args.scene_build_mode,
+            full_grasp=True, dof_mode='finger_only',
+        )
+        donor = SimpleNamespace(**(vars(args) | {'native_recipe_sha256': donor_sha}))
+        warm_start_checkpoint(args.warm_start, collector.trainer, expected_sha256=args.warm_start_sha256,
+                              **_checkpoint_context(collector.trainer, donor, profile, seed))
+    total = args.closure_check_windows if controller_check else (2 if probe else (args.updates - args.completed_updates) * rollout_steps)
     iterations = []
     window_seconds = []
     window_phases = []
     rollout_start = teach_train__perf_counter()
     best = None
-    rollout_stats = []
+    rollout_stats, grip_stats, lesson_stats = [], [], []
     try:
         for index in range(total):
             started_window = teach_train__perf_counter()
+            if controller_check:
+                if index == 0:
+                    controller_trace = []
+                    peak_dwell = collector._stable_clamp_s.clone()
+                    peak_lift = peak_dwell.clone()
+                    ever_success = torch.zeros_like(peak_dwell, dtype=torch.bool)
+                action = torch.zeros((2, 24), device=collector.device)
+                # Second lane changes wrist height by 2 mm to test capture from
+                # a different height. Both lanes request lift once clamp is ready.
+                if index < 12:
+                    action[1, (14, 17)] = -0.2
+                action[:, (14, 17)] = torch.where(collector._lift_unlocked[:, None], 0.6, action[:, (14, 17)])
+                collector.timings = {}
+                token = f'closure-check-{index}'
+                collector.begin_action_window(action, token=token, policy_uids=(token,) * 2, end=end)
+                collector.advance_action_window(action, end)
+                packet = collector.complete_action_window()
+                fields = collector.last.fields
+                diag = collector.contact.last_diagnostics
+                height = torch.minimum(fields['median_z'] - collector.reward._median,
+                                       fields['min_z'] - collector.reward._min)
+                peak_dwell = torch.maximum(peak_dwell, collector._stable_clamp_s)
+                detached = fields['bilateral_support'] & fields['off_table'] & fields['no_external_support']
+                peak_lift = torch.maximum(peak_lift, height.masked_fill(~detached, 0))
+                ever_success |= packet.reason_masks['success']
+                if index % 15 == 0 or index + 1 == total or bool(packet.done.any()):
+                    gaps, valid = collector.geometry.policy_pad_gaps(
+                        collector.state['link_pose_xyzw'], collector.nodes, collector.radii)
+                    ni = torch.arange(41, device=gaps.device)
+                    sides = torch.stack((ni < 20, ni > 20)).repeat_interleave(gaps.shape[1] // 2, dim=0)
+                    measured_q = torch.stack([collector.state['q'][:, hand, ids]
+                                              for hand, ids in enumerate(collector.ctrl.active)], dim=1)
+                    eligible = valid & sides[None]
+                    nearest_mm = (1000 * gaps.masked_fill(~eligible, torch.inf).amin(-1)).tolist()
+                    has_node = eligible.any(-1).tolist()
+                    controller_trace.append(dict(window=index+1, q_rad=measured_q.tolist(),
+                        wrist_z_m=collector.state['base_link_pose_w'][..., 2].tolist(),
+                        bilateral=fields['bilateral_support'].tolist(), pad_n=diag['pad_loads_mean_n'].tolist(),
+                        nearest_gap_mm=[[v if present else None for v, present in zip(row, mask)]
+                                        for row, mask in zip(nearest_mm, has_node)],
+                        support_n=diag['support_load_n'].tolist(), dwell_s=collector._stable_clamp_s.tolist(),
+                        height_m=height.tolist(), ended=packet.done.tolist(), event=packet.event.tolist()))
+                if collector._reset_allowed:
+                    collector.reset(collector._reset_allowed)
+                continue
             reward = collector.window(end, probe_reset=probe and len(lanes) == 2 and (index == 0))
             window_seconds.append(teach_train__perf_counter() - started_window)
             window_phases.append(dict(collector.timings))
             if collector.full_grasp:
                 rollout_stats.append(collector.training_stats)
+                if collector.gated_lift:
+                    lesson_stats.append(collector.lesson_stats)
+                if collector.config.grip_balance_enabled:
+                    grip_stats.append(collector.grip_stats)
             if collector.trainer.rollout.full:
                 if probe:
                     raise RuntimeError('probe must not update a policy')
@@ -145,6 +231,32 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
                         prelift_potential=float(summary[:, 9].amax()),
                         supported_median_lift_m=float(summary[:, 10].amax()),
                     )
+                    if grip_stats:
+                        rows = torch.stack(grip_stats).cpu()
+                        means = rows[:, :3].mean(0).tolist()
+                        observed = float(rows[:, 4].sum())
+                        record['grip_metrics'] = dict(
+                            balance_score=means[0], left_total_normal_n=means[1],
+                            right_total_normal_n=means[2],
+                            bilateral_load_rate=observed / len(rows),
+                            relative_hand_load_error=(float(rows[:, 3].sum()) / observed
+                                                      if observed else None),
+                        )
+                        if collector.gated_lift:
+                            acquired, ready = rows[:, 5:7].mean(0).tolist()
+                            record['grip_metrics'].update(grasp_latched_rate=acquired, clamp_ready_rate=ready)
+                    if lesson_stats:
+                        lessons = torch.stack(lesson_stats)
+                        record['curriculum_metrics'] = dict(zip(
+                            ('touch_rate', 'clamp_rate', 'lift_5mm_rate', 'lift_15mm_rate', 'bonus_mean'),
+                            lessons[:, :5].mean(0).tolist(), strict=True))
+                        stats = record['curriculum_metrics']
+                        stats.update(zip(('completed_episodes', 'qualified_episodes', 'promotions'),
+                                         lessons[:, 5:].sum(0).long().tolist(), strict=True))
+                        level, streak = collector.reward.mastery
+                        fractions = torch.stack([(level == i).double().mean() for i in range(1, 6)])
+                        stats.update(zip((f'level_{i}_fraction' for i in range(1, 6)), fractions.tolist(), strict=True))
+                        stats.update(depth=level.double().mean().item(), streak_mean=streak.double().mean().item())
                     grasp_metrics = record['grasp_metrics']
                     score = tuple(grasp_metrics[name] for name in (
                         'successes', 'hold_s', 'detached_lift_m', 'bilateral_support_rate', 'contact_rate',
@@ -178,22 +290,44 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
                 record['iteration_seconds'] = teach_train__perf_counter() - rollout_start
                 print('DH116_PPO_UPDATE', teach_train__json.dumps(record, allow_nan=False), flush=True)
                 rollout_stats.clear()
+                grip_stats.clear()
+                lesson_stats.clear()
                 iterations.append(record)
                 rollout_start = teach_train__perf_counter()
             if probe:
                 print('DH116_TENSOR_WINDOW', index + 1, 'sdk', runtime.physics_step, 'reward', reward, flush=True)
     except BaseException as exc:
         collector.ctrl.invalidate()
-        write_new(output / 'tensor_failure.json', dict(error=str(exc), type=type(exc).__name__, completed_windows=collector.controls, sdk_step=sim.current_time_step_index, rod_sdk=runtime.physics_step, updates=collector.trainer.counters['updates'], teacher_admission=False))
+        write_new(output / 'tensor_failure.json', dict(error=str(exc), type=type(exc).__name__, completed_windows=collector.controls, sdk_step=sim.current_time_step_index, rod_sdk=runtime.physics_step, updates=collector.trainer.counters['updates'], teacher_admission=False,
+                   window_bad_rows=getattr(collector.reward, '_window_bad', torch.zeros_like(collector._wrist_aligned)).nonzero().flatten().tolist(),
+                   lane_failure_bits=collector._window_fault_bits.tolist(),
+                   failure_bit_names=['pair_capacity_or_native_error', 'pair_normal_or_value',
+                                      'nonfinite_reduction', 'force_balance', 'sdk_readback',
+                                      'rod_readback', 'wrench_submit']))
         raise
     updates = collector.trainer.counters['updates']
-    if runtime.physics_step != end or collector.controls != total or updates != (0 if probe else args.updates) or (probe and runtime.resets != ([1, 2] if len(lanes) == 2 else [1] * len(lanes))):
+    if runtime.physics_step != end or collector.controls != total or updates != (0 if probe or controller_check else args.updates) or (probe and runtime.resets != ([1, 2] if len(lanes) == 2 else [1] * len(lanes))):
         raise ValueError('incomplete actual bounded run')
-    return dict(throughput_probe_only=probe, updates=updates, controls=total, environments=len(lanes), sdk_step=end, iterations=iterations, window_seconds=window_seconds, window_phases=window_phases, sdk_initialization_steps=2, physics_hz=480, control_hz=60, rod_substeps=12, articulations=2, action_size=24, run_uuid=run_uuid, geometry_backend=getattr(collector.geometry, 'backend', None), geometry_measurement=geometry_measurement_identity(collector.geometry), actual_measurement_backend=geometry_measurement_identity(collector.geometry)['actual_measurement_backend'], measurement_scope='bounded_diagnostic', measurement_native_evidence=args.measurement_native_evidence, scene_construction=getattr(batch, 'construction_metadata', None), task_setup=batch.task_setup_metadata, native_readback_mode=getattr(batch, 'readback_mode', 'raw'), source_cache_metadata=batch.readback_metadata() if hasattr(batch, 'readback_metadata') else None, readback_audit=batch.readback_audit() if hasattr(batch, 'readback_audit') else None, reset_ids=runtime.resets, reset_checks=collector.reset_proofs, peak_cuda_allocated_bytes=torch.cuda.max_memory_allocated(), teacher_admission=False, grasp_qualified=False)
+    setup = {} if closure_setup is None else {'reduced_dof': closure_setup}
+    if controller_check:
+        setup.update(controller_probe_only=True, controller_trace=controller_trace,
+                     peak_clamp_s=peak_dwell.tolist(), peak_detached_lift_m=peak_lift.tolist(),
+                     strict_success=ever_success.tolist())
+    return dict(**setup, throughput_probe_only=probe, updates=updates, controls=total, environments=len(lanes), sdk_step=end, iterations=iterations, window_seconds=window_seconds, window_phases=window_phases, sdk_initialization_steps=2, physics_hz=480, control_hz=60, rod_substeps=12, articulations=2, action_size=24, run_uuid=run_uuid, geometry_backend=getattr(collector.geometry, 'backend', None), geometry_measurement=geometry_measurement_identity(collector.geometry), actual_measurement_backend=geometry_measurement_identity(collector.geometry)['actual_measurement_backend'], measurement_scope='bounded_diagnostic', measurement_native_evidence=args.measurement_native_evidence, scene_construction=getattr(batch, 'construction_metadata', None), task_setup=batch.task_setup_metadata, native_readback_mode=getattr(batch, 'readback_mode', 'raw'), source_cache_metadata=batch.readback_metadata() if hasattr(batch, 'readback_metadata') else None, readback_audit=batch.readback_audit() if hasattr(batch, 'readback_audit') else None, reset_ids=runtime.resets, reset_checks=collector.reset_proofs, peak_cuda_allocated_bytes=torch.cuda.max_memory_allocated(), teacher_admission=False, grasp_qualified=False)
 from dh116.env.contracts import require_aligned
 from dh116.rl.student_data import _validate_state
 
-def native_recipe(grasp, *, receipt_sha256, num_envs, episode_windows, scene_build_mode, full_grasp):
+def dof_action_indices(dof_mode, participating):
+    if dof_mode == 'full24':
+        return None
+    if dof_mode not in ('finger_only', 'grasp_lift'):
+        raise ValueError('unknown Teacher DoF mode')
+    fingers = tuple(i + 6 * side for side in (0, 1) for i in range(6) if i in participating)
+    return fingers + ((14, 17) if dof_mode == 'grasp_lift' else ())
+
+
+def native_recipe(grasp, *, receipt_sha256, num_envs, episode_windows, scene_build_mode, full_grasp,
+                  dof_mode='full24', gated_lift=False):
     """Bind the native launch and frozen replay to the same sources and task."""
     inventory = {
         str(path.relative_to(teach_train__ROOT)): teach_train__file_sha256(path)
@@ -201,8 +335,11 @@ def native_recipe(grasp, *, receipt_sha256, num_envs, episode_windows, scene_bui
         if path.is_file() and path.suffix in ('.py', '.cu')
     }
     reward_config = teach_train__ROOT / 'configs/training' / f'reward_{grasp}.json'
+    from dh116.rl.reward import load_config
+    reward = load_config(reward_config, full_grasp=full_grasp)
+    indices = dof_action_indices(dof_mode, reward.finger_goal.participating)
     recipe_sha = digest(dict(
-        source=inventory, scene=receipt_sha256, reward=teach_train__file_sha256(reward_config),
+        dof_mode=dof_mode, action_indices=indices, gated_lift=gated_lift, source=inventory, scene=receipt_sha256, reward=teach_train__file_sha256(reward_config),
         full=full_grasp, envs=num_envs, episode_windows=episode_windows, build=scene_build_mode,
         readback=os.environ.get('DH116_NATIVE_READBACK_BACKEND', 'official_cache'),
         geometry=os.environ.get('DH116_TENSOR_GEOMETRY_BACKEND', 'eager'),
@@ -234,11 +371,16 @@ def worker(args, end):
     from dh116.physics.solver import TensorBackendProfile
     from dh116.env.lifecycle import native_gpu_lock
     profile = TensorBackendProfile.load()
-    (archive, reset) = load_task_scene(args.grasp, full_grasp=getattr(args, 'full_grasp', False))
+    near_wire = getattr(args, 'near_wire_reset', False)
+    (archive, reset) = load_task_scene(args.grasp, full_grasp=getattr(args, 'full_grasp', False), near_wire=near_wire)
+    if hasattr(args, 'receipt_sha256') and archive.scene_inputs['manifest_sha256'] != args.receipt_sha256:
+        raise ValueError('worker scene or Reset changed after recipe validation')
     task = teach_train__json.loads((teach_train__ROOT / 'configs/tasks' / (args.grasp + '.json')).read_text())
     height = task.get('startup_height')
     if getattr(args, 'full_grasp', False) and 'full_scene_input' in task:
         height = task.get('full_startup_height')
+    if near_wire:
+        height = None
     if height is not None:
         checked_file(teach_train__ROOT / height['evidence_path'], height['evidence_sha256'])
         height = {k: height[k] for k in ('delta_z_m', 'evidence_sha256')}
@@ -262,7 +404,7 @@ from dh116.rl.student_model import StereoHistoryBatch as StereoHistoryBatch
 from dh116.rl.student_model import SensorBatch
 from dh116.physics.runtime import require_substep_guard
 
-TEACHER_ENV_COUNTS = (2, 128, 512, 1024, 2048)
+TEACHER_ENV_COUNTS = (2, 128, 512, 1024, 2048, 4096)
 
 
 def train_teacher_main(argv=None):
@@ -274,6 +416,13 @@ def train_teacher_main(argv=None):
     parser.add_argument('--outer-timeout-s', type=int, default=900)
     parser.add_argument('--episode-windows', type=int)
     parser.add_argument('--full-grasp', action='store_true', help='supported scene with full grasp, Lift and Hold reward')
+    dof = parser.add_mutually_exclusive_group()
+    dof.add_argument('--dof-mode', choices=('full24', 'finger_only', 'grasp_lift'), default='full24')
+    dof.add_argument('--finger-only', dest='dof_mode', action='store_const', const='finger_only')
+    parser.add_argument('--gated-lift', action='store_true',
+                        help='preserve the measured grasp and synchronize wrist lift after stable bilateral contact')
+    parser.add_argument('--warm-start', type=teach_train__Path, help='initialize grasp_lift weights from a finger_only checkpoint')
+    parser.add_argument('--warm-start-sha256')
     parser.add_argument('--output', type=teach_train__Path, required=True)
     parser.add_argument('--policy-seed', type=int, default=20261123)
     parser.add_argument('--resume', type=teach_train__Path, help='resume to --updates after a fresh physical Reset')
@@ -282,11 +431,22 @@ def train_teacher_main(argv=None):
     parser.add_argument('--retain-probe-frames', action='store_true')
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--probe-control-windows', type=int, choices=(2,))
+    group.add_argument('--closure-check-windows', type=int, choices=(120, 480))
     group.add_argument('--updates', type=int)
     parser.add_argument('--native-evidence', type=teach_train__Path, action='append', default=[])
     parser.add_argument('--native-evidence-sha256', action='append', default=[])
     parser.add_argument('--worker', action='store_true', help=teach_train__argparse.SUPPRESS)
     args = parser.parse_args(argv)
+    if args.dof_mode != 'full24' and not args.full_grasp:
+        parser.error('reduced DoF requires the full grasp scene and contact reward')
+    if args.gated_lift and args.dof_mode != 'grasp_lift':
+        parser.error('--gated-lift requires --dof-mode grasp_lift')
+    if ((args.warm_start is None) != (args.warm_start_sha256 is None)
+            or (args.warm_start is not None and
+                (args.dof_mode != 'grasp_lift' or args.updates is None or args.resume is not None))):
+        parser.error('warm start requires both checkpoint and SHA, grasp_lift updates, and no --resume')
+    if args.closure_check_windows and (args.num_envs != 2 or not args.gated_lift or not args.full_grasp):
+        parser.error('controller-only check requires N=2 full grasp with gated lift')
     if args.checkpoint_interval < 1 or (args.retain_probe_frames and (args.num_envs != 2 or not args.probe_control_windows)):
         parser.error('positive checkpoint interval and raw frames restricted to 2-lane probes')
     if args.outer_timeout_s < 240 or (args.probe_control_windows and args.outer_timeout_s > 900):
@@ -303,13 +463,14 @@ def train_teacher_main(argv=None):
     args.scene_build_mode = args.scene_build_mode or os.environ.get('DH116_SCENE_BUILD_MODE', 'clone')
     validate_native_options(args.scene_build_mode, training=args.updates is not None)
     task = teach_train__json.loads((teach_train__ROOT / 'configs/tasks' / (args.grasp + '.json')).read_text())
-    scene_spec = task.get('full_scene_input', task['scene_input']) if args.full_grasp else task['scene_input']
-    args.receipt_sha256 = scene_spec['sha256']
+    from dh116.env.scene import task_scene_sha256
+    args.near_wire_reset = args.dof_mode != 'full24' and 'near_wire_reset' in task
+    args.receipt_sha256 = task_scene_sha256(task, full_grasp=args.full_grasp, near_wire=args.near_wire_reset)
     args.measurement_native_evidence = None
     inventory, recipe_sha = native_recipe(
         args.grasp, receipt_sha256=args.receipt_sha256, num_envs=args.num_envs,
         episode_windows=args.episode_windows, scene_build_mode=args.scene_build_mode,
-        full_grasp=args.full_grasp,
+        full_grasp=args.full_grasp, dof_mode=args.dof_mode, gated_lift=args.gated_lift,
     )
     args.native_recipe_sha256 = recipe_sha
     args.completed_updates = 0
@@ -338,7 +499,12 @@ def train_teacher_main(argv=None):
     from dh116.rl.reward import load_config
     reward = load_config(teach_train__ROOT / 'configs/training' / f'reward_{args.grasp}.json',
                          full_grasp=args.full_grasp)
-    total = args.probe_control_windows or (args.updates - args.completed_updates) * reward.ppo['rollout_steps']
+    args.action_indices = dof_action_indices(args.dof_mode, reward.finger_goal.participating)
+    force_band = dict(grip_balance_enabled=reward.grip_balance_enabled,
+                      grip_force_band_n=reward.grip_force_band_n,
+                      force_band_status=('exploratory' if reward.grip_force_band_n is not None else
+                                         'disabled' if reward.grip_balance_enabled else None))
+    total = args.closure_check_windows or args.probe_control_windows or (args.updates - args.completed_updates) * reward.ppo['rollout_steps']
     end = 2 + 8 * total
     if args.worker:
         worker(args, end)
@@ -347,7 +513,7 @@ def train_teacher_main(argv=None):
     output.mkdir(parents=True, exist_ok=False)
     native = output / 'native'
     native.mkdir()
-    write_new(output / 'attempt.json', dict(schema='dh116-production-native-attempt-v1', source_sha256=inventory, grasp=args.grasp, num_envs=args.num_envs, controls=total, sdk_steps=end, ppo_updates=args.updates or 0, completed_updates_at_start=args.completed_updates, resumed_checkpoint_sha256=args.resume_sha256, scene_build_mode=args.scene_build_mode, scene_sha256=args.receipt_sha256, episode_windows=args.episode_windows, outer_timeout_s=args.outer_timeout_s, full_grasp=args.full_grasp, recipe_sha256=recipe_sha))
+    write_new(output / 'attempt.json', dict(schema='dh116-production-native-attempt-v1', source_sha256=inventory, grasp=args.grasp, num_envs=args.num_envs, controls=total, sdk_steps=end, ppo_updates=args.updates or 0, completed_updates_at_start=args.completed_updates, resumed_checkpoint_sha256=args.resume_sha256, scene_build_mode=args.scene_build_mode, scene_sha256=args.receipt_sha256, episode_windows=args.episode_windows, outer_timeout_s=args.outer_timeout_s, full_grasp=args.full_grasp, dof_mode=args.dof_mode, action_indices=args.action_indices, gated_lift=args.gated_lift, near_wire_reset=args.near_wire_reset, warm_start_sha256=args.warm_start_sha256, recipe_sha256=recipe_sha, controller_probe_only=bool(args.closure_check_windows), closure_guidance=args.gated_lift, **force_band))
     command = [sys.executable, str(teach_train__ROOT / 'scripts/train_teacher.py'), *(sys.argv[1:] if argv is None else argv), '--output', str(native), '--worker']
     from dh116.env.lifecycle import resolve_physical_gpu_uuid
     gpu_uuid = resolve_physical_gpu_uuid(args.gpu)
@@ -373,7 +539,7 @@ def train_teacher_main(argv=None):
     if close.get('app_close_returned') is not True or close.get('close_mode') != 'normal' or lifecycle.get('failure') is not None or (lifecycle.get('close_mode') != 'normal') or (lifecycle.get('lifetime_released_before_close') is not True) or (lifecycle.get('physics_steps') != end) or (actual.get('sdk_step') != end) or (actual.get('controls') != total) or (actual.get('updates') != (args.updates or 0)):
         raise ValueError('complete acquisition and verified natural close required')
     from dh116.physics.geometry import CudaGeometryProfile
-    write_new(output / 'native_result.json', dict(actual, grasp=args.grasp, completed_updates_at_start=args.completed_updates, resumed_checkpoint_sha256=args.resume_sha256, exit_code=code, process_exit_verified=True, episode_windows=args.episode_windows, reward_mode='full' if args.full_grasp else 'smoke', scene_sha256=args.receipt_sha256, recipe_sha256=recipe_sha, geometry_manifest_sha256=CudaGeometryProfile.load().manifest_sha256, runtime_graph_compilation=False, close_mode='normal', teacher_admission=False))
+    write_new(output / 'native_result.json', dict(actual, grasp=args.grasp, completed_updates_at_start=args.completed_updates, resumed_checkpoint_sha256=args.resume_sha256, exit_code=code, process_exit_verified=True, episode_windows=args.episode_windows, reward_mode='full' if args.full_grasp else 'smoke', scene_sha256=args.receipt_sha256, recipe_sha256=recipe_sha, geometry_manifest_sha256=CudaGeometryProfile.load().manifest_sha256, runtime_graph_compilation=False, close_mode='normal', teacher_admission=False, **force_band))
     return 0
 from dh116.rl.student_model import StereoAsymmetricPolicy
 from dh116.rl.student_model import StereoHistory
@@ -382,7 +548,7 @@ class NativeTensorCollector(NativeTensorPhysicsRuntime):
     """Keep Teacher sampling/value/rollout separate from shared physical stepping."""
 
     def __init__(self, project, sim, batch, prepared, archive, seed, initial, bindings, runtime, profile,
-                 *, episode_windows=32, wall_cap_s=180.0, full_grasp=False):
+                 *, episode_windows=32, wall_cap_s=180.0, full_grasp=False, dof_mode='full24', gated_lift=False):
         self._configure_physics(
             project, sim, batch, prepared, archive, seed, initial, bindings, runtime, profile,
             episode_windows=episode_windows, wall_cap_s=wall_cap_s, full_grasp=full_grasp,
@@ -390,8 +556,20 @@ class NativeTensorCollector(NativeTensorPhysicsRuntime):
         cfg = tenso_colle__json.loads((project / f'configs/training/teacher_{self.style}.json').read_text())
         self.model = TensorNativeTeacher(cfg, backend_profile=profile, num_envs=self.n, reward_config=self.config).to(self.device)
         pp = self.config.ppo
-        self.trainer = DeviceDeformablePPOTrainer(self.model, PPOConfig(lr=pp['learning_rate'], gamma=pp['gamma'], lam=pp['gae_lambda'], clip=pp['clip'], epochs=pp['epochs'], minibatches=pp['minibatches'], value_coef=pp['value'], entropy_coef=pp['entropy'], max_grad_norm=pp['max_grad_norm'], target_kl=pp['target_kl'], kl_backtrack_steps=pp['kl_backtrack_steps']), rollout_steps=pp['rollout_steps'], num_envs=self.n, device=self.device, fast_update=self.full_grasp)
+        if (dof_mode != 'full24' and not self.full_grasp) or (gated_lift and dof_mode != 'grasp_lift'):
+            raise ValueError('reduced DoF or lift gate requires its supported full-grasp mode')
+        self.dof_mode, self.gated_lift = dof_mode, gated_lift
+        action_indices = dof_action_indices(dof_mode, self.config.finger_goal.participating)
+        self.trainer = DeviceDeformablePPOTrainer(self.model, PPOConfig(lr=pp['learning_rate'], gamma=pp['gamma'], lam=pp['gae_lambda'], clip=pp['clip'], epochs=pp['epochs'], minibatches=pp['minibatches'], value_coef=pp['value'], entropy_coef=pp['entropy'], max_grad_norm=pp['max_grad_norm'], target_kl=pp['target_kl'], kl_backtrack_steps=pp['kl_backtrack_steps']), rollout_steps=pp['rollout_steps'], num_envs=self.n, device=self.device, fast_update=self.full_grasp, action_indices=action_indices)
         self._initialize_episode()
+        if self.gated_lift:
+            self.reward.enable_mastery()
+            self.trainer.mastery = self.reward.mastery
+
+    def policy_action_mask(self):
+        if self.dof_mode == 'full24':
+            return None
+        return self._wrist_aligned[:, None].expand(-1, 24)
 
     def observation(self):
         stamp = self.source._boundary()
@@ -413,9 +591,10 @@ class NativeTensorCollector(NativeTensorPhysicsRuntime):
         if self.controls == 0:
             self.first_sdk = self.runtime.physics_step
         obs = self.observation()
-        sample = self.trainer.collect_step(obs, obs)
+        sample = self.trainer.collect_step(obs, obs, action_mask=self.policy_action_mask())
         (actions, token) = (sample['actions'], sample['collection_token'])
-        if probe_reset and tenso_colle__torch.equal(actions[0], actions[1]):
+        if (probe_reset and self.dof_mode == 'full24'
+                and tenso_colle__torch.equal(actions[0], actions[1])):
             raise ValueError('probe requires independent sampled 24D lane actions')
         self.timings['observation_policy_sample'] = tenso_colle__perf_counter() - phase_start
         phase_start = tenso_colle__perf_counter()
@@ -435,11 +614,34 @@ class NativeTensorCollector(NativeTensorPhysicsRuntime):
         packet = self.complete_action_window(truncated=timeout, buffer_full=full)
         self.trainer.record_step(packet.reward.float(), packet.done, value, truncated=packet.truncated, bootstrap_mask=~packet.terminated, executed_actions=actions, collection_token=token)
         if self.full_grasp:
+            if self.reward.mastery is not None:
+                success = packet.reason_masks['success']
+                natural_timeout = packet.truncated & (self.ages >= self.episode_windows)
+                qualified, promoted = self.reward.finish_mastery_episodes(
+                    natural_timeout, packet.terminated & ~success, success)
+                lesson = packet.event_terms['curriculum']
+                valid_stage = lesson['raw'].masked_fill(packet.terminated & ~packet.reason_masks['success'], 0)
+                self.lesson_stats = tenso_colle__torch.stack((
+                    *((valid_stage >= i).double().mean() for i in (1, 2, 3, 4)),
+                    lesson['contribution'].mean(),
+                    (natural_timeout | packet.terminated).sum(), qualified.sum(), promoted.sum(),
+                ))
             v = self.reward._last_values
             contacted = (v['coverage_left'] > 0) & (v['coverage_right'] > 0)
             detached = v['bilateral_support'] & v['no_external_support'] & v['off_table']
             detached &= (v['soft_non_target_contact'] == 0) & (v['soft_reaction_force'] < 1.0)
             lift = packet.terms['lift']['raw'].masked_fill(~detached, 0)
+            if self.config.grip_balance_enabled:
+                pad_loads = self.contact.last_diagnostics['pad_loads_mean_n']
+                left, right = pad_loads.sum(-1).masked_fill(packet.terminated[:, None], 0).unbind(-1)
+                both = (left > 0) & (right > 0)
+                imbalance = (left - right).abs() / (left + right).clamp_min(1e-12)
+                self.grip_stats = tenso_colle__torch.stack((
+                    v['grip_balance'].mean(), left.mean(), right.mean(),
+                    imbalance.masked_fill(~both, 0).mean(), both.double().mean(),
+                    *((self._grasp_latched.double().mean(), self._lift_unlocked.double().mean())
+                      if self.gated_lift else ()),
+                ))
             supported = v['bilateral_support'] & v['off_table'] & ~v['no_external_support'] & ~v['prohibited_support']
             supported_height = (v['median_z'] - packet.post_context['reset_median_z_m']).masked_fill(~supported, 0)
             reasons = packet.reason_masks

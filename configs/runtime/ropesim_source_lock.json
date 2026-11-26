@@ -10,7 +10,7 @@
     "csrc/batch.cu": "899e95da5aab86a40442be8effbcadbd6d2923a27b9554475d38f6fef631d868",
     "csrc/batch.h": "05ada7802a92b7af33b62ddaa5837cea9e61a6a62fef17c9bcae469dd5bb6d8f",
     "csrc/bindings.cpp": "27d0beff8302cb7cb37ce093be15657b4c5431b2a63b3fb3c2af05d53624f5d4",
-    "csrc/sdf.cu": "34e7dee4ee55c346749df674f97c74cf524881cdb426f0727cc654029017a54e",
+    "csrc/sdf.cu": "2945ad482ab4690efe0e28ff8d77e5507e83cc5e3498513f3bef6167d35f223a",
     "csrc/sdf.h": "02d58d174bc40ef9d5e4a2f61888576d56205fec49da408c1d0c8aae002c9c24",
     "docs/SOLVER.md": "a496b590d385ffb65bf35c3535a029f026df3f2b23b8e19cdcaf63dae6a3f9fe",
     "examples/batch_swing.py": "e136a97fdf0729e1d70d3ca1b461741d4c54f257e7c57046f1ffb3e018d7b6f2",

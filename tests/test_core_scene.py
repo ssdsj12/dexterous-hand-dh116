@@ -451,3 +451,29 @@ def test_usd_template_clone_preserves_precise_origins_and_local_physics():
     result = subprocess.run([sys.executable, '-B', '-c', script, str(cloner), str(schema / 'pxr')],
                             env=env, capture_output=True, text=True, timeout=60)
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+
+def test_near_wire_overlay_preserves_rod_and_binds_reset_pose_to_scene():
+    from dh116.env.contracts import linea_coupl__ACTIVE, expand
+    from dh116.env.scene import load_task_scene, near_wire_scene_inputs
+
+    base, reset = load_task_scene('pinch', full_grasp=True)
+    inputs = base.scene_inputs
+    seed = inputs['authored_seed']
+    poses = np.asarray(seed['reset_root_pose_w']).copy()
+    poses[:, 2] -= 0.003
+    indices = [seed['joint_names'].index(name) for name in linea_coupl__ACTIVE]
+    active = np.asarray(seed['joint_positions'])[:, indices]
+    candidate = dict(source_scene_sha256=inputs['manifest_sha256'], root_pose_wxyz=poses.tolist(),
+                     active_q_rad=active.tolist())
+    near = near_wire_scene_inputs(inputs, candidate)
+    np.testing.assert_allclose(near['authored_seed']['reset_root_pose_w'], poses, rtol=0, atol=1e-12)
+    np.testing.assert_allclose(near['authored_seed']['joint_positions'], [expand(row) for row in active])
+    np.testing.assert_array_equal(near['reset']['rod_reset']['node_positions'], reset['rod_reset']['node_positions'])
+    assert near['archive']['task']['support_scene'] == base.task['support_scene']
+    assert near['manifest_sha256'] != inputs['manifest_sha256']
+    assert near['archive']['task_seed_sha256'] == near['authored_seed']['sha256']
+    candidate['source_scene_sha256'] = '0' * 64
+    with pytest.raises(ValueError, match='source scene'):
+        near_wire_scene_inputs(inputs, candidate)

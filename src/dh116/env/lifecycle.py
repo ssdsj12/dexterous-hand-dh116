@@ -2,6 +2,7 @@
 import gc as nativ_owner__gc, json as nativ_owner__json, os, time, types as nativ_owner__types, weakref as nativ_owner__weakref
 import sys as nativ_sessi__sys
 import re
+import struct
 import subprocess
 from contextlib import contextmanager
 from pathlib import Path as nativ_resou_lock__Path
@@ -138,8 +139,8 @@ BOUNDARY_VERSION = 'dh116-pinch-import-boundary-v3'
 
 def scene_lanes(count, table_size):
     size = np.asarray(table_size, dtype=float)
-    if count not in (2, 32, 64, 128, 512, 1024, 2048) or size.shape != (3,) or (not np.isfinite(size).all()) or (size <= 0).any():
-        raise ValueError('2, 32, 64, 128, 512, 1024 or 2048 lanes and a positive original table size required')
+    if count not in (2, 32, 64, 128, 512, 1024, 2048, 4096) or size.shape != (3,) or (not np.isfinite(size).all()) or (size <= 0).any():
+        raise ValueError('2, 32, 64, 128, 512, 1024, 2048 or 4096 lanes and a positive original table size required')
     columns = nativ_sessi__math.ceil(nativ_sessi__math.sqrt(count))
     spacing = float(max(size[:2]) + 1.0)
     width = max(3, len(str(count - 1)))
@@ -868,12 +869,14 @@ def batch_snapshot(references):
         summary.pop('observation', None)
     return summary
 
+_SDK_DT32 = struct.unpack("<f", struct.pack("<f", 1 / 480))[0]
+
 def _clock(reader, expected_sdk_step):
     row = reader()
     if type(row) is not dict or set(row) != {'sdk_step', 'sdk_time_s', 'app_update_number'}:
         raise ValueError('complete SDK/App clock required')
     (step, t, update) = (row['sdk_step'], row['sdk_time_s'], row['app_update_number'])
-    if type(expected_sdk_step) is not int or expected_sdk_step < 2 or type(step) is not int or (step != expected_sdk_step) or (type(t) not in (float, int)) or (not stat_cache_relea__math.isfinite(t)) or (not stat_cache_relea__math.isclose(t, expected_sdk_step / 480, rel_tol=0, abs_tol=2e-06)) or (type(update) is not int) or (update < 0):
+    if type(expected_sdk_step) is not int or expected_sdk_step < 2 or type(step) is not int or (step != expected_sdk_step) or (type(t) not in (float, int)) or (not stat_cache_relea__math.isfinite(t)) or (min(abs(t - expected_sdk_step / 480), abs(t - expected_sdk_step * _SDK_DT32)) > 2e-06) or (type(update) is not int) or (update < 0):
         raise ValueError(f'SDK step {expected_sdk_step} and valid non-sentinel App clock required')
     return dict(row)
 simul_owner_clean___describe_referrer = nativ_owner___describe_referrer

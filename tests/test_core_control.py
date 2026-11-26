@@ -293,3 +293,147 @@ def test_wrist_projection_matches_issued_mount_targets_at_rotated_hard_stop():
     assert (world[..., 2] >= base[..., 2] - 1e-8).all()
     torch.testing.assert_close(projection['projected_root_poses'][..., :3], world, atol=1e-9, rtol=0)
     torch.testing.assert_close(projection['palm_offsets_m'], world - control.roots[..., :3], atol=1e-9, rtol=0)
+
+
+
+def test_clamp_lift_dwell_is_consecutive_and_lane_local():
+    from dh116.hand.safety import stable_clamp_step
+    ticks = torch.zeros(2, dtype=torch.long)
+    for _ in range(95):
+        ticks, unlocked = stable_clamp_step(ticks, torch.tensor([True, True]), required_steps=96)
+    assert not unlocked.any()
+    ticks, unlocked = stable_clamp_step(ticks, torch.tensor([True, False]), required_steps=96)
+    assert unlocked.tolist() == [True, False]
+    assert ticks.tolist() == [96, 0]
+    ticks, unlocked = stable_clamp_step(ticks, torch.tensor([False, True]), required_steps=96)
+    assert ticks.tolist() == [0, 1] and not unlocked.any()
+
+
+
+def test_reduced_dof_wrist_alignment_does_not_need_finger_arrival():
+    from dh116.physics.runtime import NativeTensorPhysicsRuntime
+    fields = dict(wrist_goal_m=torch.tensor([0.009, 0.001, 0.012]),
+                  wrist_goal_rad=torch.tensor([0.1, 0.2, 0.1]))
+    assert NativeTensorPhysicsRuntime.wrist_aligned(fields).tolist() == [True, False, False]
+
+
+def test_coordinated_lift_preserves_clamp_until_lost_and_shares_mount_headroom():
+    control, stamp, state, _, _, _, _ = control_fixture(soft_constraints=True)
+    control.invalidate()
+    control.fixed_fingers = (3, 4, 5, 9, 10, 11)
+    anchors = state['root_pose_wxyz']
+    angle = torch.tensor(torch.pi / 8, dtype=torch.float64)
+    anchors[0, 0, 3] = angle.cos()
+    anchors[0, 0, 5] = angle.sin()
+    root = control.roots
+    control.palms[0, 0, 0] = -0.085
+    control.palms[0, 0, 2] = 0.1 * 2 ** .5 - 0.085 - 0.000025
+    measured = root.clone()
+    measured[..., :3] += control.palms
+    pose = torch.cat([state['q'][:, side, control.active[side]].double()
+                      for side in (0, 1)], dim=1)
+    action = torch.zeros(2, 24)
+    action[:, :12] = -1
+    action[:, (14, 17)] = torch.tensor([1., -.25])
+    actor_request = action.clone()
+
+    def prepare(clamped, reference, ready, clearance=.01):
+        control.pending = None
+        return control.prepare(action, state, torch.full((2, 2), clearance, dtype=torch.float64),
+                               measured, stamp=stamp, grasp_lift=(clamped, reference, ready))
+
+    clamped = torch.tensor([True, False])
+    ready = torch.tensor([True, False])
+    reference = pose.clone()
+    reference[1] = torch.nan
+    good = prepare(clamped, reference, ready)
+    dz = good['projection']['projected_root_poses'][..., 2] - measured[..., 2]
+    torch.testing.assert_close(dz[0, 0], dz[0, 1], rtol=0, atol=1e-8)
+    assert 0 < dz[0, 0] <= .000026
+    assert dz[1, 0] > 0 > dz[1, 1]
+    for side in (0, 1):
+        first = state['backend_targets'][0, side, control.active[side][0]]
+        assert 0 < first - good['expected'][side][0, 0] < .001
+        torch.testing.assert_close(good['expected'][side][:, 3:6],
+                                   state['backend_targets'][:, side, control.active[side][3:]])
+    assert torch.equal(action, actor_request)
+    assert not good['constraint_failure'].any()
+
+    # Losing either side freezes wrist motion immediately and releases the
+    # narrow finger target envelope so the next contact can be found.
+    reference[0] = torch.nan
+    stopped = prepare(clamped, reference, torch.zeros_like(ready))
+    dz = stopped['projection']['projected_root_poses'][..., 2] - measured[..., 2]
+    torch.testing.assert_close(dz[0], torch.zeros_like(dz[0]), atol=1e-8, rtol=0)
+    assert (state['backend_targets'][0, 0, control.active[0][0]]
+            - stopped['expected'][0][0, 0]) > .002
+
+    # On re-acquisition the measured shape can differ from the old command.
+    # Bring the target back at its normal rate before permitting lift.
+    reference[0] = pose[0]
+    state['backend_targets'][0, 0, control.active[0][0]] += .09
+    catchup = prepare(clamped, reference, ready)
+    dz = catchup['projection']['projected_root_poses'][..., 2] - measured[..., 2]
+    torch.testing.assert_close(dz[0], torch.zeros_like(dz[0]), atol=1e-8, rtol=0)
+    drift = state['backend_targets'][0, 0, control.active[0][0]] - catchup['expected'][0][0, 0]
+    assert .002 < drift <= .002501
+
+    # Infeasible hold at the table must go through the original safe projection.
+    blocked = prepare(clamped, reference, torch.zeros_like(ready), clearance=.0019)
+    assert blocked['constraint_failure'][0]
+    required_z = root[..., 2] + blocked['projection']['safe_z_offset_m']
+    assert (blocked['projection']['projected_root_poses'][0, :, 2] >= required_z[0] - 1e-8).all()
+
+
+def test_coordinated_lift_recaptures_measured_pose_only_after_full_reacquisition():
+    from dh116.physics.runtime import NativeTensorPhysicsRuntime
+
+    runtime = NativeTensorPhysicsRuntime.__new__(NativeTensorPhysicsRuntime)
+    control, _, state, _, _, _, _ = control_fixture(soft_constraints=True)
+    runtime.ctrl, runtime.state = control, state
+    runtime.gated_lift = True
+    runtime._clamp_dwell_steps = 2
+    runtime._clamp_steps = torch.zeros(2, dtype=torch.long)
+    runtime._stable_clamp_s = torch.zeros(2, dtype=torch.float64)
+    runtime._lift_unlocked = torch.zeros(2, dtype=torch.bool)
+    runtime._grasp_latched = torch.zeros(2, dtype=torch.bool)
+    runtime._grasp_pose = torch.full((2, 12), torch.nan, dtype=torch.float64)
+
+    def advance(left, right):
+        runtime._count_clamp(torch.tensor([left, right]))
+
+    advance(True, True)
+    assert runtime._grasp_pose.isnan().all()
+    advance(True, True)
+    original = runtime._grasp_pose.clone()
+    assert runtime._lift_unlocked.tolist() == [True, True]
+    state['q'][0, 0, control.active[0][0]] = .3
+    state['backend_targets'][0, 0, control.active[0][0]] = .6
+    advance(False, True)
+    assert runtime._grasp_latched.tolist() == [True, True]
+    assert runtime._grasp_pose[0].isnan().all()
+    advance(True, True)
+    assert not runtime._lift_unlocked[0]
+    advance(True, True)
+    assert runtime._lift_unlocked.tolist() == [True, True]
+    torch.testing.assert_close(runtime._grasp_pose[0, 0], torch.tensor(.3, dtype=torch.float64))
+    assert torch.equal(runtime._grasp_pose[1], original[1])
+
+@pytest.mark.parametrize('style,digits', [('pinch', 2), ('tripod', 3), ('power', 5)])
+def test_reference_closure_preserves_authority_and_regulates_individual_pads(style, digits):
+    from dh116.hand.safety import guided_closure_action
+    q = torch.zeros((2, 12), dtype=torch.float64)
+    reference = q[0].reshape(2, 6)
+    request = torch.zeros((2, 24), dtype=q.dtype)
+    loads = q.new_zeros(2, 2, digits + (style == 'power'))
+    enabled = torch.tensor([True, False])
+    guided = guided_closure_action(request, q, reference, loads, style, enabled)
+    assert (guided[0, 1:digits + 1] > 0).all() and guided[0, 0] == 0
+    assert guided[1].count_nonzero() == 0
+    assert torch.equal(guided[:, 12:], request[:, 12:])
+    loads[0, 0, 0] = 2.0
+    guided = guided_closure_action(request, q, reference, loads, style, enabled)
+    assert guided[0, 1] < 0 and guided[0, 2] > 0
+    request[:, 1::2] = -1
+    request[:, ::2] = 1
+    assert torch.equal(request, guided_closure_action(request, q, reference, loads, style, enabled))

@@ -1430,5 +1430,934 @@
         "receipt": "runs/grasp-reference-fit-final-20261126-015604/power-probe/native_result.json"
       }
     }
+  },
+  "reduced_dof_o6_closure": {
+    "baseline_git_sha": "523ae9bbd03c8f0046238e6eb9e5494296b16d64",
+    "cpu_tests_passed": 243,
+    "cuda_tests_passed": 13,
+    "modified_file_sha256": {
+      "CHANGELOG.md": "4f93b7debecf6d9dc486042a92e1d503a2f517bd8315508459b40504969cb73e",
+      "README.md": "67e4bf9355faedc805c9051370883458ab76d1b81dd46e355741db76f559b402",
+      "scripts/train_teacher.py": "32a5663a3fdee10a6fa82c368127172566317e71b6d5cc02619750024258ed80",
+      "src/dh116/env/lifecycle.py": "2cbbbaea682862ccaa9037cdb545a8560c5f36901763a3ca784170d4e121b944",
+      "src/dh116/hand/safety.py": "0152d3c188dd49ce1ebc54a9b0d383c700cac3c380c000c617f06a59455ff6cc",
+      "src/dh116/physics/runtime.py": "6f416e8cc7354f5f3bf2d08136027b758d1d5927a4ff0ccac6a66d2f59c669c3",
+      "src/dh116/physics/solver.py": "faafe8f85ab374a726e00057bdc750c6ffbdeab89cd4118af848b252610806ad",
+      "src/dh116/rl/device.py": "dd52d69e8734c0cbd5c089cf3b5bdb5a035db061e9c530eefc6488a7f7dfcf7c",
+      "src/dh116/rl/reward.py": "95a369a81e208d98e14f7ac6c73f78a101a9d604edcbb22389794614819f3b53",
+      "src/dh116/rl/training.py": "719963bb2f157c67e48dc71f273d7731989fe399980b1206fa89e5624b482851",
+      "tests/test_core_contact.py": "ab4eacec3e0aad0af5da22ac785bc68ca16e435886818c83803ada79d5894472",
+      "tests/test_core_control.py": "5352de85b335efcd7f63cfecca8f9e75d3d24aae73e8353fb09c7e8d6f11a765",
+      "tests/test_core_lifecycle.py": "85340add4939c4945255ff1219418b4d51d15c9c8f7d436fb200641e23c8d246",
+      "tests/test_core_ppo.py": "652b3990089dcf85a443accd3c48245519c0891b475d54ff094ae7a4cba00bc1",
+      "tests/test_core_reward.py": "7858dfddb2b491401d0cab951be308f798487408f009a93cb58784794bad69a6"
+    },
+    "ppo_baseline_sha256": "2175a41dde5560137bb1f1856049ec46c112c454f7acbe9e84e5e6a7654687e0",
+    "teacher_source_sha256": "f39eb3fb5b8431eeb14fa6387473c1dfba87af487088e2512d26d4b60a6ac75b",
+    "frozen_motion_pinch": {
+      "qualified_detached_windows": 3,
+      "positive_net_lift_mm": 0.0,
+      "raw_contact_timestamps_saved": false,
+      "maximum_nonreset_sample_median_delta_mm": -1.4141201972961426,
+      "maximum_nonreset_sample_min_delta_mm": -1.902848482131958,
+      "final_median_delta_mm": -50.178,
+      "final_min_delta_mm": -60.001,
+      "final_lowest_node": 3
+    },
+    "scope": "measured_alignment_then_fixed_wrist_closure_with_stable_load_gated_z",
+    "environments": 2,
+    "ppo_updates": 0,
+    "clamp_acceptance_s": 0.25,
+    "grasp_qualified": false,
+    "lift_qualified": false,
+    "controlled_diagnostic_sha256": "58ad87194a92bcdfd6713d0f5fda917fa9469154872324699434b07a3b5f487f",
+    "by_grasp": {
+      "pinch": {
+        "receipt": "runs/o6-pad-evidence-20261126-111401/pinch/native/controlled_contact.json",
+        "receipt_sha256": "64e71b2b9f822877047cb6ab19ecd0f7e96de0ca31290b4922b5e71de7a90aec",
+        "latest_scope_completed_windows": 330,
+        "sdk_steps": 2642,
+        "natural_exit_code": 0,
+        "reached_wrist_alignment": [
+          true,
+          true
+        ],
+        "reset_qualified_for_ppo": false,
+        "best_both_wrist_error_mm": 1.8696735678200493,
+        "stable_bilateral_s": 0.0,
+        "qualified_detached_lift_mm": 0.0,
+        "minimum_readback_table_clearance_mm": 57.666020791082076,
+        "last_net_lift_mm": [
+          -23.102879524230957,
+          -23.104071617126465
+        ],
+        "last_support_forces_N": [
+          [
+            0.0,
+            0.15954289331017327,
+            0.15959402619391802
+          ],
+          [
+            0.0,
+            0.15954237696273751,
+            0.15959451617840217
+          ]
+        ],
+        "last_valid_lattice_pad_gap_mm": [
+          [
+            0.20047231018543243,
+            0.23394404351711273,
+            1.374405860900879,
+            1.1816811561584473
+          ],
+          [
+            0.20055286586284637,
+            0.2340446263551712,
+            1.3742610216140747,
+            1.1815382242202759
+          ]
+        ],
+        "pad_backface_windows": 0,
+        "joint_dislocation_windows": 0,
+        "source_fault_windows": 0
+      },
+      "tripod": {
+        "receipt": "runs/o6-pad-evidence-20261126-111401/tripod/native/controlled_contact.json",
+        "receipt_sha256": "62a05f6aa053ebd2ad278bda67a7b0fe93cb1d953de2144f2f476906a7085381",
+        "latest_scope_completed_windows": 330,
+        "sdk_steps": 2642,
+        "natural_exit_code": 0,
+        "reached_wrist_alignment": [
+          true,
+          true
+        ],
+        "reset_qualified_for_ppo": false,
+        "best_both_wrist_error_mm": 9.370419432209848,
+        "stable_bilateral_s": 0.0,
+        "qualified_detached_lift_mm": 0.0,
+        "minimum_readback_table_clearance_mm": 38.92931863350396,
+        "last_net_lift_mm": [
+          -23.10207486152649,
+          -23.10284972190857
+        ],
+        "last_support_forces_N": [
+          [
+            0.0,
+            0.1595442576690437,
+            0.15959238753052019
+          ],
+          [
+            0.0,
+            0.15954532518024084,
+            0.15959558901249252
+          ]
+        ],
+        "last_valid_lattice_pad_gap_mm": [
+          [
+            0.026395544409751892,
+            0.1151808500289917,
+            1.754850149154663,
+            4.031392574310303,
+            4.693282604217529,
+            1.058729887008667
+          ],
+          [
+            0.020548701286315918,
+            0.11576199531555176,
+            1.77665376663208,
+            4.0132246017456055,
+            4.680522918701172,
+            1.0558147430419922
+          ]
+        ],
+        "pad_backface_windows": 0,
+        "joint_dislocation_windows": 0,
+        "source_fault_windows": 0
+      },
+      "power": {
+        "receipt": "runs/o6-pad-evidence-20261126-111401/power/native/controlled_contact.json",
+        "receipt_sha256": "b37f81b51eb899818b4bbb4692a3114e459ff662cf7921a054a9dba939f4e342",
+        "latest_scope_completed_windows": 246,
+        "sdk_steps": 1970,
+        "natural_exit_code": 0,
+        "reached_wrist_alignment": [
+          false,
+          false
+        ],
+        "reset_qualified_for_ppo": false,
+        "best_both_wrist_error_mm": 16.71767102466817,
+        "stable_bilateral_s": 0.0,
+        "qualified_detached_lift_mm": 0.0,
+        "minimum_readback_table_clearance_mm": 7.369707705805029,
+        "last_net_lift_mm": [
+          -60.00682711601257,
+          -60.00682711601257
+        ],
+        "last_support_forces_N": [
+          [
+            0.8882306794167241,
+            1.1452259589601337,
+            0.6606227956034771
+          ],
+          [
+            0.9020523377656019,
+            1.1617879224115386,
+            0.6574955434894352
+          ]
+        ],
+        "last_valid_lattice_pad_gap_mm": [
+          [
+            6.594419479370117,
+            null,
+            null,
+            null,
+            1.0512793064117432,
+            23.085161209106445,
+            null,
+            null,
+            null,
+            13.48973560333252,
+            0.2456037402153015,
+            26.405025482177734
+          ],
+          [
+            6.52089786529541,
+            null,
+            null,
+            null,
+            0.9183050394058228,
+            22.94976234436035,
+            null,
+            null,
+            null,
+            null,
+            0.22040820121765137,
+            26.28129768371582
+          ]
+        ],
+        "pad_backface_windows": 0,
+        "joint_dislocation_windows": 0,
+        "source_fault_windows": 0
+      }
+    },
+    "cli_probes": {
+      "finger_only": {
+        "dof_mode": "finger_only",
+        "gated_lift": false,
+        "policy_action_indices": [
+          0,
+          1,
+          2,
+          6,
+          7,
+          8
+        ],
+        "reset_wrist_error_m": 0.0344199889289196,
+        "reset_wrist_error_rad": 0.426580600226568,
+        "wrist_aligned": [
+          false,
+          false
+        ],
+        "receipt": "runs/reduced-dof-cli-20261126-111930/finger_only/native_result.json",
+        "receipt_sha256": "36c1066a8588f4d6ef88cf4b8edf92523b555f083157da6debb01f596fed545d",
+        "recipe_sha256": "9444ea1d23d2efd4eb58ded639a98fb835c457fe1430b2c305849c897e3d26de",
+        "natural_exit_code": 0,
+        "reset_ids": [
+          1,
+          2
+        ]
+      },
+      "grasp_lift": {
+        "dof_mode": "grasp_lift",
+        "gated_lift": true,
+        "policy_action_indices": [
+          0,
+          1,
+          2,
+          6,
+          7,
+          8,
+          14,
+          17
+        ],
+        "reset_wrist_error_m": 0.0344199889289196,
+        "reset_wrist_error_rad": 0.426580600226568,
+        "wrist_aligned": [
+          false,
+          false
+        ],
+        "receipt": "runs/reduced-dof-cli-20261126-111930/grasp_lift/native_result.json",
+        "receipt_sha256": "d87aae1aba728bac8705c8ca4275a51233508fa50a9b1ba6f6f4587c325f2fef",
+        "recipe_sha256": "61b9635f59525d981dabdc29157564d7169172e06c3ca0b33e0a41908a226512",
+        "natural_exit_code": 0,
+        "reset_ids": [
+          1,
+          2
+        ]
+      }
+    }
+  },
+  "near_wire_init_902": {
+    "reset_mode": "measured_near_wire",
+    "cpu_cuda_pytest_passed": 257,
+    "policy_mode": "grasp_lift",
+    "gated_lift": false,
+    "probe_environments": 2,
+    "probe_control_windows": 2,
+    "grasp_probes": {
+      "pinch": {
+        "result": "runs/near-wire-reset-probe-20261126-113623/pinch/native_result.json",
+        "result_sha256": "82dec5be3b4afafe5269af8cdd8a9dcd42b4b3f5f11f99cace3f36c8f717fdd1",
+        "seed_fit": "runs/near-wire-seed-fit-20261126-113244/pinch/native/pose_fit.json",
+        "seed_fit_sha256": "703f75978ce6c664a3512fdb4a058d3b802c77cca8b67990ec347f6e3f32c0b3",
+        "scene_sha256": "9fe90115d4b035993426fda6f1c36ca6dad31315fcbae873712c4633b5e31237",
+        "reset_pad_gap_range_mm": [
+          0.550793468952179,
+          0.5517387986183167
+        ],
+        "reset_min_clearance_mm": 62.016597824650745,
+        "policy_action_indices": [
+          0,
+          1,
+          2,
+          6,
+          7,
+          8,
+          14,
+          17
+        ],
+        "process_exit_code": 0
+      },
+      "tripod": {
+        "result": "runs/near-wire-reset-probe-20261126-113623/tripod/native_result.json",
+        "result_sha256": "8e5838377a47a4ebabfe9384aa6683cf9b8ba3d9cb7281619c3bcee51c22215d",
+        "seed_fit": "runs/near-wire-seed-fit-20261126-113244/tripod/native/pose_fit.json",
+        "seed_fit_sha256": "36b8b3f14beff7ae9c73e3893fa35ac09e105a3a48d201ff5a1f8632820113ac",
+        "scene_sha256": "1979c120be912ce3a3919d70bb46fbf62c82986fff4f76698fb67478b9d963cd",
+        "reset_pad_gap_range_mm": [
+          0.5504693984985352,
+          0.5515413284301758
+        ],
+        "reset_min_clearance_mm": 53.174604805284744,
+        "policy_action_indices": [
+          0,
+          1,
+          2,
+          3,
+          6,
+          7,
+          8,
+          9,
+          14,
+          17
+        ],
+        "process_exit_code": 0
+      },
+      "power": {
+        "result": "runs/near-wire-reset-probe-20261126-113623/power/native_result.json",
+        "result_sha256": "9cf2845343c9e7b00a835508e4700ffa61f16ff399424e5283e36d72a6cabb1c",
+        "seed_fit": "runs/near-wire-seed-fit-20261126-113244/power/native/pose_fit.json",
+        "seed_fit_sha256": "16dd6f6800fb40d2695de11e662591dd36f7f587250f0d5b3d9a7611784f91a5",
+        "scene_sha256": "29c04dc62ed0051651fc94f86fc6b90ad9c52060f47f6f757abb6fcae9c45767",
+        "reset_pad_gap_range_mm": [
+          0.5490067601203918,
+          1.760542392730713
+        ],
+        "reset_min_clearance_mm": 15.787369501843173,
+        "policy_action_indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          14,
+          17
+        ],
+        "process_exit_code": 0
+      }
+    },
+    "pinch_controlled_touch": {
+      "result": "runs/near-wire-touch-20261126-113853/native/near_wire_touch.json",
+      "result_sha256": "d63fbb7593fdf42842ddb4c4a5a6f6161c2cad9b6c3774ae355b50e292fcc7e9",
+      "control_windows": 100,
+      "first_window_measured_z_mm": [
+        [
+          0.2589225769042969,
+          0.25910139083862305
+        ],
+        [
+          -0.2589225769042969,
+          -0.25910139083862305
+        ]
+      ],
+      "max_continuous_bilateral_support_s": 0.035416666666666666,
+      "process_exit_code": 0,
+      "qualified_lift_hold": false
+    },
+    "teacher_admission": false
+  },
+  "teacher_4096_grasp_lift": {
+    "environments_per_grasp": 4096,
+    "updates_per_grasp": 1024,
+    "control_windows_per_update": 32,
+    "dof_mode": "grasp_lift",
+    "starting_updates": 0,
+    "gated_lift": false,
+    "cameras": false,
+    "pytest_passed": 259,
+    "solver_binary_sha256": "a07b79832f167e9aa73b15cf96de303914cb7bb5dd0864004df0d2f2066ae03d",
+    "power_reset_sweep": "runs/power-palm-wrap-check-20261126-114857/native/power_wrap_sweep.json",
+    "native_probes": {
+      "pinch": {
+        "gpu": 1,
+        "path": "runs/teacher-4096-ppo1024-20261126-115319/pinch-probe/native_result.json",
+        "receipt_sha256": "c82d542c61bad5f3eb5713ee822ef0c41ce12159badae115e3e42b2f072a3b69",
+        "recipe_sha256": "b30517879630e53f57b2a23ed4dcf5c38808ce2f134f42c1aac9b9d4c23f2bc3",
+        "reset_pad_gap_range_mm": [
+          0.5341809988021851,
+          0.5948548316955566
+        ],
+        "peak_cuda_allocated_bytes": 3582706688,
+        "exit_code": 0
+      },
+      "tripod": {
+        "gpu": 2,
+        "path": "runs/teacher-4096-ppo1024-20261126-115319/tripod-probe/native_result.json",
+        "receipt_sha256": "5a0ee716a2ea08c995334581ed9a48d567b287d753736a766eeee1043b2b8120",
+        "recipe_sha256": "2db4ea190a9abb2fb2646442485c7884bd38067eed3eb9a063e5fdea6cfa11bb",
+        "reset_pad_gap_range_mm": [
+          0.5251588225364685,
+          0.5701398253440857
+        ],
+        "peak_cuda_allocated_bytes": 3587766272,
+        "exit_code": 0
+      },
+      "power": {
+        "gpu": 3,
+        "path": "runs/teacher-4096-ppo1024-20261126-115319/power-probe/native_result.json",
+        "receipt_sha256": "ec4b61b9f14b6bb898b00ba556abdbf9fe0f46aa18d377cfcd51c237e217e015",
+        "recipe_sha256": "a5e97aee7f411114e7f3d7d8526c5ba68a9d0a81bb3978f68a2b00eca3f93155",
+        "reset_pad_gap_range_mm": [
+          0.9721615314483643,
+          8.336719512939453
+        ],
+        "peak_cuda_allocated_bytes": 3669229568,
+        "exit_code": 0
+      }
+    },
+    "training": {
+      "pinch": {
+        "directory": "runs/teacher-4096-ppo1024-20261126-115319/pinch-train",
+        "gpu": 1,
+        "pid": 1880699,
+        "verified_updates": 5,
+        "first_update_seconds": 32.438231511972845,
+        "first_checkpoint_sha256": "a180bd9a33bbd63956504df3d85e68aba5ec7ee13092d922b1d1c23206c5816d",
+        "latest_checkpoint": "runs/teacher-4096-ppo1024-20261126-115319/pinch-train/native/latest.pt"
+      },
+      "tripod": {
+        "directory": "runs/teacher-4096-ppo1024-20261126-115319/tripod-train",
+        "gpu": 2,
+        "pid": 1882723,
+        "verified_updates": 2,
+        "first_update_seconds": 34.683504451066256,
+        "first_checkpoint_sha256": "e5fe8f8c0e39c15050ef16d01669570122f42a774237cbf62cb29f88f9da6f2b",
+        "latest_checkpoint": "runs/teacher-4096-ppo1024-20261126-115319/tripod-train/native/latest.pt"
+      },
+      "power": {
+        "directory": "runs/teacher-4096-ppo1024-20261126-115319/power-train",
+        "gpu": 3,
+        "pid": 1879413,
+        "verified_updates": 6,
+        "first_update_seconds": 31.884343018988147,
+        "first_checkpoint_sha256": "caae9be4e6787c33fc1774201c36a015c1d636c495186a1ae2c56e6e7ca21958",
+        "latest_checkpoint": "runs/teacher-4096-ppo1024-20261126-115319/power-train/native/latest.pt"
+      }
+    },
+    "training_completed": false,
+    "teacher_admission": false
+  },
+  "teacher_4096_force_balance": {
+    "environments_per_grasp": 4096,
+    "updates_per_grasp": 1024,
+    "starting_updates": 0,
+    "dof_mode": "grasp_lift",
+    "gated_lift": false,
+    "near_wire_reset": true,
+    "grip_force_band_n": [
+      0.4,
+      2.5
+    ],
+    "force_band_status": "exploratory",
+    "cpu_tests_passed": 247,
+    "cuda_tests_passed": 13,
+    "training_completed": false,
+    "teacher_admission": false,
+    "native_probes": {
+      "pinch": {
+        "path": "runs/teacher-4096-force-balance-20261126-125557/pinch-probe/native_result.json",
+        "receipt_sha256": "f00771d8e8c5325ddbefa35a0392d179bb6480263fc4157a44cf53fc388122f4",
+        "recipe_sha256": "6f588efe6cefe7c4bdc9d872b756971dac27f4294ce8b822d26a60f82a8f0f6d",
+        "exit_code": 0
+      },
+      "tripod": {
+        "path": "runs/teacher-4096-force-balance-20261126-125557/tripod-probe/native_result.json",
+        "receipt_sha256": "a742fa66d529f72d2fa442c1e4d081e231e56b4fe03d1942e5c5f11385dd207d",
+        "recipe_sha256": "9b76245bd437fb704004f18b8021b8655b1bc4fe6f33f5901fe9b16a7d2a739d",
+        "exit_code": 0
+      },
+      "power": {
+        "path": "runs/teacher-4096-force-balance-20261126-125557/power-probe/native_result.json",
+        "receipt_sha256": "80b034458b07b489366b589b68d48b42708d41cc1df66558a5198c14c4007ee1",
+        "recipe_sha256": "7c861043e07ab45d5db6fde70a2e4bfde425a015a8bb1174c165eb3e083349eb",
+        "exit_code": 0
+      }
+    },
+    "training": {
+      "pinch": {
+        "directory": "runs/teacher-4096-force-balance-20261126-125557/pinch-train",
+        "gpu": 1,
+        "pid": 1943094,
+        "verified_updates": 1,
+        "first_update_seconds": 31.24975440581329,
+        "first_checkpoint_sha256": "51d7fbd1123a59f6729c9ea7694d192eb8149a68e49eac956680e64dbb6abdcc"
+      },
+      "tripod": {
+        "directory": "runs/teacher-4096-force-balance-20261126-125557/tripod-train",
+        "gpu": 2,
+        "pid": 1943095,
+        "verified_updates": 1,
+        "first_update_seconds": 32.76948482403532,
+        "first_checkpoint_sha256": "9f1c559edc8b6841dbcea2894093ebf33521a7a989380e407c591046a6894b7d"
+      },
+      "power": {
+        "directory": "runs/teacher-4096-force-balance-20261126-125557/power-train",
+        "gpu": 3,
+        "pid": 1943224,
+        "verified_updates": 1,
+        "first_update_seconds": 35.32436178391799,
+        "first_checkpoint_sha256": "1d992d56a59669229c1a36d432cc65dc12f67170820ea07f236246eedc9f013a"
+      }
+    },
+    "pinch_native_force_scan": {
+      "path": "runs/teacher-4096-force-balance-20261126-125557/pinch-force-scan-native/native/force_scan.json",
+      "exit_code": 0,
+      "windows": 100,
+      "ever_bilateral": [
+        false,
+        false
+      ],
+      "qualified_force_band": false
+    },
+    "old_training_receipt": "runs/teacher-4096-force-balance-20261126-125557/previous_training.json"
+  },
+  "teacher_4096_grip_balance_no_band": {
+    "environments_per_grasp": 4096,
+    "updates_per_grasp": 1024,
+    "starting_updates": 0,
+    "grip_balance_enabled": true,
+    "grip_force_band_n": null,
+    "force_band_status": "disabled",
+    "dof_mode": "grasp_lift",
+    "gated_lift": false,
+    "near_wire_reset": true,
+    "pytest_passed": 261,
+    "teacher_admission": false,
+    "training_completed": false,
+    "previous_training_receipt": "runs/teacher-4096-force-balance-no-band-20261126-132901/previous_training.json",
+    "native_probes": {
+      "pinch": {
+        "path": "runs/teacher-4096-force-balance-no-band-20261126-132901/pinch-probe/native_result.json",
+        "receipt_sha256": "05975c1d142cb9419683d5374ea498c334df9700f3b921d8da909aa35ad6f078",
+        "exit_code": 0,
+        "recipe_sha256": "d000e2dd630971956e05dd5eb1fa77fbcec534626570f75e19219c23efdf596f"
+      },
+      "tripod": {
+        "path": "runs/teacher-4096-force-balance-no-band-20261126-132901/tripod-probe/native_result.json",
+        "receipt_sha256": "8b9ffc4e732abbc80292786c51f0ed9c7ffe90d73792ecd83c710dbff0aa5d94",
+        "exit_code": 0,
+        "recipe_sha256": "ec48a275d92339f862b6f45ace01378078156085fc1f5f7a7cb36280a9fb5696"
+      },
+      "power": {
+        "path": "runs/teacher-4096-force-balance-no-band-20261126-132901/power-probe/native_result.json",
+        "receipt_sha256": "cc95c7f7c4f30b9dba5549ea969a59e560252b72f164f3269f39d46472a6afbc",
+        "exit_code": 0,
+        "recipe_sha256": "a61706cad2a669666aa355265370eccd1a49deed78e248b751349dde2724a405"
+      }
+    },
+    "training": {
+      "tripod": {
+        "directory": "runs/teacher-4096-force-balance-no-band-20261126-132901/tripod-train",
+        "gpu": 2,
+        "pid": 1976497,
+        "verified_updates": 1,
+        "first_update_seconds": 32.17160450294614,
+        "first_checkpoint_sha256": "47221c436316bdaead3808cf5eba375ffec536d39fed399b442c9ff1c9b58ce4"
+      },
+      "pinch": {
+        "directory": "runs/teacher-4096-force-balance-no-band-20261126-132901/pinch-train",
+        "gpu": 1,
+        "pid": 1976494,
+        "verified_updates": 1,
+        "first_update_seconds": 32.591832933947444,
+        "first_checkpoint_sha256": "ac1a3c317e52eb65c527fb4b3b4d4b610e4322503203263c7780cd6122e094de"
+      },
+      "power": {
+        "directory": "runs/teacher-4096-force-balance-no-band-20261126-132901/power-train",
+        "gpu": 3,
+        "pid": 1978075,
+        "verified_updates": 1,
+        "first_update_seconds": 32.31639388296753,
+        "first_checkpoint_sha256": "06c9244c2dae2647ac2159663c72018ce6537804a615a0b2022906abd92b3b47"
+      }
+    }
+  },
+  "teacher_4096_coordinated_lift": {
+    "antigravity_reviews": [
+      "R10",
+      "R11"
+    ],
+    "force_band_status": "disabled",
+    "grasp_contact_steps": 96,
+    "finger_trim_rad": 0.04,
+    "environments_per_grasp": 4096,
+    "updates_per_grasp": 2000,
+    "training_from_zero": true,
+    "pytest_passed": 263,
+    "controlled_motion_unit_tests_passed": true,
+    "teacher_admission": false,
+    "grasp_qualified": false,
+    "source_receipts": {
+      "pinch": {
+        "peer_reset": true,
+        "recipe_sha256": "a32e8007e0cee5826806ca862671aac13454aa036f7a0a9661a713e973b6e9bb",
+        "paths": [
+          "runs/teacher-4096-coordinated-lift-20261126-140209/pinch-n2/native_result.json",
+          "runs/teacher-4096-coordinated-lift-20261126-140209/pinch-probe/native_result.json"
+        ],
+        "sha256": [
+          "5a1d37eaea9b1a86f4fe8afed00a61a0050aaa29907b56a3ef0a52a235a7e638",
+          "0a021f13e72c4077c574481b0eeb142002f41f51feef5b293cc9c1d6d9861d5f"
+        ]
+      },
+      "tripod": {
+        "peer_reset": true,
+        "recipe_sha256": "c69b22d5688b6fd676d617c99366c889e1af689f5b1ef43814eecf80dca1b1d0",
+        "paths": [
+          "runs/teacher-4096-coordinated-lift-20261126-140209/tripod-n2/native_result.json",
+          "runs/teacher-4096-coordinated-lift-20261126-140209/tripod-probe/native_result.json"
+        ],
+        "sha256": [
+          "1bd4189ddde194edeb89ef95da79c560bd205810db7425823ba3bfa6a8b1fcc1",
+          "41039282bdff2826348ab375b6787c504922752291fb029db3bdd8890fc4b42c"
+        ]
+      },
+      "power": {
+        "peer_reset": true,
+        "recipe_sha256": "c432a1b260b69af8b2d0e17670b197e0884c01f7bd3b42173124d1015cedc0e6",
+        "paths": [
+          "runs/teacher-4096-coordinated-lift-20261126-140209/power-n2/native_result.json",
+          "runs/teacher-4096-coordinated-lift-20261126-140209/power-probe/native_result.json"
+        ],
+        "sha256": [
+          "098b7aca7fd915bf7fa09e46aab13daf1970be3c963b83a89c943c4913726c81",
+          "cb2081cd1a422d977459fa857e4a7cb7db16897d63ed4a9f75cc54ec24678cf3"
+        ]
+      }
+    },
+    "training": {
+      "pinch": {
+        "directory": "runs/teacher-4096-coordinated-lift-20261126-140209/pinch-train",
+        "gpu": 1,
+        "pid": 2020435,
+        "verified_updates": 1,
+        "first_update_s": 33.27044842601754
+      },
+      "tripod": {
+        "directory": "runs/teacher-4096-coordinated-lift-20261126-140209/tripod-train",
+        "gpu": 2,
+        "pid": 2020436,
+        "verified_updates": 1,
+        "first_update_s": 32.58356112008914
+      },
+      "power": {
+        "directory": "runs/teacher-4096-coordinated-lift-20261126-140209/power-train",
+        "gpu": 3,
+        "pid": 2022443,
+        "verified_updates": 1,
+        "first_update_s": 32.98681088699959
+      }
+    }
+  },
+  "teacher_grasp_curriculum_r12": {
+    "output": "runs/teacher-4096-curriculum-r12",
+    "goal_updates": 2000,
+    "num_envs": 4096,
+    "strict_success_qualified": false,
+    "core_tests": 264,
+    "training": {
+      "pinch": {
+        "gpu": 1,
+        "worker": 2046719,
+        "first_checkpoint_sha256": "fa4677b68e83eb315e78e3b074cfd971c3ad3a52fe4af43166c935d915add293",
+        "first_update": 1,
+        "first_iteration_s": 30.938930942909792,
+        "first_update_curriculum": {
+          "touch_rate": 0.0,
+          "clamp_rate": 0.0,
+          "lift_5mm_rate": 0.0,
+          "lift_15mm_rate": 0.0,
+          "bonus_mean": 0.0,
+          "depth": 1
+        },
+        "first_strict_success": 0.0,
+        "probe_sha256": "e6ef75b1714311d29b4aaffc06a6338420ad7bf0108634c9dc7a487cdf288ad8",
+        "first_checkpoint_verified": true
+      },
+      "tripod": {
+        "gpu": 2,
+        "worker": 2045977,
+        "first_checkpoint_sha256": "7f7384986c00f8925ae4521b98c288984f678adc242ba2ce699b62837a9cf1ab",
+        "first_update": 1,
+        "first_iteration_s": 34.19660034100525,
+        "first_update_curriculum": {
+          "touch_rate": 0.0,
+          "clamp_rate": 0.0,
+          "lift_5mm_rate": 0.0,
+          "lift_15mm_rate": 0.0,
+          "bonus_mean": 0.0,
+          "depth": 1
+        },
+        "first_strict_success": 0.0,
+        "probe_sha256": "aed22a390ee95122fad602f588f40c86f3d21ecffbde04722be00bc249b7b883",
+        "first_checkpoint_verified": true
+      },
+      "power": {
+        "gpu": 3,
+        "worker": 2045700,
+        "first_checkpoint_sha256": "48730e70547b966a5c5c1cbea9fc5f7ff85e3947126b48e12ade14c5a641e950",
+        "first_update": 1,
+        "first_iteration_s": 35.326417377917096,
+        "first_update_curriculum": {
+          "touch_rate": 0.07680511474609375,
+          "clamp_rate": 0.0,
+          "lift_5mm_rate": 0.0,
+          "lift_15mm_rate": 0.0,
+          "bonus_mean": 0.0054779052734375,
+          "depth": 1
+        },
+        "first_strict_success": 0.0,
+        "probe_sha256": "bf376eaf7298a99604c49ef6cbb84d9c5e4660605549a74cac142194f39f9591",
+        "first_checkpoint_verified": true
+      }
+    }
+  },
+  "teacher_episode_mastery_r13": {
+    "output": "runs/teacher-4096-mastery-r13",
+    "consecutive_qualifying_episodes": 3,
+    "independent_lanes": true,
+    "pytest_passed": 265,
+    "envs_per_style": 4096,
+    "update_budget": 2000,
+    "training_rollout_best": true,
+    "independent_evaluation_performed": false,
+    "styles": {
+      "pinch": {
+        "gpu": 1,
+        "worker": 2069526,
+        "first_iteration_s": 36.01227537309751,
+        "first_update": 1,
+        "strict_success": 0.0,
+        "curriculum_metrics": {
+          "touch_rate": 0.0,
+          "clamp_rate": 0.0,
+          "lift_5mm_rate": 0.0,
+          "lift_15mm_rate": 0.0,
+          "bonus_mean": 0.0,
+          "completed_episodes": 0,
+          "qualified_episodes": 0,
+          "promotions": 0,
+          "level_1_fraction": 1.0,
+          "level_2_fraction": 0.0,
+          "level_3_fraction": 0.0,
+          "level_4_fraction": 0.0,
+          "level_5_fraction": 0.0,
+          "depth": 1.0,
+          "streak_mean": 0.0
+        },
+        "probe_sha256": "fbe22fde1061dc8668707e321dbd2b3c499d03d81e781259079781ee2d275781",
+        "first_checkpoint_sha256": "a79b7969f482828132b5a6988ac648df7c807f5ad7b5b0d22cfbaa0fa9f8e079"
+      },
+      "tripod": {
+        "gpu": 2,
+        "worker": 2070285,
+        "first_iteration_s": 34.80959953693673,
+        "first_update": 1,
+        "strict_success": 0.0,
+        "curriculum_metrics": {
+          "touch_rate": 0.0,
+          "clamp_rate": 0.0,
+          "lift_5mm_rate": 0.0,
+          "lift_15mm_rate": 0.0,
+          "bonus_mean": 0.0,
+          "completed_episodes": 0,
+          "qualified_episodes": 0,
+          "promotions": 0,
+          "level_1_fraction": 1.0,
+          "level_2_fraction": 0.0,
+          "level_3_fraction": 0.0,
+          "level_4_fraction": 0.0,
+          "level_5_fraction": 0.0,
+          "depth": 1.0,
+          "streak_mean": 0.0
+        },
+        "probe_sha256": "faab617e50a0bfdfa557170aa9742b25a36a3486bbe0901d792108fac07260e4",
+        "first_checkpoint_sha256": "415d1c2023bc0b2a027325170a6f0783ecf46560867b7924a1291132ee645f9a"
+      },
+      "power": {
+        "gpu": 3,
+        "worker": 2070284,
+        "first_iteration_s": 34.04372285096906,
+        "first_update": 1,
+        "strict_success": 0.0,
+        "curriculum_metrics": {
+          "touch_rate": 0.0765838623046875,
+          "clamp_rate": 0.0,
+          "lift_5mm_rate": 0.0,
+          "lift_15mm_rate": 0.0,
+          "bonus_mean": 0.005462646484375,
+          "completed_episodes": 0,
+          "qualified_episodes": 0,
+          "promotions": 0,
+          "level_1_fraction": 1.0,
+          "level_2_fraction": 0.0,
+          "level_3_fraction": 0.0,
+          "level_4_fraction": 0.0,
+          "level_5_fraction": 0.0,
+          "depth": 1.0,
+          "streak_mean": 0.0
+        },
+        "probe_sha256": "730619155329b1322151e4f22a1c9ac09e90b55bf5676f76f82362dbd33ce482",
+        "first_checkpoint_sha256": "87b33835736db06155ea1dcd0af8c411e3205ee414a677a885cc6cc3c494ccf0"
+      }
+    }
+  },
+  "teacher_guided_closure_r14": {
+    "output": "runs/teacher-4096-guided-r14",
+    "envs_per_style": 4096,
+    "update_budget": 2000,
+    "from_zero": true,
+    "pytest_passed": 268,
+    "independent_evaluation_performed": false,
+    "styles": {
+      "pinch": {
+        "gpu": 1,
+        "worker": 2125599,
+        "action_indices": [
+          0,
+          1,
+          2,
+          6,
+          7,
+          8,
+          14,
+          17
+        ],
+        "probe_sha256": "ade6781ba344cea2e80c3319eb6fb51e03fad6f36a5656c8aecef9559925beaa",
+        "first_checkpoint_sha256": "b2b2c5287dab1cf6b7c06e51b9215c2081196b7f7b0d0b921bddf46f27cda14d",
+        "first_iteration_s": 33.486826077103615,
+        "first_update": 1,
+        "strict_successes_first_update": 0.0,
+        "controller_peak_clamp_s": [
+          0.2,
+          0.2
+        ],
+        "controller_peak_detached_lift_m": [
+          0.0,
+          0.0
+        ],
+        "controller_strict_success": [
+          false,
+          false
+        ]
+      },
+      "tripod": {
+        "gpu": 2,
+        "worker": 2126243,
+        "action_indices": [
+          0,
+          1,
+          2,
+          3,
+          6,
+          7,
+          8,
+          9,
+          14,
+          17
+        ],
+        "probe_sha256": "3214b071811a83199fc7fbb0830484162f62ccadce0b56847ba1e02e8e8be1bf",
+        "first_checkpoint_sha256": "d0e164fce2c979064e81ba59ee1249bd123583a911fa124473866a8d7bf00b7f",
+        "first_iteration_s": 33.1071696348954,
+        "first_update": 1,
+        "strict_successes_first_update": 0.0,
+        "controller_peak_clamp_s": [
+          0.0,
+          0.0
+        ],
+        "controller_peak_detached_lift_m": [
+          0.0,
+          0.0
+        ],
+        "controller_strict_success": [
+          false,
+          false
+        ]
+      },
+      "power": {
+        "gpu": 3,
+        "worker": 2125893,
+        "action_indices": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          14,
+          17
+        ],
+        "probe_sha256": "472dcbb49daa69ab48452d5e84a8e478653772cf309bd45d2074154f0915d940",
+        "first_checkpoint_sha256": "b07db8f4f32e03e1e8b8771a052a370873f0cd5cb1c415553dd574210383ca0b",
+        "first_iteration_s": 33.2887399350293,
+        "first_update": 1,
+        "strict_successes_first_update": 0.0,
+        "controller_peak_clamp_s": [
+          0.0,
+          0.0
+        ],
+        "controller_peak_detached_lift_m": [
+          0.0,
+          0.0
+        ],
+        "controller_strict_success": [
+          false,
+          false
+        ]
+      }
+    }
   }
 }
