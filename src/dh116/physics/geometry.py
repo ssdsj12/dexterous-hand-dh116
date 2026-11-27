@@ -611,7 +611,7 @@ class TensorGeometry:
         self.validate_metadata(bindings=bindings, body_names=body_names)
         return self.result
 
-    def policy_pad_gaps(self, poses, nodes, radii, *, approach_normals=False):
+    def policy_pad_gaps(self, poses, nodes, radii, *, approach_normals=False, material_indices=False):
         """Return signed gaps and optionally near-surface normals for approach shaping."""
         if not hasattr(self, '_policy_pad_data'):
             self.validate_metadata()
@@ -683,7 +683,8 @@ class TensorGeometry:
         direction = ((gradient / length.clamp_min(1e-12)[..., None]).unsqueeze(-2)
                      @ rotation.transpose(-1, -2)).squeeze(-2)
         proximity = (1.0 - nearest.squeeze(-1) / radii[:, None].to(gap.dtype)).clamp(0, 1)
-        return approach_gap, inside, direction.masked_fill(~normal_valid[..., None], 0), proximity.masked_fill(~normal_valid, 0)
+        result = approach_gap, inside, direction.masked_fill(~normal_valid[..., None], 0), proximity.masked_fill(~normal_valid, 0)
+        return (*result, node.squeeze(-1)) if material_indices else result
 
     def _separation(self, minimum, maximum):
         low = [minimum[:, ids].amin(1) for ids in self._side_ids]

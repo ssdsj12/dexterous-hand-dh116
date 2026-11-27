@@ -2359,5 +2359,97 @@
         ]
       }
     }
+  },
+  "teacher_grasp_recovery_r15": {
+    "output": "runs/teacher-recovery-r15",
+    "from_zero": true,
+    "envs_per_style": 4096,
+    "update_budget": 2000,
+    "pytest_passed": 271,
+    "independent_evaluation_performed": false,
+    "success_test": "30 mm net lift, 5 s hold, maximum slip 0.5 mm",
+    "styles": {
+      "pinch": {
+        "gpu": 1,
+        "worker": 2289983,
+        "controller_sha256": "452b10b2193c02716169dfa1d664d175591fb059963853ec1b13f44111a582c7",
+        "controller_peak_clamp_s": [
+          0.2,
+          0.2
+        ],
+        "controller_reacquisitions": [
+          0,
+          0
+        ],
+        "controller_peak_detached_lift_m": [
+          0.0,
+          0.0
+        ],
+        "controller_strict_success": [
+          false,
+          false
+        ],
+        "probe_sha256": "e4375f212f21ff1d5706756309606922d646a1d495939dfd8f86e22e4b9fa31b",
+        "first_checkpoint_sha256": "2c7decd1f170a08be34b9be8722fc71ae8fedb2d7c4b1eb1fbfc7ee7f079ec11",
+        "first_bilateral_support_rate": 0.05118560791015625,
+        "first_iteration_s": 31.969824124127626,
+        "first_update": 1,
+        "strict_successes_first_update": 0
+      },
+      "tripod": {
+        "gpu": 2,
+        "worker": 2286456,
+        "controller_sha256": "46580b6109d4930d14d6472ee156001c5101b5341a93fbd4c1da470cd05006a2",
+        "controller_peak_clamp_s": [
+          0.027083333333333334,
+          0.025
+        ],
+        "controller_reacquisitions": [
+          0,
+          0
+        ],
+        "controller_peak_detached_lift_m": [
+          0.0,
+          0.0
+        ],
+        "controller_strict_success": [
+          false,
+          false
+        ],
+        "probe_sha256": "8b07f862a07f2640b9541122e925460064f20e398cad6c2e7faaef3e86689551",
+        "first_checkpoint_sha256": "fabd6a905881abb73112c85e66410be8f78f1abe9fdb37b624448669d8543633",
+        "first_bilateral_support_rate": 0.01142120361328125,
+        "first_iteration_s": 38.28878514212556,
+        "first_update": 1,
+        "strict_successes_first_update": 0
+      },
+      "power": {
+        "gpu": 3,
+        "worker": 2294217,
+        "controller_sha256": "43518d004b44fd11993562468191749d5dc70c1081a884c763d8a1dd8266ec7d",
+        "controller_peak_clamp_s": [
+          0.0,
+          0.0
+        ],
+        "controller_reacquisitions": [
+          0,
+          0
+        ],
+        "controller_peak_detached_lift_m": [
+          0.0,
+          0.0
+        ],
+        "controller_strict_success": [
+          false,
+          false
+        ],
+        "probe_sha256": "afe1945ad53b124b2f14fb4dae2aad79b8eb975fdebe08a7060735d0c387208a",
+        "first_checkpoint_sha256": "75a53ca1346363f08d33c8d2653ebfada93a0c58f29ad9b700bed575e6d00194",
+        "first_bilateral_support_rate": 0.0,
+        "first_iteration_s": 32.79476945102215,
+        "first_update": 1,
+        "strict_successes_first_update": 0
+      }
+    }
   }
 }

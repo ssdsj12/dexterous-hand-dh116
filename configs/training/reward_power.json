@@ -6,13 +6,13 @@
     "gae_lambda": 0.97,
     "epochs": 3,
     "minibatches": 4,
-    "learning_rate": 0.00003
+    "learning_rate": 3e-05
   },
   "schema_sha256": "5c31eda15b12d7c364e541c8cf032e4d052dfb2faa1a284bff89fb0da5263655",
   "design_document_sha256": "a6a04d7dab20048d22b152762eb07018c3269cd63bfad77ed2b11799d7ed97d9",
   "weight_status": "design_approved_native_unverified",
   "gamma_source": "ppo.gamma",
-  "grip_balance_enabled": true,
+  "grip_balance_enabled": false,
   "legacy_r1_enabled": false,
   "legacy_r2_enabled": false,
   "finite_task_deadline": {
@@ -55,6 +55,6 @@
   "finger_goal": {
     "schema": "dh116-teacher-finger-goal-v1",
     "grasp": "power",
-    "reference_sha256": "69a76f8b9abc3ecf648fba110560051ca44406cb4abd669bfb742e2a51820407"
+    "reference_sha256": "85c6ee1b15c45dc1e05b3e35a97fbfbf8eb26a5d8c547c526af7ba9abfe2c812"
   }
 }

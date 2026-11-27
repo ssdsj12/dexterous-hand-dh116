@@ -5,12 +5,11 @@ import torch as surfa_force_shari__torch
 import math as surfa_succe__math
 import math as tenso_contr__math
 
-def guided_closure_action(request, command, goal, loads, grasp, enabled):
+def guided_closure_action(request, command, goal, loads, grasp, enabled, retained_force=None, held_hands=None, hold_trim=None):
     """Blend the reference/force controller with the bounded policy request.
 
     Columns 1..5 are flexors. Thumb opposition tracks its reference. The Power
-    palm is a measured support and has no actuator. Full policy authority at
-    either endpoint lets the policy reverse any guide or change grip strength.
+    palm is a measured support and has no actuator. The free hand searches while the retained hand regulates its captured load.
     """
     import torch
     digits = {'pinch': 2, 'tripod': 3, 'power': 5}[grasp]
@@ -18,6 +17,14 @@ def guided_closure_action(request, command, goal, loads, grasp, enabled):
     guide = torch.zeros_like(q)
     guide[..., 0] = ((goal[..., 0] - q[..., 0]) * 8).clamp(-0.45, 0.45)
     flex = slice(1, 1 + digits)
+    if grasp == 'power' and held_hands is not None:
+        action = request.clone()
+        # Upon enclosure the goal is the drive target captured for that hand.
+        seek = ((goal - q) * 7).clamp(-.45, .45)
+        residual = .15 * request[:, :12].reshape_as(q)
+        free = torch.where(enabled[:, None, None], (seek + residual).clamp(-1, 1), request[:, :12].reshape_as(q))
+        action[:, :12] = torch.where(held_hands[..., None], seek, free).flatten(1)
+        return action
     force = loads[..., :digits]
     # Equal hand targets track the measured mean. A starting preload prevents
     # a zero-force equilibrium. This is a servo reference, not an action limit.
@@ -40,6 +47,28 @@ def guided_closure_action(request, command, goal, loads, grasp, enabled):
     guide = guide.flatten(1).masked_fill(~enabled[:, None], 0)
     action = request.clone()
     action[:, :12] += (1 - request[:, :12].abs()) * guide
+    if retained_force is not None:
+        # A free peer contributes no load to this hand's retained set point.
+        held = retained_force.sum(-1, keepdim=True) > 0
+        captured = retained_force[..., :digits].to(q)
+        if grasp != 'power':
+            captured = captured.sum(-1, keepdim=True) * q.new_tensor(share)
+        error = (captured * .8 - force).clamp_min(0) - (force - captured * 1.2).clamp_min(0)
+        hold = torch.zeros_like(q)
+        hold[..., 0] = guide.view_as(q)[..., 0]
+        hold[..., flex] = (error / captured.clamp_min(.05)).clamp(-1, 1) * .15
+        if hold_trim is not None:
+            # The PI output is a small absolute correction to the first drive
+            # target. Repeated identical measurements cannot integrate this
+            # position correction a second time in finger_pre_guard.
+            hold[..., flex] = ((goal[..., flex] + hold_trim - q[..., flex]) * 32).clamp(-.15, .15)
+        if grasp == 'power':
+            # An unloaded digit seeks the wrap reference even under opening noise.
+            free = action[:, :12].reshape_as(q)
+            wrapping = enabled[:, None, None] & ~held & (force < .02) & (seek > 0)
+            free[..., flex] = torch.where(wrapping, (seek + .15 * request[:, :12].reshape_as(q)[..., flex])
+                                         .clamp_min(0.), free[..., flex])
+        action[:, :12] = torch.where(held, hold, action[:, :12].reshape_as(q)).flatten(1)
     return action
 
 
@@ -718,7 +747,7 @@ class TensorControl:
         return ((active < self.low - 0.02) | (active > self.high + 0.02)).any(1) | (mimic.abs() > 0.02).any(1)
 
     def prepare(self, actions, state, clearance_m, base_poses_wxyz, *, stamp, halted=None,
-                grasp_lift=None, closure_guide=None):
+                grasp_lift=None, closure_guide=None, held_measured_q=None):
         if self._failed:
             raise ValueError('failed control owner requires a new native scope')
         if self.pending is not None:
@@ -759,13 +788,17 @@ class TensorControl:
             t = tenso_contr__torch
             coordinated, reference, raise_allowed = grasp_lift
             coordinated = coordinated & ~halted
-            holding = coordinated[:, None] & t.isfinite(reference)
+            holding = ~halted[:, None] & t.isfinite(reference)
             if self.fixed_fingers:
                 holding[:, self.fixed_fingers] = False
-            lo = t.where(holding, reference - 0.04, self.low).maximum(self.low)
+            opening_margin = reference.new_tensor([.02, .005, .005, .005, .005, .005] * 2)
+            lo = t.where(holding, reference - opening_margin, self.low).maximum(self.low)
             hi = t.where(holding, reference + 0.04, self.high).minimum(self.high)
             in_band = (command >= lo - 1e-7) & (command <= hi + 1e-7)
-            measured_in_band = (actual >= lo - 1e-7) & (actual <= hi + 1e-7)
+            # Loaded fingers can trail the position drive. Validate shape against
+            # the measured pose at capture, independently of the drive's preload.
+            measured_reference = reference if held_measured_q is None else held_measured_q
+            measured_in_band = (actual - measured_reference).abs() <= 0.04 + 1e-7
             shape_ready = (~holding | (in_band & measured_in_band)).all(1) & holding.any(1)
             slow = self.rates['joint_rate_rad_s'] * DT
             target_step = t.where(in_band, 0.25 * slow, slow)
@@ -773,7 +806,9 @@ class TensorControl:
             residual = (bounded - command).clamp(-target_step, target_step)
             target = t.where(holding, (command + residual).maximum(self.low).minimum(self.high), target)
             wrist_action = action.clone()
-            wrist_action[:, 12:] = wrist_action[:, 12:].masked_fill(coordinated[:, None], 0)
+            held_hand = holding.reshape(self.n, 2, 6).any(-1)
+            wrist_mask = held_hand.repeat_interleave(3, dim=1).repeat(1, 2)
+            wrist_action[:, 12:] = wrist_action[:, 12:].masked_fill(wrist_mask, 0)
         if self.fixed_fingers:
             target[:, self.fixed_fingers] = command[:, self.fixed_fingers]
         (palm, angle) = wrist_requested_targets(self.palms, self.angles, wrist_action, self.rates, DT, palm_lower_m=self._palm_lower_m, palm_upper_m=self._palm_upper_m)

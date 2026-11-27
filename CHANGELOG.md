@@ -1,5 +1,9 @@
 # Changelog
 
+## Grasp recovery and sustained contact
+
+A lost clamp restores independent wrist-height control. Clean bilateral support earns a time-based reward capped at two points per episode. The two-lane controller check records recovery commands, measured wrist heights and reacquisitions.
+
 ## Contact-guided finger closure
 
 Gated Teacher grasp/lift now uses posture and measured pad load guidance with a bounded residual policy. Added a two-lane controller-only reachability check.

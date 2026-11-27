@@ -13,7 +13,7 @@
   },
   "finger_goal": {
     "grasp": "pinch",
-    "reference_sha256": "3b597850ff95cfd7668af8f7764375380180a1235a90987fbe60d2bc05fbe2bf",
+    "reference_sha256": "34e5dd3d5ec12b8ecd36cb419bd6ef7b1d30384b941f7695a794722f23f5e125",
     "schema": "dh116-teacher-finger-goal-v1"
   },
   "finite_task_deadline": {

@@ -359,14 +359,13 @@ def test_coordinated_lift_preserves_clamp_until_lost_and_shares_mount_headroom()
     assert torch.equal(action, actor_request)
     assert not good['constraint_failure'].any()
 
-    # Losing either side freezes wrist motion immediately and releases the
-    # narrow finger target envelope so the next contact can be found.
+    # Losing support releases both the finger band and coordinated wrist command.
     reference[0] = torch.nan
-    stopped = prepare(clamped, reference, torch.zeros_like(ready))
-    dz = stopped['projection']['projected_root_poses'][..., 2] - measured[..., 2]
-    torch.testing.assert_close(dz[0], torch.zeros_like(dz[0]), atol=1e-8, rtol=0)
+    recovery = prepare(torch.zeros_like(clamped), reference, torch.zeros_like(ready))
+    dz = recovery['projection']['projected_root_poses'][..., 2] - measured[..., 2]
+    assert dz[0, 0] > 0 > dz[0, 1]
     assert (state['backend_targets'][0, 0, control.active[0][0]]
-            - stopped['expected'][0][0, 0]) > .002
+            - recovery['expected'][0][0, 0]) > .002
 
     # On re-acquisition the measured shape can differ from the old command.
     # Bring the target back at its normal rate before permitting lift.
@@ -385,39 +384,63 @@ def test_coordinated_lift_preserves_clamp_until_lost_and_shares_mount_headroom()
     assert (blocked['projection']['projected_root_poses'][0, :, 2] >= required_z[0] - 1e-8).all()
 
 
-def test_coordinated_lift_recaptures_measured_pose_only_after_full_reacquisition():
+def test_per_hand_capture_survives_load_dip_and_requires_current_bilateral_for_ascent():
     from dh116.physics.runtime import NativeTensorPhysicsRuntime
 
-    runtime = NativeTensorPhysicsRuntime.__new__(NativeTensorPhysicsRuntime)
-    control, _, state, _, _, _, _ = control_fixture(soft_constraints=True)
-    runtime.ctrl, runtime.state = control, state
-    runtime.gated_lift = True
-    runtime._clamp_dwell_steps = 2
-    runtime._clamp_steps = torch.zeros(2, dtype=torch.long)
-    runtime._stable_clamp_s = torch.zeros(2, dtype=torch.float64)
-    runtime._lift_unlocked = torch.zeros(2, dtype=torch.bool)
-    runtime._grasp_latched = torch.zeros(2, dtype=torch.bool)
-    runtime._grasp_pose = torch.full((2, 12), torch.nan, dtype=torch.float64)
+    rt = NativeTensorPhysicsRuntime.__new__(NativeTensorPhysicsRuntime)
+    rt.ctrl, _, rt.state, _, _, _, _ = control_fixture(soft_constraints=True)
+    rt.gated_lift = True
+    rt._clamp_dwell_steps = 96
+    rt._clamp_steps = torch.zeros(2, dtype=torch.long)
+    rt._stable_clamp_s = rt._clamp_steps.double()
+    rt._lift_unlocked = rt._clamp_steps.bool()
+    rt._grasp_latched = rt._lift_unlocked.clone()
+    rt._grasp_pose = torch.full((2, 12), torch.nan, dtype=torch.float64)
+    rt._grasp_force = torch.zeros((2, 2, 2), dtype=torch.float64)
+    rt._held_measured_q = rt._grasp_pose.clone()
+    rt._filtered_load = torch.zeros_like(rt._grasp_force)
+    rt._force_integral = torch.zeros_like(rt._grasp_force)
+    rt._hold_trim = torch.zeros_like(rt._grasp_force)
+    rt._hand_ticks = torch.zeros((2, 2), dtype=torch.long)
+    rt._hand_lost_ticks = torch.zeros_like(rt._hand_ticks)
+    z = torch.zeros(2)
+    rt.reward = SimpleNamespace(_median=z, _min=z)
+    rt.config = SimpleNamespace(success={'net_lift_m': .03})
+    rt.last = SimpleNamespace(fields=dict(median_z=z, min_z=z, off_table=z.bool(), no_external_support=z.bool()))
+    rt.state['backend_targets'][0, 0, rt.ctrl.active[0][0]] = .21
+    loads = torch.full_like(rt._grasp_force, .41)
+    def step(left, right):
+        sides = torch.tensor([[left, right], [False, False]])
+        rt._count_clamp(sides.all(1), sides, loads)
+    for _ in range(8):
+        step(True, False)
+    assert rt._grasp_pose[0, 0].item() == pytest.approx(.21)
+    assert rt._grasp_pose[0, 6:].isnan().all() and rt._grasp_pose[1].isnan().all()
+    rt.state['backend_targets'][0, 0, rt.ctrl.active[0][0]] = .35
+    for _ in range(96):
+        step(True, True)
+    assert rt._grasp_lift_control()[2].tolist() == [True, False]
+    anchor = rt._grasp_pose[0].clone()
+    loads.fill_(.12)
+    step(False, True)
+    assert rt._grasp_lift_control()[0].tolist() == [True, False]
+    assert not rt._grasp_lift_control()[2].any()
+    torch.testing.assert_close(rt._grasp_pose[0], anchor)
+    assert (rt._grasp_force[0] == .41).all()
+    for _ in range(95):
+        step(True, True)
+    assert not rt._lift_unlocked.any()
+    step(True, True)
+    assert rt._lift_unlocked.tolist() == [True, False]
+    torch.testing.assert_close(rt._grasp_pose[0], anchor)
 
-    def advance(left, right):
-        runtime._count_clamp(torch.tensor([left, right]))
+    loads[:, 0] = 0
+    for _ in range(120):
+        step(False, True)
+    assert rt._grasp_pose[0, :6].isnan().all() and rt._grasp_force[0, 0].count_nonzero() == 0
+    torch.testing.assert_close(rt._grasp_pose[0, 6:], anchor[6:])
+    assert not rt._lift_unlocked[0]
 
-    advance(True, True)
-    assert runtime._grasp_pose.isnan().all()
-    advance(True, True)
-    original = runtime._grasp_pose.clone()
-    assert runtime._lift_unlocked.tolist() == [True, True]
-    state['q'][0, 0, control.active[0][0]] = .3
-    state['backend_targets'][0, 0, control.active[0][0]] = .6
-    advance(False, True)
-    assert runtime._grasp_latched.tolist() == [True, True]
-    assert runtime._grasp_pose[0].isnan().all()
-    advance(True, True)
-    assert not runtime._lift_unlocked[0]
-    advance(True, True)
-    assert runtime._lift_unlocked.tolist() == [True, True]
-    torch.testing.assert_close(runtime._grasp_pose[0, 0], torch.tensor(.3, dtype=torch.float64))
-    assert torch.equal(runtime._grasp_pose[1], original[1])
 
 @pytest.mark.parametrize('style,digits', [('pinch', 2), ('tripod', 3), ('power', 5)])
 def test_reference_closure_preserves_authority_and_regulates_individual_pads(style, digits):
@@ -437,3 +460,63 @@ def test_reference_closure_preserves_authority_and_regulates_individual_pads(sty
     request[:, 1::2] = -1
     request[:, ::2] = 1
     assert torch.equal(request, guided_closure_action(request, q, reference, loads, style, enabled))
+
+@pytest.mark.parametrize('style,digits', [('pinch', 2), ('tripod', 3), ('power', 5)])
+def test_held_hand_resists_policy_reopening_while_peer_seeks(style, digits):
+    from dh116.hand.safety import guided_closure_action
+    q = torch.zeros((1, 12), dtype=torch.float64)
+    goal = torch.full((1, 2, 6), .1, dtype=q.dtype)
+    force = q.new_zeros(1, 2, digits + (style == 'power'))
+    force[:, 0] = .3
+    if style == 'tripod':
+        force[:, 0, 0] = .6
+    retained = force.clone()
+    request = -torch.ones((1, 24), dtype=q.dtype)
+    enabled = torch.tensor([True])
+    result = guided_closure_action(request, q, goal, force, style, enabled, retained)
+    torch.testing.assert_close(result[0, 1:digits+1], torch.zeros(digits, dtype=q.dtype))
+    if style == 'power':
+        assert (result[0, 7:12] > 0).all()
+    force[0, 0, 1] = 0
+    recovery = guided_closure_action(request, q, goal, force, style, enabled, retained)
+    assert recovery[0, 2] > 0
+    force[0, 0, 1] = 3.
+    relief = guided_closure_action(request, q, goal, force, style, enabled, retained)
+    assert relief[0, 2] < 0 and (request == -1).all()
+
+def test_drive_preload_is_not_mistaken_for_lift_pose_drift():
+    control, stamp, state, _, _, _, _ = control_fixture(soft_constraints=True)
+    control.invalidate()
+    measured = torch.cat([state['q'][:, s, ids].double() for s, ids in enumerate(control.active)], 1)
+    drive = measured.clone()
+    drive[:, 1] += .05
+    state['backend_targets'][:, 0, control.active[0][1]] = drive[:, 1]
+    action = torch.zeros((2, 24))
+    action[:, (14, 17)] = 1
+    ready = torch.ones(2, dtype=torch.bool)
+    state['q'][1, 0, control.active[0][1]] -= .06
+    trans = control.prepare(action, state, torch.full((2, 2), .02), control.roots,
+                            stamp=stamp, grasp_lift=(ready, drive, ready), held_measured_q=measured)
+    delta = trans['projection']['coordinated_lift_delta_m']
+    assert delta[0] > 0 and delta[1] == 0
+
+
+def test_latched_pi_is_per_hand_and_freezes_without_valid_opposition():
+    from types import SimpleNamespace
+    from dh116.physics.runtime import NativeTensorPhysicsRuntime
+
+    load = torch.tensor([[[.4, .4], [.8, .8]]], dtype=torch.float64)
+    rt = SimpleNamespace(style="pinch", _grasp_force=load.clone(), _filtered_load=load.clone(),
+                         _hold_trim=torch.zeros_like(load), _force_integral=torch.zeros_like(load))
+    neither = torch.zeros((1, 2), dtype=torch.bool)
+    left = torch.tensor([[True, False]])
+    weak = .25 * load
+    for _ in range(160):
+        NativeTensorPhysicsRuntime._update_hold_trim(rt, weak, left, neither, neither)
+    assert (rt._hold_trim[0, 0] > 0).all() and rt._hold_trim[0, 0].max() <= .03 * 160 / 480
+    assert not rt._hold_trim[0, 1].any()
+    frozen = rt._hold_trim.clone()
+    NativeTensorPhysicsRuntime._update_hold_trim(rt, weak * 0, neither, neither, neither)
+    torch.testing.assert_close(rt._hold_trim, frozen)
+    NativeTensorPhysicsRuntime._update_hold_trim(rt, weak * 0, neither, neither, left)
+    assert not rt._hold_trim.any() and not rt._force_integral.any()

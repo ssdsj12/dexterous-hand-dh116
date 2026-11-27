@@ -317,6 +317,7 @@ def test_goal_full_rewards_new_progress_without_paying_for_static_support_or_reg
             reward.observe(measured)
         packets.append(reward.settle_once((token, token)))
     steady = packets[1]
+    assert 'clean_support_time' not in steady.event_terms  # Full grasp without curriculum.
     assert (steady.terms['grip_balance']['raw'] == 0.75).all()
     assert not packets[2].terms['grip_balance']['raw'].any()
     torch.testing.assert_close(steady.reward, steady.gamma * steady.endpoint_phi - steady.phi_pre - steady.integrated_cost + steady.event)
@@ -428,3 +429,92 @@ def test_episode_mastery_uses_terminal_dwell_and_three_distinct_ends():
     reward.mastery[0].fill_(5)
     reward.finish_mastery_episodes(none, none, active)
     assert reward.mastery.tolist() == [[5, 5], [0, 0]]
+
+
+def test_clean_support_time_counts_valid_ticks_at_all_levels_and_stops_at_terminal():
+    reward, schemas, endpoint = goal_full_setup()
+    reward.enable_mastery()
+    reward.mastery[0, 1] = 2
+    begin(reward, schemas)
+    for tick in range(1, 9):
+        frame = endpoint(tick, touch=1., carried=True)
+        if tick == 2:
+            frame.fields['soft_reaction_force'].fill_(1.)
+        if tick == 3:
+            frame.fields['soft_non_target_contact'].fill_(0.1)
+        if tick == 4:
+            frame.fields['bilateral_support'].fill_(False)
+        if tick == 5:
+            frame.fields['opposed_left'].fill_(False)
+        if tick == 6:
+            frame.fields['constraint_failure'][0] = True
+        if tick == 7:
+            frame.fields['off_table'].fill_(False)
+        reward.observe(frame)
+    packet = reward.settle_once(('w0', 'w0'))
+    bonus = packet.event_terms['clean_support_time']['contribution']
+    assert bonus.tolist() == pytest.approx([0., 3 * 3 / 480])
+    assert packet.event[0] == -40.
+    other_events = sum(entry['contribution'] for name, entry in packet.event_terms.items()
+                       if name != 'clean_support_time')
+    torch.testing.assert_close(packet.reward - (packet.gamma * packet.endpoint_phi -
+                               packet.phi_pre - packet.integrated_cost + other_events), bonus)
+
+
+def test_clean_support_time_budget_survives_regrasp_and_only_resets_selected_lane():
+    from dataclasses import fields
+
+    reward, schemas, endpoint = goal_full_setup()
+    reward.enable_mastery()
+    total = torch.zeros(2, dtype=torch.float64)
+    reset_tick = None
+    for window in range(44):
+        token = f'carry-{window}'
+        begin(reward, schemas, tick=8 * window, token=token)
+        for tick in range(window * 8 + 1, window * 8 + 9):
+            frame = endpoint(tick, touch=1., carried=window != 30)
+            if reset_tick is not None:
+                frame.anchor_reference_tick[1].fill_(reset_tick + 1)
+            reward.observe(frame)
+        packet = reward.settle_once((token, token))
+        bonus = packet.event_terms['clean_support_time']['contribution']
+        if window == 30:
+            assert bonus.tolist() == [0., 0.]
+        total += bonus
+        if window == 42:
+            assert total.tolist() == pytest.approx([2., 2.])
+            assert bonus.tolist() == [0., 0.]
+            reset_tick = tick
+            src = endpoint(reset_tick)
+            selected = {f.name: getattr(src, f.name)[1:] for f in fields(src)
+                        if isinstance(getattr(src, f.name), torch.Tensor)}
+            selected.update(fields={k: v[1:] for k, v in src.fields.items()},
+                            anchor_present=torch.zeros(1, dtype=torch.bool))
+            schemas = (schemas[0], replace(schemas[1], episode_uid='new-e', reset_uid='new-r'))
+            reward.reset_selected((1,), (schemas[1],), replace(src, **selected),
+                                  previous_request=torch.zeros(1, 24), tokens=('fresh',), policy_uids=('p',))
+    assert bonus.tolist() == pytest.approx([0., 3 / 60])
+
+
+def test_clean_support_time_preserves_final_5s_lift_and_prohibited_support_events():
+    reward, schemas, endpoint = goal_full_setup()
+    reward.enable_mastery()
+    reward.mastery[0].fill_(5)
+    total = torch.zeros(2, dtype=torch.float64)
+    for window in range(301):
+        token = f'lift-{window}'
+        begin(reward, schemas, tick=window * 8, token=token)
+        for tick in range(window * 8 + 1, window * 8 + 9):
+            frame = endpoint(tick, touch=1., carried=True, detached=True, min_z=.031, median_z=.031)
+            frame.fields['hold_motion'].fill_(True)
+            if tick == 2401:
+                frame.fields['no_external_support'][1] = False
+                frame.fields['prohibited_support'][1] = True
+            reward.observe(frame)
+        packet = reward.settle_once((token, token))
+        total += packet.event_terms['clean_support_time']['contribution']
+    assert total.tolist() == pytest.approx([2., 2.])
+    assert packet.terminated.tolist() == [True, True]
+    assert packet.reason_masks['success'].tolist() == [True, False]
+    assert packet.reason_masks['prohibited_support'].tolist() == [False, True]
+    assert packet.event.tolist() == [100., -50.]

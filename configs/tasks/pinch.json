@@ -44,8 +44,8 @@
   },
   "material_status": "explicit_candidate_inherits_P0_solver_coefficients_not_measured_task_material",
   "scene_input": {
-    "path": "build/scene_bundle/anatomical/pinch_legacy/scene.json",
-    "sha256": "1b3d42ec95dc3dbbbae316b4d99a447e12dd9af168a9fb6a52e85e5590c3908a",
+    "path": "build/scene_bundle/anatomical/pinch_legacy/scene-34e5dd3d5ec12b8e.json",
+    "sha256": "dcc8bb19096d53045343df6373dbad8a6ca801ad90531ad1014b375c7ffe1806",
     "source_scene": {
       "path": "build/scene_bundle/scene.json",
       "sha256": "d1b8b5404af1ee809e88ffdf384c629fe7833e86ea471f88a3ccfaee5fac9a93"
@@ -54,7 +54,7 @@
       36,
       4
     ],
-    "reference_sha256": "3b597850ff95cfd7668af8f7764375380180a1235a90987fbe60d2bc05fbe2bf"
+    "reference_sha256": "34e5dd3d5ec12b8ecd36cb419bd6ef7b1d30384b941f7695a794722f23f5e125"
   },
   "qualification": {
     "teacher": false,
@@ -70,8 +70,8 @@
     "evidence_path": "build/scene_bundle/height_failure.json"
   },
   "full_scene_input": {
-    "path": "build/scene_bundle/anatomical/pinch/scene.json",
-    "sha256": "4bc89729e0fbf91686141ced6e4d046f926614d805b3b05ea02fff5218fa3d55",
+    "path": "build/scene_bundle/anatomical/pinch/scene-34e5dd3d5ec12b8e.json",
+    "sha256": "6cce6b40c0a6e7064e0908e18f96c491fca24cc8b95c0916891e21df25d3c1e5",
     "source_scene": {
       "path": "build/scene_bundle/pinch_supported/scene.json",
       "sha256": "c43d29b93ef94799eaaf1edf2f97d0241a48994f6ac1891766e5bc4bca86cc44"
@@ -80,43 +80,43 @@
       36,
       4
     ],
-    "reference_sha256": "3b597850ff95cfd7668af8f7764375380180a1235a90987fbe60d2bc05fbe2bf"
+    "reference_sha256": "34e5dd3d5ec12b8ecd36cb419bd6ef7b1d30384b941f7695a794722f23f5e125"
   },
   "near_wire_reset": {
-    "source_scene_sha256": "4bc89729e0fbf91686141ced6e4d046f926614d805b3b05ea02fff5218fa3d55",
+    "source_scene_sha256": "6cce6b40c0a6e7064e0908e18f96c491fca24cc8b95c0916891e21df25d3c1e5",
     "root_pose_wxyz": [
       [
-        0.49742786667939304,
-        -0.15694010049646315,
-        0.4772144178538628,
-        -0.5341643178287161,
-        -0.38631864593116055,
-        0.7514516193263926,
-        0.027328541421735568
+        0.5004137724202211,
+        -0.16550934363298733,
+        0.47556608394831906,
+        -0.5279263358452151,
+        -0.38553126024171164,
+        0.7548033117809595,
+        0.054142329299528086
       ],
       [
-        0.5417011068130584,
-        0.16492039274656362,
-        0.4503948921964522,
-        0.28320569285037983,
-        0.5675459810143678,
-        -0.4931647758085028,
-        -0.5953776943028053
+        0.539571873467451,
+        0.1569573036681453,
+        0.4441598320291266,
+        -0.26449971419082874,
+        -0.5739499314776728,
+        0.4800092055718867,
+        0.6084509346824859
       ]
     ],
     "active_q_rad": [
       [
-        0.28494423473265423,
-        0.4737300909820823,
-        0.6773274447450099,
+        0.22608626274279453,
+        0.47593302391103726,
+        0.6726715895399307,
         1.1503485441207886,
         1.149911880493164,
         1.1510348320007324
       ],
       [
-        0.4811825205644336,
-        0.04524196025531876,
-        0.7125772194079112,
+        0.4185386539665267,
+        0.016563997310909292,
+        0.7082663109188478,
         0.27531737089157104,
         0.5642440915107727,
         0.2512429654598236

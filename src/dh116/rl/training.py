@@ -144,21 +144,47 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
             started_window = teach_train__perf_counter()
             if controller_check:
                 if index == 0:
+                    collector.contact.trace_pad_vertical = True
                     controller_trace = []
                     peak_dwell = collector._stable_clamp_s.clone()
                     peak_lift = peak_dwell.clone()
                     ever_success = torch.zeros_like(peak_dwell, dtype=torch.bool)
+                    # NaN until this lane has a measured, pre-lift stable grip.
+                    clamp_z = torch.full_like(collector.state['base_link_pose_w'][..., 2], torch.nan)
+                    recovery_age = torch.zeros_like(collector._clamp_steps)
+                    reacquisitions = torch.zeros_like(recovery_age)
+                    recovery_windows = torch.zeros_like(recovery_age)
                 action = torch.zeros((2, 24), device=collector.device)
                 # Second lane changes wrist height by 2 mm to test capture from
                 # a different height. Both lanes request lift once clamp is ready.
                 if index < 12:
                     action[1, (14, 17)] = -0.2
-                action[:, (14, 17)] = torch.where(collector._lift_unlocked[:, None], 0.6, action[:, (14, 17)])
+                ready = collector._lift_unlocked.clone()
+                measured_z = collector.state['base_link_pose_w'][..., 2]
+                known = torch.isfinite(clamp_z).all(1)
+                clamp_z = torch.where((ready & ~known)[:, None], measured_z, clamp_z)
+                recovering = known & ~ready
+                # First return to the original stable wrist heights. After dwelling
+                # there for 0.25 s, sweep +/-4 mm at 10 mm/s to find the wire.
+                near_anchor = (measured_z - clamp_z).abs().amax(1) < 0.00025
+                searching = recovering & ((recovery_age >= 15) | near_anchor)
+                recovery_age = torch.where(searching, recovery_age + 1, 0)
+                phase = ((recovery_age - 15).clamp_min(0) % 96).to(measured_z.dtype)
+                offset = torch.where(phase < 24, phase, torch.where(phase < 72, 48 - phase, phase - 96)) * (0.004 / 24)
+                target_z = clamp_z + offset[:, None]
+                command_z = collector.ctrl.roots[..., 2] + collector.ctrl.palms[..., 2]
+                m_per_window = collector.ctrl.rates['wrist_rate_m_s'] / 60
+                seek_z = ((target_z - command_z) / m_per_window).clamp(-0.2, 0.2)
+                requested_z = torch.where(recovering[:, None], seek_z.to(action.dtype), action[:, (14, 17)])
+                action[:, (14, 17)] = torch.where(ready[:, None], 0.6, requested_z)
+                recovery_windows += recovering.long()
                 collector.timings = {}
                 token = f'closure-check-{index}'
                 collector.begin_action_window(action, token=token, policy_uids=(token,) * 2, end=end)
                 collector.advance_action_window(action, end)
                 packet = collector.complete_action_window()
+                regained = recovering & collector._lift_unlocked
+                reacquisitions += regained.long()
                 fields = collector.last.fields
                 diag = collector.contact.last_diagnostics
                 height = torch.minimum(fields['median_z'] - collector.reward._median,
@@ -167,7 +193,8 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
                 detached = fields['bilateral_support'] & fields['off_table'] & fields['no_external_support']
                 peak_lift = torch.maximum(peak_lift, height.masked_fill(~detached, 0))
                 ever_success |= packet.reason_masks['success']
-                if index % 15 == 0 or index + 1 == total or bool(packet.done.any()):
+                lost = ready & ~collector._lift_unlocked
+                if index % 15 == 0 or index + 1 == total or bool((packet.done | lost | (collector._lift_unlocked & ~ready)).any()):
                     gaps, valid = collector.geometry.policy_pad_gaps(
                         collector.state['link_pose_xyzw'], collector.nodes, collector.radii)
                     ni = torch.arange(41, device=gaps.device)
@@ -179,13 +206,31 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
                     has_node = eligible.any(-1).tolist()
                     controller_trace.append(dict(window=index+1, q_rad=measured_q.tolist(),
                         wrist_z_m=collector.state['base_link_pose_w'][..., 2].tolist(),
+                        requested_z=action[:, (14, 17)].tolist(), recovering=recovering.tolist(),
+                        lost=lost.tolist(), reacquired=regained.tolist(),
+                        held_measured_q_rad=collector._held_measured_q.nan_to_num().reshape(2, 2, 6).tolist(),
+                        held_command_rad=collector._grasp_pose.nan_to_num().reshape(2, 2, 6).tolist(),
+                        held_hands=torch.isfinite(collector._grasp_pose.reshape(2, 2, 6)[..., 0]).tolist(),
                         bilateral=fields['bilateral_support'].tolist(), pad_n=diag['pad_loads_mean_n'].tolist(),
+                        pad_normal_z_mean=diag['pad_normal_z_mean'].tolist(),
+                        pad_normal_vertical_n=diag['pad_normal_vertical_n'].tolist(),
+                        pad_tangential_vertical_n=diag['pad_tangential_vertical_n'].tolist(),
                         nearest_gap_mm=[[v if present else None for v, present in zip(row, mask)]
                                         for row, mask in zip(nearest_mm, has_node)],
                         support_n=diag['support_load_n'].tolist(), dwell_s=collector._stable_clamp_s.tolist(),
+                        hold_s=collector.reward._hold_s.tolist(),
+                        slip_status=collector.reward._slip_status.tolist(),
+                        slip_m=[v if v is not None and float("-inf") < v < float("inf") else None for v in collector.reward._slip.tolist()],
+                        fixed_world_hold=fields['hold_motion'].tolist(),
+                        off_table=fields['off_table'].tolist(),
+                        clean_contact=(fields['soft_non_target_contact'] == 0).tolist(),
+                        unsaturated=(fields['soft_reaction_force'] < 1).tolist(),
                         height_m=height.tolist(), ended=packet.done.tolist(), event=packet.event.tolist()))
                 if collector._reset_allowed:
-                    collector.reset(collector._reset_allowed)
+                    ids = list(collector._reset_allowed)
+                    clamp_z[ids] = torch.nan
+                    recovery_age[ids] = 0
+                    collector.reset(ids)
                 continue
             reward = collector.window(end, probe_reset=probe and len(lanes) == 2 and (index == 0))
             window_seconds.append(teach_train__perf_counter() - started_window)
@@ -312,7 +357,8 @@ def train(sim, owners, trace, project, prepared, archive, lanes, output, gpu, en
     if controller_check:
         setup.update(controller_probe_only=True, controller_trace=controller_trace,
                      peak_clamp_s=peak_dwell.tolist(), peak_detached_lift_m=peak_lift.tolist(),
-                     strict_success=ever_success.tolist())
+                     strict_success=ever_success.tolist(), recovery_windows=recovery_windows.tolist(),
+                     reacquisitions=reacquisitions.tolist(), clamp_measurement_cadence='window_end')
     return dict(**setup, throughput_probe_only=probe, updates=updates, controls=total, environments=len(lanes), sdk_step=end, iterations=iterations, window_seconds=window_seconds, window_phases=window_phases, sdk_initialization_steps=2, physics_hz=480, control_hz=60, rod_substeps=12, articulations=2, action_size=24, run_uuid=run_uuid, geometry_backend=getattr(collector.geometry, 'backend', None), geometry_measurement=geometry_measurement_identity(collector.geometry), actual_measurement_backend=geometry_measurement_identity(collector.geometry)['actual_measurement_backend'], measurement_scope='bounded_diagnostic', measurement_native_evidence=args.measurement_native_evidence, scene_construction=getattr(batch, 'construction_metadata', None), task_setup=batch.task_setup_metadata, native_readback_mode=getattr(batch, 'readback_mode', 'raw'), source_cache_metadata=batch.readback_metadata() if hasattr(batch, 'readback_metadata') else None, readback_audit=batch.readback_audit() if hasattr(batch, 'readback_audit') else None, reset_ids=runtime.resets, reset_checks=collector.reset_proofs, peak_cuda_allocated_bytes=torch.cuda.max_memory_allocated(), teacher_admission=False, grasp_qualified=False)
 from dh116.env.contracts import require_aligned
 from dh116.rl.student_data import _validate_state

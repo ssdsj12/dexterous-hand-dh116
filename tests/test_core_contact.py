@@ -229,6 +229,17 @@ def test_flat_reward_readout_separates_light_contact_from_vertical_carry():
     torch.testing.assert_close(result['support_vertical_n'], nodes.new_tensor([0, 0, 0.12]))
     torch.testing.assert_close(result['hand_vertical_n'], nodes.new_tensor([0, 0, 0.06]))
     torch.testing.assert_close(result['balanced_hand_vertical_n'], nodes.new_tensor([0, 0, 0.04]))
+    # A lateral normal with upward friction and a tilted normal are different mechanisms.
+    readout.trace_pad_vertical = True
+    vectors[(indices[:, 0] == 2) & (indices[:, 3] == 2), 3:6] = nodes.new_tensor([0.8, 0, 0.6])
+    packet['normal_force'] = (vectors[:, 3:6] * vectors[:, 6:9]).sum(-1)
+    readout(packet, nodes)
+    diag = readout.last_diagnostics
+    torch.testing.assert_close(diag['pad_normal_z_mean'][2, :, 0], nodes.new_tensor([0, 0.6]))
+    torch.testing.assert_close(diag['pad_normal_vertical_n'][2, :, 0], nodes.new_tensor([0, 0.0552]))
+    torch.testing.assert_close(diag['pad_tangential_vertical_n'][2, :, 0], nodes.new_tensor([0.04, -0.0352]))
+    assert not diag['pad_normal_z_mean'][:, :, 1].any()
+    assert not readout(packet, nodes)['bilateral_support'].any()
     nodes[0, 8, 1] = 0.15  # A left material node displaced into the right world half.
     assert readout(packet, nodes)['load_progress_left'][0] == 0
 
@@ -417,3 +428,46 @@ def test_grip_balance_uses_substep_normal_loads_and_grasp_specific_ratios(force_
         assert result['bilateral_support'][4]
         torch.testing.assert_close(score[4], score.new_tensor(1.0 if force_band_n is None else .4))
         torch.testing.assert_close(score[5], score[0] / 12)
+
+
+def test_power_wrap_is_independent_of_load_shares_and_rejects_empty_and_wrong_side_grasps():
+    from dh116.physics.runtime import GraspContactReadout
+
+    names = tuple(side + '.' + pad for side in ('left', 'right')
+                  for pad in (*GraspContactReadout.PADS, 'base_link', 'finger52_link'))
+    readout = GraspContactReadout('power', (*names, 'table', 'support_0', 'support_1'), device='cpu')
+    nodes = torch.zeros(4, 41, 3, dtype=torch.float64)
+    nodes[..., 1] = torch.linspace(-.25, .25, 41)
+    # Lanes have two real middle-phalanx contacts, no right contact, a wrong-side
+    # right contact, or a fist around empty space with both hands brushing the wire.
+    keys = torch.tensor([(0, 0, 7, 6), (0, 0, 32, 13), (1, 0, 7, 6),
+                         (2, 0, 7, 6), (2, 0, 7, 13), (3, 0, 7, 6), (3, 0, 32, 13)])
+    enclosed = torch.ones(4, 2, dtype=torch.bool)
+    enclosed[3] = False
+    for f in (.001, 2.0):
+        w = nodes.new_zeros(len(keys), 12)
+        w[:, 3], w[:, 6] = 1., f
+        out = readout(dict(env_ids=keys[:, 0], indices=keys[:, 1:], vectors=w,
+                           normal_force=w[:, 6]), nodes, wrap=(enclosed, enclosed.double()))
+        assert out['bilateral_support'].tolist() == [True, False, False, False]
+        assert out['contact_nodes'][0].tolist() == [7, 32]
+        assert not out['non_target_normal_n'].any()
+
+
+def test_power_wrap_requires_measured_closure_and_circumferential_enclosure():
+    from dh116.physics.runtime import GraspContactReadout
+
+    nodes = torch.zeros(4, 41, 3)
+    nodes[..., 1] = torch.linspace(-.25, .25, 41)
+    indices = torch.tensor([7, 32]).view(1, 2, 1).expand(4, 2, 6)
+    theta = torch.arange(6) * (torch.pi / 3)
+    normals = torch.stack((theta.cos(), torch.zeros(6), theta.sin()), -1).repeat(4, 2, 1, 1)
+    tangent = nodes.new_tensor([0, 1, 0]).expand(4, 2, 3)
+    near = torch.ones(4, 2, 6)
+    error = torch.zeros(4, 2)
+    normals[1] = normals[1, :, :1].clone()
+    near[2, :, 5] = 0.
+    error[3] = .3
+    enclosed, _ = GraspContactReadout.power_wrap(nodes, tangent, indices, near * 0, normals,
+                                                  near, torch.full((4,), .005), error)
+    assert enclosed.tolist() == [[True, True], [False, False], [False, False], [False, False]]

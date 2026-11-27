@@ -30,6 +30,9 @@ train_rewar__SMOKE = 'approach_wiring_smoke_v1'
 train_rewar__FULL = 'flexible_train_r1_full'
 train_rewar__GOAL_FULL = 'flexible_train_goal_full_v3'
 GOAL_PROGRESS_WEIGHTS = dict(distance=0.5, finger_goal=0.5, load_progress=1.0, prelift=3.0, lift=8.0, hold=6.0)
+# At 480 Hz, 320 valid ticks pay at most +2 per episode; regrasp never refills it.
+CLEAN_SUPPORT_RATE = 3.0
+CLEAN_SUPPORT_MAX_TICKS = 320
 GOAL_SHAPING_FIELDS = ('load_progress_left', 'load_progress_right', 'support_unload', 'hand_lift_load',
                        'balanced_hand_lift_load')
 GOAL_TERMINATIONS = ('cable_fall', 'joint_dislocation', 'pad_backface')
@@ -642,6 +645,7 @@ class TensorTrainingReward:
         (self._tick, self._time) = (self._i(), self._f())
         self.mastery = None  # [2, lanes]: assigned level and consecutive qualifying episodes
         self._mastery_ticks = self._i()
+        self._clean_support_ticks = self._i()
         self._lesson = self._i()
         self._lesson_ticks = self._i()
         self._lesson_tick_targets = torch.tensor([8, 96, 48, 240, 1], device=self.device)
@@ -801,7 +805,8 @@ class TensorTrainingReward:
                 pl = torch.where(lift_ok, ((md + mn) * 0.5 / success['net_lift_m']).clamp(0, 1), 0)
             elif self.config.profile == train_rewar__GOAL_FULL:
                 net_lift = torch.minimum(md, mn) / success['net_lift_m']
-                transfer = torch.minimum(v['support_unload'], v['hand_lift_load'])
+                wrap_goal = self.config.finger_goal.grasp == 'power'
+                transfer = v['support_unload'] if wrap_goal else torch.minimum(v['support_unload'], v['hand_lift_load'])
                 carrying = transfer.masked_fill(~(self._opposed_contact(v) & v['bilateral_support'])
                                                  | v['prohibited_support'], 0)
                 pl = carrying * net_lift.clamp(0, 1)
@@ -811,7 +816,7 @@ class TensorTrainingReward:
                 clean = (v['off_table'] & ~v['prohibited_support']
                          & (v['soft_non_target_contact'] == 0) & (v['soft_reaction_force'] < 1))
                 recovery = (1 + net_lift).clamp(0, 1)
-                balanced_transfer = torch.minimum(v['support_unload'], v['balanced_hand_lift_load'])
+                balanced_transfer = transfer if wrap_goal else torch.minimum(v['support_unload'], v['balanced_hand_lift_load'])
                 if self.prelift_dwell_steps is not None:
                     clean &= v['bilateral_support'] & (
                         self.prelift_contact_steps[ids] >= self.prelift_dwell_steps
@@ -945,6 +950,7 @@ class TensorTrainingReward:
                 bad |= v
         self._guard(bad, 'reset numerical/health/source validation failed')
         self._mastery_ticks[ids] = 0
+        self._clean_support_ticks[ids] = 0
         self._lesson[ids] = 0
         self._lesson_ticks[ids] = 0
         self._reset_tick[ids] = tick
@@ -1044,6 +1050,8 @@ class TensorTrainingReward:
         self._pre_terms = self._term_payload()
         (self._count, self._terminal, self._event) = (self._i(), self._b(), self._f())
         self._lesson_before = self._lesson.clone()
+        if self.mastery is not None:
+            self._clean_support_start = self._clean_support_ticks
         self._arrival_pending = self._b()
         self._costs = torch.full((self.n, 8), tenso_train_rewar__math.nan, device=self.device, dtype=torch.float64)
         self._slip_history = torch.full_like(self._costs, tenso_train_rewar__math.nan)
@@ -1180,6 +1188,9 @@ class TensorTrainingReward:
         lifted = self._genuine_contact(v) & (slip_status == 1)
         if invalid is not None:
             clean &= ~invalid
+        if self.config.profile == train_rewar__GOAL_FULL:
+            bearing = active & clean & v['off_table'] & v['bilateral_support'] & self._opposed_contact(v)
+            self._clean_support_ticks = (self._clean_support_ticks + bearing).clamp_max(CLEAN_SUPPORT_MAX_TICKS)
         level = self.mastery[0]
         conditions = torch.stack((touch, v['bilateral_support'], lifted & (height >= 0.005),
                                   lifted & (height >= 0.015), torch.zeros_like(touch)), dim=1)
@@ -1247,6 +1258,10 @@ class TensorTrainingReward:
             lesson_bonus = (self._lesson_points[self._lesson] -
                             self._lesson_points[self._lesson_before]).masked_fill(self._terminal, 0)
             event += lesson_bonus
+            if self.config.profile == train_rewar__GOAL_FULL:
+                support_ticks = (self._clean_support_ticks - self._clean_support_start).masked_fill(self._terminal, 0)
+                support_s = support_ticks.double() / tenso_train_rewar__PHYSICS_HZ
+                event += CLEAN_SUPPORT_RATE * support_s
         reward = self.config.gamma * endpoint_phi - self._phi_pre - integrated + event
         numerical = ~torch.isfinite(reward) | ~torch.isfinite(integrated)
         if bool((incomplete | boundary | numerical).any()):
@@ -1277,6 +1292,9 @@ class TensorTrainingReward:
         if self.mastery is not None:
             event_terms['curriculum'] = self._term(self._lesson, 'stage', 'derived:ordered_grasp_lessons',
                                                    lesson_bonus)
+            if self.config.profile == train_rewar__GOAL_FULL:
+                event_terms['clean_support_time'] = self._term(
+                    support_s, 's', 'derived:clean_bilateral_support_time', CLEAN_SUPPORT_RATE * support_s)
         contribution = lambda value: torch.where(intervals, value, torch.nan)
         substep_terms = {'command_rate': self._term(contribution(self._qcmd[:, None]), 'dimensionless', 'submitted_request', contribution(0.05 * self._qcmd[:, None] / tenso_train_rewar__PHYSICS_HZ), applicable=intervals), 'time': self._term(contribution(torch.full_like(self._costs, 1.0 / tenso_train_rewar__PHYSICS_HZ)), 's', 'actual_endpoint_clock', contribution(torch.full_like(self._costs, 0.1 / tenso_train_rewar__PHYSICS_HZ)), applicable=intervals)}
         if self.full:

@@ -92,6 +92,7 @@ class GraspContactReadout:
                    'power': (*self.PADS, 'base_link')}[grasp]
         self.required = tuple((side, fingers) for side in SIDES)
         self.last_diagnostics = None
+        self.trace_pad_vertical = False
         self.pad_slots = tuple(
             tuple(self.mesh_names.index(f'{side}.{name}') for name in pads)
             for side, pads in self.required
@@ -103,6 +104,14 @@ class GraspContactReadout:
         self.required_slots = torch.zeros((2, len(self.mesh_names)), device=self.device, dtype=torch.bool)
         for i, slots in enumerate(self.pad_slots):
             self.required_slots[i, list(slots)] = True
+        if grasp == 'power':
+            self.wrap_slots = self.required_slots.clone()
+            for i, side in enumerate(SIDES):
+                middle = f'{side}.finger52_link'
+                if middle in self.mesh_names:
+                    self.wrap_slots[i, self.mesh_names.index(middle)] = True
+            self.wrap_non_target_slots = tuple(k for k in self.non_target_slots
+                                               if not self.mesh_names[k].endswith('.finger52_link'))
         # The actual native rod runs from -Y to +Y, with the left hand at -Y.
         self.side_by_mesh = torch.tensor(
             [-1 if name.startswith('left.') else 1 if name.startswith('right.') else 0
@@ -138,7 +147,36 @@ class GraspContactReadout:
     def _imbalance(a, b):
         return (a - b).abs() / (a + b).clamp_min(1e-12)
 
-    def __call__(self, packet, nodes):
+    @staticmethod
+    def power_wrap(nodes, tangent, indices, gap, normals, proximity, radius, joint_error):
+        """Test whether the measured palm and fingers enclose the local wire cross-section."""
+        rows = torch.arange(len(nodes), device=nodes.device)[:, None, None]
+        centers = nodes[rows, indices]
+        points = centers - normals * (radius[:, None, None, None] + gap[..., None])
+        axis = torch.nn.functional.normalize(tangent, dim=-1)
+        up = torch.zeros_like(axis)
+        up[..., 2] = 1
+        other = torch.zeros_like(up)
+        other[..., 0] = 1
+        up = torch.where(axis[..., 2:].abs() > .9, other, up)
+        x = torch.nn.functional.normalize(torch.linalg.cross(axis, up), dim=-1)
+        y = torch.linalg.cross(axis, x)
+        offsets = points - centers.mean(-2, keepdim=True)
+        a = (offsets * x[..., None, :]).sum(-1)
+        b = (offsets * y[..., None, :]).sum(-1)
+        angles = torch.atan2(b, a).sort(-1).values
+        largest = torch.maximum(angles.diff(dim=-1).amax(-1), 2 * math.pi + angles[..., 0] - angles[..., -1])
+        fingers, palm = offsets[..., :5, :], offsets[..., 5:, :]
+        inner = fingers.mean(-2) - palm.squeeze(-2)
+        inner -= (inner * axis).sum(-1, keepdim=True) * axis
+        palm_inward = (normals[..., 5, :] * inner).sum(-1) > 0
+        nearby = (proximity > 0).all(-1)
+        closed = joint_error <= .15
+        enclosed = (largest < math.pi) & palm_inward & nearby & closed
+        progress = proximity.mean(-1) * (1 - (joint_error / .35).clamp(0, 1))
+        return enclosed, progress
+
+    def __call__(self, packet, nodes, *, wrap=None):
         # Each pair has already been checked against the owned solver reductions,
         # and the complete per-lane pair capacity and clock have been verified.
         env = packet['env_ids']
@@ -181,7 +219,7 @@ class GraspContactReadout:
         contact_nodes = []
         pad_means = []
         totals, clamp_quality = [], []
-        for side, slots, required_slot in zip(SIDES, self.pad_slots, self.required_slots, strict=True):
+        for i, (side, slots, required_slot) in enumerate(zip(SIDES, self.pad_slots, self.required_slots, strict=True)):
             pad_loads = loads[:, :, slots]
             pad_means.append(pad_loads.mean(1))
             pad_normals = weighted_normal[:, :, slots]
@@ -220,7 +258,19 @@ class GraspContactReadout:
             result['load_progress_' + side] = 0.5 * (load_progress + opposition_progress.mean(1)) * correct_side
             result['opposed_' + side] = opposed
             node_load = loads.new_zeros(batch * 41)
-            node_load.index_add_(0, env * 41 + node, normal_force * required_slot[mesh])
+            if wrap is not None:
+                # Solver contact identity is independent of how the hand shares load.
+                legal = self.wrap_slots[i]
+                hit = legal[mesh] & ~wrong & (normal_force > 0)
+                node_load.index_add_(0, env * 41 + node, hit.to(node_load))
+                touching = node_load.view(batch, 41).amax(-1) > 0
+                enclosed, progress = wrap
+                effective[-1] = enclosed[:, i] & touching & correct_side
+                result['coverage_' + side] = effective[-1].double()
+                result['opposed_' + side] = enclosed[:, i] & correct_side
+                result['load_progress_' + side] = progress[:, i] * correct_side
+            else:
+                node_load.index_add_(0, env * 41 + node, normal_force * required_slot[mesh])
             contact_nodes.append(node_load.view(batch, 41).argmax(1))
         if self.balance_enabled:
             balance = 1 - self._imbalance(*totals)
@@ -232,14 +282,33 @@ class GraspContactReadout:
         result['off_table'] = (support_loads[:, :, 0] <= self.SUPPORT_LOAD_LIMIT_N).all(1)
         result['no_external_support'] = (support_loads <= self.SUPPORT_LOAD_LIMIT_N).all(dim=(1, 2))
         result['support_load_n'] = support_loads.amax(1)
-        self.last_diagnostics = dict(pad_loads_mean_n=torch.stack(pad_means, 1),
+        self.last_diagnostics = dict(effective_hand=torch.stack(effective, 1),
+                                     pad_loads_mean_n=torch.stack(pad_means, 1),
                                      support_load_n=result['support_load_n'])
+        if self.trace_pad_vertical:
+            # Each normal is sampled at its own solver substep. Contact point height
+            # relative to that node center equals -radius * normal.z in world space.
+            slots = self.hand_slots
+            normal_z = weighted_normal[..., slots, 2].mean(1).reshape(batch, 2, -1)
+            total_z = vertical[..., slots].mean(1).reshape_as(normal_z)
+            pad_load = self.last_diagnostics['pad_loads_mean_n']
+            self.last_diagnostics.update(
+                pad_normal_z_mean=normal_z / pad_load.clamp_min(1e-12),
+                pad_normal_vertical_n=normal_z,
+                pad_tangential_vertical_n=total_z - normal_z,
+            )
         result['support_vertical_n'] = vertical[:, :, self.support_slots].clamp_min(0).sum(-1).amax(1)
         result['hand_vertical_n'] = vertical[:, :, self.hand_slots].sum(-1).amin(1) * correct_side
         left_up, right_up = (vertical[:, :, slots].sum(-1) for slots in self.pad_slots)
         result['balanced_hand_vertical_n'] = 2 * torch.minimum(left_up, right_up).amin(1) * correct_side
         result['non_target_normal_n'] = (loads[:, :, self.non_target_slots].amax((1, 2))
                                          if self.non_target_slots else loads.new_zeros(batch))
+        if wrap is not None:
+            self.last_diagnostics['wrap_enclosed'] = wrap[0]
+            # The 17-slot Power scene includes each little finger's middle phalanx.
+            # Its physical reaction belongs to the wrap just like the distal pad.
+            extra = self.wrap_non_target_slots
+            result['non_target_normal_n'] = loads[:, :, extra].amax((1, 2)) if extra else loads.new_zeros(batch)
         return result
 
 
@@ -580,6 +649,13 @@ class NativeTensorPhysicsRuntime:
         if getattr(self, 'gated_lift', False):
             self._closure_goal = self.state['q'].new_tensor(self.config.finger_goal.target_rad).reshape(2, 6)
             self._closure_zero_load = self._closure_goal.new_zeros((self.n, 2, len(self.contact.pad_slots[0])))
+            self._grasp_force = torch.zeros_like(self._closure_zero_load)
+            self._filtered_load = torch.zeros_like(self._grasp_force)
+            self._force_integral = torch.zeros_like(self._grasp_force)
+            self._hold_trim = torch.zeros_like(self._grasp_force)
+            self._held_measured_q = self._grasp_pose.clone()
+            self._hand_ticks = self._clamp_steps[:, None].expand(-1, 2).clone()
+            self._hand_lost_ticks = torch.zeros_like(self._hand_ticks)
         self._initialize_window_state()
         self._reset_refs(self.ids)
 
@@ -842,7 +918,19 @@ class NativeTensorPhysicsRuntime:
         self._geometry_bad = torch.zeros(len(p), dtype=torch.bool, device=self.device)
         if self.full_grasp:
             radii = self.radii[subset]
-            gaps, valid, normals, proximity = self.geometry.policy_pad_gaps(poses, p, radii, approach_normals=True)
+            power = getattr(self, 'style', None) == 'power' and not reset
+            sample = self.geometry.policy_pad_gaps(poses, p, radii, approach_normals=True, material_indices=True) if power else self.geometry.policy_pad_gaps(poses, p, radii, approach_normals=True)
+            gaps, valid, normals, proximity = sample[:4]
+            if power:
+                indices = sample[4].reshape(len(p), 2, 6)
+                nearest = gaps.gather(-1, sample[4].unsqueeze(-1)).reshape_as(indices)
+                rows = torch.arange(len(p), device=p.device)[:, None]
+                station = indices.median(-1).values
+                tangent = p[rows, (station + 1).clamp_max(40)] - p[rows, (station - 1).clamp_min(0)]
+                q = torch.stack([self.state['q'][subset, i][:, ids] for i, ids in enumerate(self.ctrl.active)], 1)
+                error = measured_finger_errors(q, self.config.finger_goal)
+                self._power_wrap = self.contact.power_wrap(p, tangent, indices, nearest, normals.reshape(len(p), 2, 6, 3),
+                                                          proximity.reshape_as(indices), radii, error)
             nearest = gaps.masked_fill(~valid, float('inf')).amin(-1)
             min_gap = nearest.amin(-1)
             if not reset:
@@ -933,7 +1021,7 @@ class NativeTensorPhysicsRuntime:
         else:
             if capture['pair_owner_time_s'] != stamp.solver_time_s:
                 raise ValueError('grasp contact does not belong to the elapsed solver boundary')
-            contact = self.contact(capture, nodes)
+            contact = self.contact(capture, nodes, wrap=self._power_wrap) if self.style == 'power' else self.contact(capture, nodes)
             contact['support_unload'] = (1 - contact.pop('support_vertical_n') / self.rod_weight_n).clamp(0, 1)
             contact['hand_lift_load'] = (contact.pop('hand_vertical_n') / self.rod_weight_n).clamp(0, 1)
             contact['balanced_hand_lift_load'] = (
@@ -1026,6 +1114,14 @@ class NativeTensorPhysicsRuntime:
             self._lift_unlocked[selected] = False
             self._grasp_latched[selected] = False
             self._grasp_pose[selected] = torch.nan
+            if getattr(self, 'gated_lift', False):
+                self._grasp_force[selected] = 0
+                self._filtered_load[selected] = 0
+                self._force_integral[selected] = 0
+                self._hold_trim[selected] = 0
+                self._held_measured_q[selected] = torch.nan
+                self._hand_ticks[selected] = 0
+                self._hand_lost_ticks[selected] = 0
             self._wrist_aligned[selected] = self.wrist_aligned(frame.fields)[selected]
             if self.contact.last_diagnostics is not None:
                 for value in self.contact.last_diagnostics.values():
@@ -1143,18 +1239,18 @@ class NativeTensorPhysicsRuntime:
         if getattr(self, 'gated_lift', False):
             diag = self.contact.last_diagnostics
             loads = self._closure_zero_load if diag is None else diag['pad_loads_mean_n']
-            goal = torch.where(self._lift_unlocked[:, None, None],
-                               self._grasp_pose.reshape(-1, 2, 6), self._closure_goal)
+            anchor = self._grasp_pose.reshape(-1, 2, 6)
+            goal = torch.where(torch.isfinite(anchor), anchor, self._closure_goal)
             closure_guide = (goal, loads, self.style,
-                             self._wrist_aligned & ~halted)
-            fields = self.last.fields
-            height = torch.minimum(fields['median_z'] - self.reward._median,
-                                   fields['min_z'] - self.reward._min)
-            at_height = (fields['off_table'] & fields['no_external_support']
-                         & (height >= self.config.success['net_lift_m']))
-            lift = (self._grasp_latched, self._grasp_pose, self._lift_unlocked & ~at_height)
+                             self._wrist_aligned & ~halted, self._grasp_force)
+            if self.style == 'power':
+                closure_guide += (torch.isfinite(anchor[..., 0]),)
+            else:
+                closure_guide += (None, self._hold_trim)
+            lift = self._grasp_lift_control()
         trans = self.ctrl.prepare(actions, self.state, self.clear, self.state['base_link_pose_w'],
-                                  stamp=pre, halted=halted, grasp_lift=lift, closure_guide=closure_guide)
+                                  stamp=pre, halted=halted, grasp_lift=lift, closure_guide=closure_guide,
+                                  held_measured_q=self._held_measured_q if lift is not None else None)
         if self.controls == 0 and pre.sdk_step == self.first_sdk:
             reaction = self.runtime.initial_reaction(physics_step=pre.sdk_step + 1)
         else:
@@ -1227,9 +1323,10 @@ class NativeTensorPhysicsRuntime:
                                    hard_causes=hard, soft_costs=soft, numerical_ok=numerical_ok)
             fields = self.last.fields
             self._wrist_aligned |= ~halted & fields['numerical_health'] & self.wrist_aligned(fields)
-            clamp_safe = (fields['bilateral_support'] & fields['numerical_health'] & ~halted
-                          & ~fields['constraint_failure'] & ~fields['pad_backface'])
-            self._count_clamp(clamp_safe)
+            safe = fields['numerical_health'] & ~halted & ~fields['constraint_failure'] & ~fields['pad_backface']
+            diag = self.contact.last_diagnostics
+            self._count_clamp(fields['bilateral_support'] & safe, diag['effective_hand'] & safe[:, None],
+                              diag['pad_loads_mean_n'])
         else:
             guard |= joint_bad | self._geometry_bad
             if self.geometry is not None:
@@ -1255,16 +1352,62 @@ class NativeTensorPhysicsRuntime:
             mark('n2_cold_parity_evidence')
         return ready
 
-    def _count_clamp(self, clamp_safe):
+    def _grasp_lift_control(self):
+        fields = self.last.fields
+        height = torch.minimum(fields['median_z'] - self.reward._median,
+                               fields['min_z'] - self.reward._min)
+        at_height = (fields['off_table'] & fields['no_external_support']
+                     & (height >= self.config.success['net_lift_m']))
+        both_held = torch.isfinite(self._grasp_pose.reshape(-1, 2, 6)[..., 0]).all(1)
+        return both_held, self._grasp_pose, self._lift_unlocked & ~at_height
+
+    def _update_hold_trim(self, loads, sensed, acquire, release):
+        """Bounded per-pad PI about the immutable captured drive and local hand load."""
+        filtered = self._filtered_load
+        new_load = filtered + (-math.expm1(-1 / (480 * .03))) * (loads - filtered)
+        valid = sensed[..., None] & ~release[..., None]
+        filtered.copy_(torch.where(acquire[..., None], loads, torch.where(valid, new_load, filtered)))
+        share = (.5, .5) if self.style == 'pinch' else (.5, .25, .25)
+        reference = self._grasp_force.sum(-1, keepdim=True) * loads.new_tensor(share)
+        error = (reference * .8 - filtered).clamp_min(0) - (filtered - reference * 1.2).clamp_min(0)
+        trial = (self._force_integral + error / 480).clamp(-2, 2)
+        raw = .01 * error + .02 * trial
+        winding = ((raw > .04) & (error > 0)) | ((raw < -.005) & (error < 0))
+        self._force_integral.copy_(torch.where(valid & ~winding, trial, self._force_integral))
+        desired = (.01 * error + .02 * self._force_integral).clamp(-.005, .04)
+        delta = (desired - self._hold_trim).clamp(-.03 / 480, .03 / 480)
+        self._hold_trim.add_(torch.where(valid & (error != 0), delta, 0))
+        clear = (acquire | release)[..., None]
+        self._hold_trim.masked_fill_(clear, 0)
+        self._force_integral.masked_fill_(clear, 0)
+        filtered.masked_fill_(release[..., None], 0)
+
+    def _count_clamp(self, clamp_safe, hand_safe, pad_loads):
         steps, unlocked = stable_clamp_step(
             self._clamp_steps, clamp_safe, required_steps=self._clamp_dwell_steps,
         )
         if getattr(self, 'gated_lift', False):
-            acquired = unlocked & ~self._lift_unlocked
-            actual = torch.cat([self.state['q'][:, side, ids].double()
-                                for side, ids in enumerate(self.ctrl.active)], dim=1)
-            self._grasp_pose = torch.where(acquired[:, None], actual, self._grasp_pose)
-            self._grasp_pose.masked_fill_(~unlocked[:, None], torch.nan)
+            # Capture each already-applied hand command once. Keep it through a
+            # pressure dip; prolonged complete loss releases just that hand.
+            pose = self._grasp_pose.view(-1, 2, 6)
+            held = torch.isfinite(pose[..., 0])
+            self._hand_ticks = (self._hand_ticks + 1).clamp_max(3).masked_fill(~hand_safe, 0)
+            lost = held & (~hand_safe if getattr(self, 'style', None) == 'power' else pad_loads.amax(-1) < 0.02)
+            self._hand_lost_ticks = (self._hand_lost_ticks + 1).clamp_max(120).masked_fill(~lost, 0)
+            release = self._hand_lost_ticks >= 120
+            acquire = ~held & (self._hand_ticks >= 3)
+            command = torch.stack([self.state['backend_targets'][:, side, ids].double()
+                                   for side, ids in enumerate(self.ctrl.active)], dim=1)
+            pose.copy_(torch.where(acquire[..., None], command, pose).masked_fill(release[..., None], torch.nan))
+            measured = torch.stack([self.state['q'][:, side, ids].double()
+                                    for side, ids in enumerate(self.ctrl.active)], dim=1)
+            measured_anchor = self._held_measured_q.view(-1, 2, 6)
+            measured_anchor.copy_(torch.where(acquire[..., None], measured, measured_anchor)
+                                  .masked_fill(release[..., None], torch.nan))
+            self._grasp_force.copy_(torch.where(acquire[..., None], pad_loads, self._grasp_force)
+                                    .masked_fill(release[..., None], 0))
+            if getattr(self, 'style', None) in ('pinch', 'tripod'):
+                self._update_hold_trim(pad_loads, held & hand_safe, acquire, release)
             self._grasp_latched |= unlocked
         self._lift_unlocked = unlocked
         self._clamp_steps.copy_(steps)
@@ -1275,6 +1418,10 @@ class NativeTensorPhysicsRuntime:
         tensors = {**self.state, 'rod_nodes': self.nodes, 'rod_v': self.velocity, 'palm': self.ctrl.palms, 'angles': self.ctrl.angles, 'age': self.ages, 'rest': self.source.rest_lengths_m, 'request': self.source.previous_request, 'reset_z': self.source.reset_z, 'reset_distance': self.source.reset_distance_m}
         tensors.update(clamp_steps=self._clamp_steps, grasp_latched=self._grasp_latched,
                        grasp_pose=self._grasp_pose, lift_unlocked=self._lift_unlocked)
+        if getattr(self, 'gated_lift', False):
+            tensors.update(hand_ticks=self._hand_ticks, hand_lost_ticks=self._hand_lost_ticks,
+                           grasp_force=self._grasp_force, held_measured_q=self._held_measured_q, filtered_load=self._filtered_load,
+                           force_integral=self._force_integral, hold_trim=self._hold_trim)
         for (name, value) in vars(self.reward).items():
             if isinstance(value, torch.Tensor) and value.ndim and (len(value) == self.n):
                 tensors['reward.' + name] = value
